@@ -176,6 +176,9 @@ export default {
     promptParseFailed:
       "Prompt parsing failed, please check assistant prompt template",
     plugins: "Plugins",
+    pendingFiles: "Pending Files",
+    clearAllFiles: "Clear All Files",
+    removeFile: "Remove File",
   },
   settingsView: {
     title: "Settings",
