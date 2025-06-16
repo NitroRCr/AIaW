@@ -1,7 +1,6 @@
 import { useLocateId } from "./locateId"
 import { useBack } from "./back"
 import { useSetTitle } from "./setTitle"
-import { syncRef } from "./syncRef"
 import { useMdPreviewProps } from "./mdPreviewProps"
 import keyComposition from "./keyComposition"
 import { useSetTheme } from "./setTheme"
@@ -15,7 +14,6 @@ export {
   useLocateId,
   useBack,
   useSetTitle,
-  syncRef,
   useMdPreviewProps,
   keyComposition,
   useSetTheme,
@@ -23,5 +21,5 @@ export {
   localReactive,
   useCallApi,
   useOrder,
-  useFilterOptions
+  useFilterOptions,
 }

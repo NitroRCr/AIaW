@@ -19,6 +19,7 @@
       flex
       flex-col
       :style-fn="pageFhStyle"
+      class="relative-position"
     >
       <notification-panel
         v-if="!isPageLoaded"
@@ -30,11 +31,11 @@
         :warning="true"
       />
       <notification-panel
-        v-if="currentChat && currentChat.type === 'private'"
+        v-if="chat && chat.type === 'private'"
         :title="$t('chatsPage.privateChat')"
         :warning="true"
       />
-      <q-list v-else-if="currentChat">
+      <q-list v-else-if="chat">
         <q-item>
           <q-item-section>
             {{ $t("chatsPage.isPublic") }}
@@ -49,7 +50,8 @@
           </q-item-section>
           <q-item-section>
             <q-input
-              v-model="chat.name"
+              :model-value="chat.name"
+              @update:model-value="(value) => chatsStore.update(chat.id, { name: String(value) })"
               autogrow
               filled
               clearable
@@ -63,7 +65,8 @@
           </q-item-section>
           <q-item-section>
             <q-input
-              v-model="chat.description"
+              :model-value="chat.description"
+              @update:model-value="(value) => chatsStore.update(chat.id, { description: String(value) })"
               autogrow
               filled
               clearable
@@ -85,6 +88,18 @@
         </q-item>
         <q-separator spaced />
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <q-btn
+        fab
+        icon="sym_o_save"
+        color="primary"
+        class="sticky-save-btn"
+        @click="saveChat"
+        :loading="chatsStore.isSaving"
+        :disable="!chatsStore.hasChanges"
+        v-if="chat && chat.type !== 'private'"
+      />
     </q-page>
   </q-page-container>
 </template>
@@ -97,11 +112,10 @@ import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 import { useIsChatAdmin } from "@/features/chats/composables/useIsChatAdmin"
-import { syncRef } from "@/shared/composables/syncRef"
 import { useChatsStore } from "@/features/chats/store"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 import { pageFhStyle } from "@/shared/utils/functions"
-import { computed, ref, toRaw, watch } from "vue"
+import { computed, toRaw } from "vue"
 const $q = useQuasar()
 
 defineEmits(["toggle-drawer"])
@@ -113,42 +127,50 @@ const props = defineProps<{
 const chatsStore = useChatsStore()
 const workspaceStore = useWorkspacesStore()
 
-const workspace = computed(() =>
-  workspaceStore.workspaces.find(
-    (workspace) => workspace.id === chat.value?.workspace_id
-  )
-)
-const currentChat = computed(() =>
-  chatsStore.chats.find((chat) => chat.id === props.id)
-)
-const isPageLoaded = computed(() => currentChat.value !== undefined)
-
-const { isAdmin } = useIsChatAdmin(currentChat)
-
-const chat = syncRef(
-  currentChat,
-  (val) => {
-    chatsStore.putItem(toRaw(val))
-  },
-  { valueDeep: true }
-)
-
-const chatPublic = ref(chat.value?.type === "workspace")
-
-watch(chatPublic, (newVal) => {
-  if (newVal) {
-    chatsStore.update(currentChat.value!.id, { type: "workspace" })
-  } else {
-    chatsStore.update(currentChat.value!.id, { type: "group" })
+const chatId = computed(() => props.id)
+const chat = computed(() => chatsStore.chats.find(c => c.id === chatId.value))
+const chatPublic = computed({
+  get: () => chat.value?.type === "workspace",
+  set: async (value) => {
+    if (chat.value) {
+      const newType = value ? "workspace" : "group"
+      await chatsStore.update(chat.value.id, { type: newType })
+    }
   }
 })
 
+const workspace = computed(() => workspaceStore.workspaces.find(w => w.id === chat.value?.workspace_id))
+
+const isPageLoaded = computed(() => chat.value !== undefined)
+
+const { isAdmin } = useIsChatAdmin(chat)
+
+async function saveChat() {
+  if (!chat.value) return
+
+  try {
+    await chatsStore.update(chat.value.id, toRaw(chat.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Chat settings saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving chat settings'
+    })
+  }
+}
+
 function pickAvatar () {
+  if (!chat.value) return
   $q.dialog({
     component: PickAvatarDialog,
-    componentProps: { model: chat.value?.avatar, defaultTab: "icon" },
-  }).onOk((avatar) => {
-    chatsStore.update(currentChat.value!.id, { avatar })
+    componentProps: { model: chat.value.avatar, defaultTab: "icon" },
+  }).onOk(async (avatar) => {
+    if (chat.value) {
+      await chatsStore.update(chat.value.id, { avatar })
+    }
   })
 }
 </script>

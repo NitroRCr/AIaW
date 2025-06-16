@@ -25,11 +25,17 @@
     animated
   >
     <q-tab-panel name="dialogs">
-      <dialog-list :workspace-id="workspaceId" />
+      <dialog-list
+        v-if="workspaceId"
+        :workspace-id="workspaceId"
+      />
     </q-tab-panel>
 
     <q-tab-panel name="chats">
-      <chat-list :workspace-id="workspaceId" />
+      <chat-list
+        v-if="workspaceId"
+        :workspace-id="workspaceId"
+      />
     </q-tab-panel>
   </q-tab-panels>
 </template>

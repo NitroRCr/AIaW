@@ -8,7 +8,10 @@
     </q-toolbar-title>
   </view-common-header>
   <q-page-container v-if="provider">
-    <q-page :style-fn="pageFhStyle">
+    <q-page
+      :style-fn="pageFhStyle"
+      class="relative-position"
+    >
       <q-list
         py-2
         max-w="1000px"
@@ -81,6 +84,17 @@
           </q-item-section>
         </q-item>
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <q-btn
+        fab
+        icon="sym_o_save"
+        color="primary"
+        class="sticky-save-btn"
+        @click="saveProvider"
+        :loading="store.isSaving"
+        :disable="!store.hasChanges"
+      />
     </q-page>
   </q-page-container>
   <error-not-found v-else />
@@ -94,10 +108,8 @@ import ProviderInputItems from "@/features/providers/components/ProviderInputIte
 import SubproviderInput from "@/features/providers/components/SubproviderInput.vue"
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import { useSetTitle } from "@/shared/composables/setTitle"
-import { syncRef } from "@/shared/composables/syncRef"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 import {
-  CustomProviderMapped,
   SubproviderMapped,
 } from "@/services/supabase/types"
 import { useProvidersStore } from "@/features/providers/store"
@@ -112,34 +124,47 @@ const props = defineProps<{
 defineEmits(["toggle-drawer"])
 
 const store = useProvidersStore()
+const $q = useQuasar()
 
-const provider = syncRef<CustomProviderMapped>(
-  () => store.providers.find((a) => a.id === props.id),
-  (val) => {
-    store.put(toRaw(val))
-  },
-  { valueDeep: true }
-)
+const providerId = computed(() => props.id)
+const provider = computed(() => store.providers.find(p => p.id === providerId.value))
+
+async function saveProvider() {
+  if (!provider.value) return
+
+  try {
+    await store.put(toRaw(provider.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Provider saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving provider'
+    })
+  }
+}
 
 function addSubprovider () {
-  store.update(provider.value.id, {
-    subproviders: [
-      {
-        custom_provider_id: provider.value.id,
-        provider: null,
-        model_map: {},
-      },
-    ],
+  if (!provider.value) return
+  provider.value.subproviders.push({
+    custom_provider_id: provider.value.id,
+    provider: null,
+    model_map: {},
   })
 }
 
 function removeSubprovider (subprovider: SubproviderMapped) {
-  store.deleteSubprovider(provider.value.id, subprovider.id)
+  if (!provider.value) return
+  const index = provider.value.subproviders.findIndex(s => s.id === subprovider.id)
+  if (index > -1) {
+    provider.value.subproviders.splice(index, 1)
+  }
 }
 
-const $q = useQuasar()
-
 function pickAvatar () {
+  if (!provider.value) return
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {
@@ -147,9 +172,12 @@ function pickAvatar () {
       defaultTab: "icon",
     },
   }).onOk((avatar) => {
-    provider.value.avatar = avatar
+    // Create a new object to trigger reactivity
+    const updatedProvider = { ...provider.value!, avatar }
+    Object.assign(provider.value!, updatedProvider)
   })
 }
+
 const { t } = useI18n()
 useSetTitle(
   computed(

@@ -6,7 +6,7 @@ import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCa
 import { supabase } from "@/services/supabase/client"
 import { defaultAvatar, defaultTextAvatar } from "@/shared/utils/functions"
 import { AssistantDefaultPrompt } from "@/features/dialogs/utils/templates"
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { AssistantMapped, Assistant } from "@/services/supabase/types"
 
@@ -22,7 +22,16 @@ function mapAssistantTypes (item: Assistant): AssistantMapped {
 export const useAssistantsStore = defineStore("assistants", () => {
   const assistants = ref<AssistantMapped[]>([])
   const isLoaded = ref(false)
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(assistants, () => {
+    hasChanges.value = true
+  }, { deep: true })
+
   const fetchAssistants = async () => {
+    isLoaded.value = false
+
     const { data, error } = await supabase.from("user_assistants").select("*")
 
     if (error) {
@@ -32,7 +41,11 @@ export const useAssistantsStore = defineStore("assistants", () => {
     console.log("[DEBUG] Fetch assistants", data)
 
     assistants.value = data.map(mapAssistantTypes)
-    isLoaded.value = true
+
+    setTimeout(() => {
+      isLoaded.value = true
+      hasChanges.value = false
+    })
   }
 
   const init = async () => {
@@ -46,6 +59,8 @@ export const useAssistantsStore = defineStore("assistants", () => {
   const { t } = useI18n()
 
   async function add (props: Partial<Assistant> = {}) {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("user_assistants")
       .insert({
@@ -66,6 +81,11 @@ export const useAssistantsStore = defineStore("assistants", () => {
       .select()
       .single()
 
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
+
     if (error) {
       console.error("Error adding assistant:", error)
     }
@@ -76,12 +96,19 @@ export const useAssistantsStore = defineStore("assistants", () => {
   }
 
   async function update (id: string, changes) {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("user_assistants")
       .update(changes)
       .eq("id", id)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("Error updating assistant:", error)
@@ -109,12 +136,16 @@ export const useAssistantsStore = defineStore("assistants", () => {
   }
 
   async function delete_ (id: string) {
+    isSaving.value = true
+
     const { error } = await supabase
       .from("user_assistants")
       .delete()
       .eq("id", id)
       .select()
       .single()
+
+    isSaving.value = false
 
     if (error) {
       console.error("Error deleting assistant:", error)
@@ -133,5 +164,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
     put,
     delete: delete_,
     isLoaded,
+    isSaving,
+    hasChanges,
   }
 })

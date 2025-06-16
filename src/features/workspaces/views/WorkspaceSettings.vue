@@ -6,7 +6,10 @@
   </view-common-header>
 
   <q-page-container>
-    <q-page bg-sur>
+    <q-page
+      bg-sur
+      class="relative-position"
+    >
       <loading-panel v-if="!isLoaded" />
       <notification-panel
         v-else-if="!isAdmin"
@@ -14,7 +17,7 @@
         :warning="true"
       />
       <q-list v-else>
-        <q-item>
+        <q-item v-if="workspace">
           <q-item-section>
             {{ $t("workspacePage.isPublic") }}
           </q-item-section>
@@ -22,7 +25,7 @@
             <q-toggle v-model="workspace.is_public" />
           </q-item-section>
         </q-item>
-        <q-item>
+        <q-item v-if="workspace">
           <q-item-section>
             {{ $t("workspacePage.name") }}
           </q-item-section>
@@ -36,7 +39,7 @@
             />
           </q-item-section>
         </q-item>
-        <q-item>
+        <q-item v-if="workspace">
           <q-item-section>
             {{ $t("workspacePage.description") }}
           </q-item-section>
@@ -52,7 +55,7 @@
         </q-item>
         <q-separator spaced />
 
-        <q-item>
+        <q-item v-if="workspace">
           <q-item-section>
             {{ $t("workspaceSettings.defaultAssistant") }}
           </q-item-section>
@@ -76,6 +79,7 @@
           </q-item-section>
         </q-item>
         <q-item
+          v-if="workspace"
           clickable
           v-ripple
           @click="pickAvatar"
@@ -87,7 +91,7 @@
             <a-avatar :avatar="workspace.avatar" />
           </q-item-section>
         </q-item>
-        <q-item>
+        <q-item v-if="workspace">
           <q-item-section avatar>
             {{ $t("workspaceSettings.homeContent") }}
           </q-item-section>
@@ -106,6 +110,7 @@
         {{ $t("workspaceSettings.variables") }}
       </q-item-label>
       <vars-input
+        v-if="workspace"
         v-model="workspace.vars"
         :input-props="{
           filled: true,
@@ -115,8 +120,20 @@
         }"
       />
       <workspace-members
-        v-if="!workspace.is_public"
+        v-if="workspace && !workspace.is_public"
         :workspace-id="workspace.id"
+      />
+
+      <!-- Sticky Save Button -->
+      <q-btn
+        fab
+        icon="sym_o_save"
+        color="primary"
+        class="sticky-save-btn"
+        @click="saveWorkspace"
+        :loading="store.isSaving"
+        :disable="!store.hasChanges"
+        v-if="isAdmin"
       />
     </q-page>
   </q-page-container>
@@ -133,53 +150,68 @@ import VarsInput from "@/features/prompt/components/VarsInput.vue"
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import WorkspaceMembers from "@features/workspaces/components/WorkspaceMembers.vue"
 import { useSetTitle } from "@shared/composables/setTitle"
-import { syncRef } from "@shared/composables/syncRef"
 import { useIsWorkspaceAdmin } from "@features/workspaces/composables/useIsWorkspaceAdmin"
 import { useAssistantsStore } from "@features/assistants/store"
 import { useUserDataStore } from "@shared/store"
 import { useWorkspacesStore } from "@features/workspaces/store"
-import { computed, Ref, inject, toRaw, watch } from "vue"
+import { computed, toRaw } from "vue"
 import { useI18n } from "vue-i18n"
-import { WorkspaceMapped } from "@/services/supabase/types"
 const { t } = useI18n()
+
+const props = defineProps<{
+  id: string
+}>()
 
 defineEmits(["toggle-drawer"])
 const userDataStore = useUserDataStore()
 const store = useWorkspacesStore()
-const workspace = syncRef(
-  inject("workspace") as Ref<WorkspaceMapped>,
-  (val) => {
-    store.putItem(toRaw(val))
-  },
-  { valueDeep: true }
-)
+const $q = useQuasar()
 
-const workspaceId = computed(() => workspace.value.id)
+const workspaceId = computed(() => props.id)
+const workspace = computed(() => store.workspaces.find(w => w.id === workspaceId.value))
+
+console.log("[DEBUG] workspace", workspaceId)
+
 const { isAdmin, isLoaded } = useIsWorkspaceAdmin(workspaceId)
 
-watch(isAdmin, (newVal) => {
-  console.log("----isAdmin", newVal)
-})
 const assistantsStore = useAssistantsStore()
 const assistantOptions = computed(() =>
-  assistantsStore.assistants
+  workspace.value ? assistantsStore.assistants
     .filter((a) => [workspace.value.id, null].includes(a.workspace_id))
     .map((a) => ({
       label: a.name,
       value: a.id,
       assistant: a,
-    }))
+    })) : []
 )
 
-const $q = useQuasar()
-
 function pickAvatar () {
+  if (!workspace.value) return
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: { model: workspace.value.avatar, defaultTab: "icon" },
   }).onOk((avatar) => {
-    workspace.value.avatar = avatar
+    // Create a new object to trigger reactivity
+    const updatedWorkspace = { ...workspace.value!, avatar }
+    Object.assign(workspace.value!, updatedWorkspace)
   })
+}
+
+async function saveWorkspace() {
+  if (!workspace.value) return
+
+  try {
+    await store.updateItem(workspace.value.id, toRaw(workspace.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Workspace settings saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving workspace settings'
+    })
+  }
 }
 
 useSetTitle(

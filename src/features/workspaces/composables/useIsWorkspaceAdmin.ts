@@ -11,6 +11,7 @@ export const useIsWorkspaceAdmin = (workspaceId: Ref<string | null>) => {
   watch(
     [() => workspaceId.value, () => currentUserId],
     async ([id, userId]) => {
+      console.log("[DEBUG] useIsWorkspaceAdmin", { id, userId })
       if (!id || !userId) {
         isAdmin.value = null
 

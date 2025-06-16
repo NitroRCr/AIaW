@@ -76,7 +76,7 @@
   </q-list>
   <search-dialog
     v-model="showSearchDialog"
-    :workspace-id
+    :workspace-id="props.workspaceId"
   />
 </template>
 

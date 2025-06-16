@@ -60,14 +60,12 @@
 </template>
 
 <script setup lang="ts">
-import { syncRef } from "@/shared/composables"
 import { useAssistantsStore } from "@features/assistants/store"
 import { usePluginsStore } from "@features/plugins/store"
 import { AssistantPlugin, Plugin } from "@shared/utils/types"
-import { toRaw } from "vue"
+import { toRaw, computed, ref, watch } from "vue"
 import AAvatar from "@shared/components/avatar/AAvatar.vue"
 import PluginTypeBadge from "@features/plugins/components/PluginTypeBadge.vue"
-import { AssistantMapped } from "@/services/supabase/types"
 
 const props = defineProps<{
   assistantId: string
@@ -76,16 +74,23 @@ const props = defineProps<{
 
 const store = useAssistantsStore()
 
-const assistant = syncRef<AssistantMapped>(
-  () => store.assistants.find((a) => a.id === props.assistantId),
-  (val) => {
-    store.put(toRaw(val))
-  },
-  { valueDeep: true }
+const currentAssistant = computed(() =>
+  store.assistants.find((a) => a.id === props.assistantId)
 )
+
+// Replace syncRef with regular ref - but this component will trigger parent save
+const assistant = ref<any>(null)
+
+// Update assistant when currentAssistant changes
+watch(currentAssistant, (newAssistant) => {
+  if (newAssistant) {
+    assistant.value = { ...newAssistant }
+  }
+}, { immediate: true, deep: true })
+
 const pluginsStore = usePluginsStore()
 
-function setPlugin (plugin: Plugin, enabled: boolean) {
+async function setPlugin (plugin: Plugin, enabled: boolean) {
   if (enabled && !assistant.value.plugins[plugin.id]) {
     const assistantPlugin: AssistantPlugin = {
       enabled: true,
@@ -112,5 +117,8 @@ function setPlugin (plugin: Plugin, enabled: boolean) {
   } else {
     assistant.value.plugins[plugin.id].enabled = enabled
   }
+
+  // Immediately save changes to the store
+  await store.put(toRaw(assistant.value))
 }
 </script>

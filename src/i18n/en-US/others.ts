@@ -35,9 +35,9 @@ Click "**Create Dialog**" in the right sidebar to start a conversation.
 - In the left sidebar, you can create multiple workspaces to separate conversations with different themes.
 - Click the settings icon in the upper right corner to enter the workspace settings, where you can switch the default assistant and change the content displayed here.
 
-For more information, see <a href="https://docs.aiaw.app/usage/" target="_blank">Usage Guide</a>
+For more information, see [Usage Guide](https://docs.aiaw.app/usage/)
 
-GitHub: <a href="https://github.com/NitroRCr/aiaw" target="_blank">NitroRCr/AIaW</a>
+GitHub: [CyberCongress/AIaW](https://github.com/dasein108/AIaW)
 `,
   },
   mcpClient: {

@@ -474,6 +474,17 @@
           </q-item-section>
         </q-item>
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <q-btn
+        fab
+        icon="sym_o_save"
+        color="primary"
+        class="sticky-save-btn"
+        @click="saveAssistant"
+        :loading="store.isSaving"
+        :disable="!store.hasChanges"
+      />
     </q-page>
   </q-page-container>
   <error-not-found v-else />
@@ -492,13 +503,11 @@ import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import { useLocateId } from "@shared/composables/locateId"
 import { useSetTitle } from "@shared/composables/setTitle"
 import { getAvatarUrl } from "@shared/composables/storage/utils"
-import { syncRef } from "@/shared/composables/syncRef"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 import { useAssistantsStore } from "@/features/assistants/store"
 import { pageFhStyle } from "@/shared/utils/functions"
 import { exportFile } from "@/shared/utils/platformApi"
 import { computed, inject, toRaw } from "vue"
-import { AssistantMapped } from "@/services/supabase/types"
 
 const props = defineProps<{
   id: string
@@ -507,17 +516,31 @@ const props = defineProps<{
 defineEmits(["toggle-drawer"])
 
 const store = useAssistantsStore()
-const assistant = syncRef<AssistantMapped>(
-  () => store.assistants.find((a) => a.id === props.id),
-  (val) => {
-    store.put(toRaw(val))
-  },
-  { valueDeep: true }
-)
-
 const $q = useQuasar()
 
+const assistant = computed(() =>
+  store.assistants.find((a) => a.id === props.id)
+)
+
+async function saveAssistant() {
+  if (!assistant.value) return
+
+  try {
+    await store.put(toRaw(assistant.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Assistant saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving assistant'
+    })
+  }
+}
+
 function pickAvatar () {
+  if (!assistant.value) return
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {
@@ -526,7 +549,7 @@ function pickAvatar () {
     },
   }).onOk((avatar) => {
     console.log("---pickAvatar avatar", avatar)
-    assistant.value.avatar = avatar
+    assistant.value!.avatar = avatar
   })
 }
 

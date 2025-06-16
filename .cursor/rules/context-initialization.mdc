@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Always read CLAUDE.md and DEVELOPMENT_GUIDE.md before starting

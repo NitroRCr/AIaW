@@ -3,7 +3,7 @@ import { defineStore } from "pinia"
 import { useWorkspacesWithSubscription } from "@/features/workspaces/composables/useWorkspacesWithSubscription"
 import { supabase } from "@/services/supabase/client"
 import { DefaultWsIndexContent } from "@/shared/utils/template/templates"
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import type {
   WorkspaceMapped,
@@ -18,8 +18,16 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   const { workspaces, isLoaded } = useWorkspacesWithSubscription()
   const workspaceMembers = ref<WorkspaceMemberMapped[]>([])
   const { t } = useI18n()
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(workspaces, () => {
+    hasChanges.value = true
+  }, { deep: true })
 
   async function addWorkspace (props: Partial<WorkspaceMapped>) {
+    isSaving.value = true
+
     const workspace = {
       name: t("stores.workspaces.newWorkspace"),
       type: "workspace",
@@ -35,6 +43,11 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       .select()
       .single()
 
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
+
     if (error) {
       console.error("❌ Failed to add workspace:", error.message)
 
@@ -45,12 +58,21 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   }
 
   const update = async (id: string, changes: Partial<WorkspaceMapped>) => {
-    return await supabase
+    isSaving.value = true
+
+    const result = await supabase
       .from("workspaces")
       .update(changes)
       .eq("id", id)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
+
+    return result
   }
 
   const throttledUpdate = throttle(
@@ -79,11 +101,18 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   }
 
   async function insertItem (workspace: WorkspaceMapped) {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("workspaces")
       .insert(workspace)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("❌ Failed to put workspace:", error.message)
@@ -228,5 +257,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     updateWorkspaceMember,
     getWorkspaceMembers,
     isUserWorkspaceAdmin,
+    isSaving,
+    hasChanges,
   }
 })

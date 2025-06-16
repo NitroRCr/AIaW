@@ -37,8 +37,8 @@ const routes: RouteRecordRaw[] = [
         component: WorkspacePage,
         props: (route) => ({ id: route.params.workspaceId }),
         children: [
-          { path: "", component: WorkspaceIndex },
-          { path: "settings", component: WorkspaceSettings },
+          { path: "", component: WorkspaceIndex, props: (route) => ({ id: route.params.workspaceId }) },
+          { path: "settings", component: WorkspaceSettings, props: (route) => ({ id: route.params.workspaceId }) },
           {
             path: "dialogs/:dialogId",
             component: DialogView,

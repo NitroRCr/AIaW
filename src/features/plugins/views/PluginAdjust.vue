@@ -120,6 +120,18 @@
         img-url="/emotions/nachoneko/7.webp"
         :message="$t('pluginAdjust.noConfigurableItems')"
       />
+
+      <!-- Sticky Save Button -->
+      <q-btn
+        fab
+        icon="sym_o_save"
+        color="primary"
+        class="sticky-save-btn"
+        @click="saveAssistant"
+        :loading="assistantsStore.isSaving"
+        :disable="!assistantsStore.hasChanges"
+        :title="assistantsStore.hasChanges ? $t('Save changes to assistant') : $t('Changes saved')"
+      />
     </q-page>
   </q-page-container>
   <error-not-found v-else />
@@ -131,38 +143,53 @@ import JsonInput from "@/shared/components/ui/JsonInput.vue"
 import PromptVarInput from "@/features/prompt/components/PromptVarInput.vue"
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import { useSetTitle } from "@/shared/composables/setTitle"
-import { syncRef } from "@/shared/composables/syncRef"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 import { useAssistantsStore } from "@/features/assistants/store"
 import { usePluginsStore } from "@/features/plugins/store"
 import { PluginApi } from "@/shared/utils/types"
 import { computed, toRaw } from "vue"
 import { useI18n } from "vue-i18n"
-import { AssistantMapped } from "@/services/supabase/types"
+import { useQuasar } from "quasar"
 
 defineEmits(["toggle-drawer"])
 
+const $q = useQuasar()
 const assistantsStore = useAssistantsStore()
+
 const props = defineProps<{
   id: string
   assistantId: string
 }>()
-const assistant = syncRef<AssistantMapped>(
-  () => assistantsStore.assistants.find((a) => a.id === props.assistantId),
-  (val) => {
-    assistantsStore.put(toRaw(val))
-  },
-  { valueDeep: true }
+
+const assistant = computed(() =>
+  assistantsStore.assistants.find((a) => a.id === props.assistantId)
 )
+
+async function saveAssistant() {
+  if (!assistant.value) return
+
+  try {
+    await assistantsStore.put(toRaw(assistant.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Plugin settings saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving plugin settings'
+    })
+  }
+}
 
 const pluginsStore = usePluginsStore()
 const plugin = computed(() =>
   pluginsStore.plugins.find((p) => p.id === props.id)
 )
-const assistantPlugin = computed(() => assistant.value.plugins[props.id])
+const assistantPlugin = computed(() => assistant.value?.plugins[props.id])
 const apiMap = computed(() => {
   const val: Record<string, PluginApi> = {}
-  plugin.value.apis.forEach((a) => {
+  plugin.value?.apis.forEach((a) => {
     val[a.name] = a
   })
 

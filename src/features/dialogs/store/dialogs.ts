@@ -24,8 +24,6 @@ export const useDialogsStore = defineStore("dialogs", () => {
       console.error(error)
     }
 
-    console.log("[DEBUG] Fetch dialogs", data)
-
     Object.assign(
       dialogs,
       data.reduce((acc, dialog) => {
