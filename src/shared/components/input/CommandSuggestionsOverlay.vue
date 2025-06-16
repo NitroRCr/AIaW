@@ -9,25 +9,29 @@
       <div
         v-for="(command, index) in filteredCommands"
         :key="command.name"
-        :class="[
-          'command-suggestion-item p-2 cursor-pointer flex items-center gap-2',
-          { 'bg-sur-c-low': selectedCommandIndex === index }
-        ]"
-        @click="executeCommand(command)"
-        @mouseenter="selectedCommandIndex = index"
       >
-        <q-icon
-          :name="command.icon"
-          size="20px"
-        />
-        <div>
-          <div class="text-sm font-medium">
-            {{ command.name }}
-          </div>
-          <div class="text-xs text-sec">
-            {{ command.description }}
+        <div
+          :class="[
+            'command-suggestion-item p-2 cursor-pointer flex items-center gap-2',
+            { 'bg-sur-c-low': selectedCommandIndex === index }
+          ]"
+          @click="executeCommand(command)"
+          @mouseenter="selectedCommandIndex = index"
+        >
+          <q-icon
+            :name="command.icon"
+            size="20px"
+          />
+          <div>
+            <div class="text-sm font-medium">
+              {{ command.name }}
+            </div>
+            <div class="text-xs text-sec">
+              {{ command.description }}
+            </div>
           </div>
         </div>
+        <q-separator v-if="index < filteredCommands.length - 1" />
       </div>
     </div>
 
@@ -116,11 +120,11 @@ function detectCommand(text: string) {
   const words = text.split(' ')
   const lastWord = words[words.length - 1]
 
-  if (lastWord.startsWith('/') && lastWord.length > 1) {
+  if ((lastWord.startsWith('/') || lastWord.startsWith('@')) && lastWord.length > 1) {
     currentCommandQuery.value = lastWord
     showCommandSuggestions.value = true
     selectedCommandIndex.value = 0
-  } else if (text.startsWith('/') && text.indexOf(' ') === -1) {
+  } else if ((text.startsWith('/') || text.startsWith('@')) && text.indexOf(' ') === -1) {
     currentCommandQuery.value = text
     showCommandSuggestions.value = true
     selectedCommandIndex.value = 0
@@ -140,7 +144,7 @@ function executeCommand(command: Command) {
   const currentText = props.inputText || ''
   let newText = ''
 
-  if (currentText.startsWith('/') && currentText.indexOf(' ') === -1) {
+  if ((currentText.startsWith('/') || currentText.startsWith('@')) && currentText.indexOf(' ') === -1) {
     // Command is the entire input
     newText = ''
   } else {
@@ -182,7 +186,10 @@ function handleEnterKey() {
 
 function handleArrowDown() {
   if (showCommandSuggestions.value) {
-    selectedCommandIndex.value = Math.max(0, selectedCommandIndex.value - 1)
+    selectedCommandIndex.value = Math.min(
+      filteredCommands.value.length - 1,
+      selectedCommandIndex.value + 1
+    )
 
     return true
   }
@@ -192,10 +199,7 @@ function handleArrowDown() {
 
 function handleArrowUp() {
   if (showCommandSuggestions.value) {
-    selectedCommandIndex.value = Math.min(
-      filteredCommands.value.length - 1,
-      selectedCommandIndex.value + 1
-    )
+    selectedCommandIndex.value = Math.max(0, selectedCommandIndex.value - 1)
 
     return true
   }
@@ -260,9 +264,16 @@ defineExpose({
 
 .command-suggestion-item {
   transition: background-color 0.2s ease;
+  /* transition: all 0.2s ease; */
+  border: 2px solid transparent;
+  border-radius: 4px;
 }
 
 .command-suggestion-item:hover {
   background-color: var(--q-color-surface-variant);
+}
+
+.command-suggestion-item.bg-sur-c-low {
+  border-color: var(--q-color-primary);
 }
 </style>

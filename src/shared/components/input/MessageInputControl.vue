@@ -270,6 +270,7 @@ const emit = defineEmits<{
   'keydown-enter': [event: KeyboardEvent]
   'paste': [event: ClipboardEvent]
   'process-files': [files: File[]]
+  'assistant-change': [assistantId: string]
 }>()
 
 const imageInput = ref()
@@ -290,7 +291,10 @@ const {
 const {
   availableCommands,
   onCommandExecuted
-} = useInputCommands(fileInput, imageInput)
+} = useInputCommands(fileInput, imageInput, (assistantId) => {
+  // Emit event to notify parent about assistant change
+  emit('assistant-change', assistantId)
+})
 
 function handleEnterKey(event: KeyboardEvent) {
   // Check if the command overlay handled the event
