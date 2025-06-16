@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { QPageContainer, QPage, useQuasar } from "quasar"
+import { QPage, QPageContainer, useQuasar } from "quasar"
 import { computed, toRaw } from "vue"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"

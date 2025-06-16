@@ -11,7 +11,7 @@ import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCa
 import { AssistantDefaultPrompt } from "@/features/dialogs/utils/templates"
 
 import { supabase } from "@/services/supabase/client"
-import { AssistantMapped, Assistant } from "@/services/supabase/types"
+import { Assistant, AssistantMapped } from "@/services/supabase/types"
 
 function mapAssistantTypes (item: Assistant): AssistantMapped {
   const { avatar, ...rest } = item

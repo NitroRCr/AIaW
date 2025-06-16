@@ -11,15 +11,5 @@ import { useSetTheme } from "./setTheme"
 import { useSetTitle } from "./setTitle"
 
 export {
-  useLocateId,
-  useBack,
-  useSetTitle,
-  useMdPreviewProps,
-  keyComposition,
-  useSetTheme,
-  useListenKey,
-  localReactive,
-  useCallApi,
-  useOrder,
-  useFilterOptions,
+  keyComposition, localReactive, useBack, useCallApi, useFilterOptions, useListenKey, useLocateId, useMdPreviewProps, useOrder, useSetTheme, useSetTitle
 }

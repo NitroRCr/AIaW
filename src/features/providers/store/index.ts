@@ -4,7 +4,7 @@ import { computed, reactive, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
 import { removeDuplicates } from "@/shared/utils/functions"
-import { ProviderType, Provider, Avatar } from "@/shared/utils/types"
+import { Avatar, Provider, ProviderType } from "@/shared/utils/types"
 import {
   modelOptions as baseModelOptions,
   ProviderTypes,

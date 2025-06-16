@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRaw, computed, ref, watch } from "vue"
+import { computed, ref, toRaw, watch } from "vue"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import { AssistantPlugin, Plugin } from "@/shared/utils/types"
