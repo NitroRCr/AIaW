@@ -247,7 +247,7 @@ interface Props {
   inputVars?: Record<string, any>
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   model: undefined,
   assistant: undefined,
   sdkModel: undefined,

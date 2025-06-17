@@ -44,7 +44,7 @@ export function useInputCommands(
     availableAssistants.forEach(assistant => {
       commands.push({
         name: `@${assistant.name}`,
-        description: `Switch to ${assistant.name} assistant`,
+        description: `Switch to ${assistant.name}`,
         icon: 'sym_o_psychology',
         action: () => {
           if (workspace.value) {

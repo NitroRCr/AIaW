@@ -263,14 +263,9 @@ defineExpose({
 }
 
 .command-suggestion-item {
-  transition: background-color 0.2s ease;
-  /* transition: all 0.2s ease; */
+  transition: all 0.2s ease;
   border: 2px solid transparent;
   border-radius: 4px;
-}
-
-.command-suggestion-item:hover {
-  background-color: var(--q-color-surface-variant);
 }
 
 .command-suggestion-item.bg-sur-c-low {
