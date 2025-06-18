@@ -68,7 +68,7 @@ import { useUserPerfsStore } from "@/shared/store"
 
 import { useProvidersStore } from "@/features/providers/store"
 
-import { CustomProviderMapped } from "@/services/data/supabase/types"
+import { CustomProvider } from "@/services/data/types/provider"
 
 const { t } = useI18n()
 
@@ -85,11 +85,11 @@ async function addItem () {
 
 const { data: perfs } = useUserPerfsStore()
 
-function setAsDefault ({ id }: CustomProviderMapped) {
+function setAsDefault ({ id }: CustomProvider) {
   perfs.provider = { type: `custom:${id}`, settings: {} }
 }
 
-function deleteItem ({ id, name }: CustomProviderMapped) {
+function deleteItem ({ id, name }: CustomProvider) {
   $q.dialog({
     title: t("customProviders.deleteProvider"),
     message: t("customProviders.deleteConfirm", { name }),

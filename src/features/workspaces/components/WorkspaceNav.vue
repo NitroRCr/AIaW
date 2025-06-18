@@ -40,7 +40,7 @@ import { useUserDataStore } from "@/shared/store"
 import { useWorkspaceActions } from "@/features/workspaces/composables/useWorkspaceActions"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import type { WorkspaceMapped } from "@/services/data/supabase/types"
+import { Workspace } from "@/services/data/types/workspace"
 
 import WorkspaceListSelect from "./WorkspaceListSelect.vue"
 
@@ -54,7 +54,7 @@ const route = useRoute()
 async function goTo (id: string) {
   const workspace = workspaceStore.workspaces.find(
     (w) => w.id === id
-  ) as WorkspaceMapped
+  ) as Workspace
   let path = `/workspaces/${workspace.id}`
   const dialogId = userDataStore.data.lastDialogIds[workspace.id]
 

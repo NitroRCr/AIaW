@@ -19,7 +19,7 @@
             {{ $t("workspacePage.isPublic") }}
           </q-item-section>
           <q-item-section side>
-            <q-toggle v-model="workspace.is_public" />
+            <q-toggle v-model="workspace.isPublic" />
           </q-item-section>
         </q-item>
         <q-item>
@@ -94,7 +94,7 @@
           <q-item-section pl-4>
             <a-input
               filled
-              v-model="workspace.index_content"
+              v-model="workspace.indexContent"
               autogrow
               clearable
             />
@@ -115,7 +115,7 @@
         }"
       />
       <workspace-members
-        v-if="!workspace.is_public"
+        v-if="!workspace.isPublic"
         :workspace-id="workspace.id"
       />
     </q-page>
@@ -124,7 +124,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import { computed, Ref, inject, toRaw, watch } from "vue"
+import { computed, Ref, inject, toRaw } from "vue"
 import { useI18n } from "vue-i18n"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
@@ -142,7 +142,7 @@ import WorkspaceMembers from "@/features/workspaces/components/WorkspaceMembers.
 import { useIsWorkspaceAdmin } from "@/features/workspaces/composables/useIsWorkspaceAdmin"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { WorkspaceMapped } from "@/services/data/supabase/types"
+import { Workspace } from "@/services/data/types/workspace"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 const { t } = useI18n()
@@ -151,7 +151,7 @@ defineEmits(["toggle-drawer"])
 const userDataStore = useUserDataStore()
 const store = useWorkspacesStore()
 const workspace = syncRef(
-  inject("workspace") as Ref<WorkspaceMapped>,
+  inject("workspace") as Ref<Workspace>,
   (val) => {
     store.putItem(toRaw(val))
   },
@@ -161,13 +161,10 @@ const workspace = syncRef(
 const workspaceId = computed(() => workspace.value.id)
 const { isAdmin, isLoaded } = useIsWorkspaceAdmin(workspaceId)
 
-watch(isAdmin, (newVal) => {
-  console.log("----isAdmin", newVal)
-})
 const assistantsStore = useAssistantsStore()
 const assistantOptions = computed(() =>
   assistantsStore.assistants
-    .filter((a) => [workspace.value.id, null].includes(a.workspace_id))
+    .filter((a) => [workspace.value.id, null].includes(a.workspaceId))
     .map((a) => ({
       label: a.name,
       value: a.id,

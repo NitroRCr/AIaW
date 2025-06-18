@@ -108,7 +108,7 @@ const dialogsStore = useDialogsStore()
 const { dialogs: workspaceDialogs } = storeToRefs(dialogsStore)
 const dialogs = computed(() =>
   Object.values(workspaceDialogs.value).filter(
-    (item) => item.workspace_id === props.workspaceId
+    (item) => item.workspaceId === props.workspaceId
   )
 )
 const showSearchDialog = ref(false)
@@ -136,7 +136,7 @@ function moveItem ({ id }) {
       accept: "workspace",
     },
   }).onOk((workspaceId) => {
-    dialogsStore.updateDialog({ id, workspace_id: workspaceId })
+    dialogsStore.updateDialog({ id, workspaceId })
   })
 }
 

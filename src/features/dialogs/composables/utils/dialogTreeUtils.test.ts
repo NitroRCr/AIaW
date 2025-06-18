@@ -4,10 +4,10 @@ describe('dialogTreeUtils', () => {
   describe('getBranchList', () => {
     it('should create a branch list map from message map', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: true },
-        msg2: { id: 'msg2', parent_id: 'msg1', is_active: true },
-        msg3: { id: 'msg3', parent_id: 'msg1', is_active: false },
-        msg4: { id: 'msg4', parent_id: 'msg2', is_active: true }
+        msg1: { id: 'msg1', parentId: null, isActive: true },
+        msg2: { id: 'msg2', parentId: 'msg1', isActive: true },
+        msg3: { id: 'msg3', parentId: 'msg1', isActive: false },
+        msg4: { id: 'msg4', parentId: 'msg2', isActive: true }
       }
 
       const result = getBranchList(messageMap)
@@ -24,7 +24,7 @@ describe('dialogTreeUtils', () => {
 
     it('should handle single message with no parent', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: true }
+        msg1: { id: 'msg1', parentId: null, isActive: true }
       }
 
       const result = getBranchList(messageMap)
@@ -34,8 +34,8 @@ describe('dialogTreeUtils', () => {
 
     it('should group multiple root messages', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: true },
-        msg2: { id: 'msg2', parent_id: null, is_active: false }
+        msg1: { id: 'msg1', parentId: null, isActive: true },
+        msg2: { id: 'msg2', parentId: null, isActive: false }
       }
 
       const result = getBranchList(messageMap)
@@ -46,10 +46,10 @@ describe('dialogTreeUtils', () => {
   describe('getDialogItemList', () => {
     it('should build dialog item list following active path', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: true },
-        msg2: { id: 'msg2', parent_id: 'msg1', is_active: true },
-        msg3: { id: 'msg3', parent_id: 'msg1', is_active: false },
-        msg4: { id: 'msg4', parent_id: 'msg2', is_active: true }
+        msg1: { id: 'msg1', parentId: null, isActive: true },
+        msg2: { id: 'msg2', parentId: 'msg1', isActive: true },
+        msg3: { id: 'msg3', parentId: 'msg1', isActive: false },
+        msg4: { id: 'msg4', parentId: 'msg2', isActive: true }
       }
 
       const branchListMap = getBranchList(messageMap)
@@ -72,9 +72,9 @@ describe('dialogTreeUtils', () => {
 
     it('should select correct sibling when active is not first', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: false },
-        msg2: { id: 'msg2', parent_id: null, is_active: true },
-        msg3: { id: 'msg3', parent_id: 'msg2', is_active: true }
+        msg1: { id: 'msg1', parentId: null, isActive: false },
+        msg2: { id: 'msg2', parentId: null, isActive: true },
+        msg3: { id: 'msg3', parentId: 'msg2', isActive: true }
       }
 
       const branchListMap = getBranchList(messageMap)
@@ -88,7 +88,7 @@ describe('dialogTreeUtils', () => {
 
     it('should handle case with no children', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: true }
+        msg1: { id: 'msg1', parentId: null, isActive: true }
       }
 
       const branchListMap = getBranchList(messageMap)
@@ -108,8 +108,8 @@ describe('dialogTreeUtils', () => {
 
     it('should default to first sibling when no active sibling found', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: false },
-        msg2: { id: 'msg2', parent_id: null, is_active: false }
+        msg1: { id: 'msg1', parentId: null, isActive: false },
+        msg2: { id: 'msg2', parentId: null, isActive: false }
       }
 
       const branchListMap = getBranchList(messageMap)
@@ -122,11 +122,11 @@ describe('dialogTreeUtils', () => {
 
     it('should handle complex branching tree', () => {
       const messageMap = {
-        root: { id: 'root', parent_id: null, is_active: true },
-        branch1: { id: 'branch1', parent_id: 'root', is_active: false },
-        branch2: { id: 'branch2', parent_id: 'root', is_active: true },
-        leaf1: { id: 'leaf1', parent_id: 'branch2', is_active: true },
-        leaf2: { id: 'leaf2', parent_id: 'branch2', is_active: false }
+        root: { id: 'root', parentId: null, isActive: true },
+        branch1: { id: 'branch1', parentId: 'root', isActive: false },
+        branch2: { id: 'branch2', parentId: 'root', isActive: true },
+        leaf1: { id: 'leaf1', parentId: 'branch2', isActive: true },
+        leaf2: { id: 'leaf2', parentId: 'branch2', isActive: false }
       }
 
       const branchListMap = getBranchList(messageMap)
@@ -141,16 +141,16 @@ describe('dialogTreeUtils', () => {
 
     it('should preserve accumulator items', () => {
       const messageMap = {
-        msg1: { id: 'msg1', parent_id: null, is_active: true }
+        msg1: { id: 'msg1', parentId: null, isActive: true }
       }
 
       const branchListMap = getBranchList(messageMap)
       const existingItem = {
-        message: { id: 'existing', parent_id: null, is_active: true },
+        message: { id: 'existing', parentId: null, isActive: true },
         index: 0,
         siblingMessageIds: ['existing'],
         siblingMessageMap: {
-          existing: { id: 'existing', parent_id: null, is_active: true }
+          existing: { id: 'existing', parentId: null, isActive: true }
         }
       }
       const result = getDialogItemList(null, messageMap, branchListMap, [existingItem])
@@ -164,12 +164,12 @@ describe('dialogTreeUtils', () => {
   describe('integration tests', () => {
     it('should work together to build complete dialog tree', () => {
       const messageMap = {
-        'conversation-start': { id: 'conversation-start', parent_id: null, is_active: true },
-        'user-msg-1': { id: 'user-msg-1', parent_id: 'conversation-start', is_active: true },
-        'ai-response-1a': { id: 'ai-response-1a', parent_id: 'user-msg-1', is_active: false },
-        'ai-response-1b': { id: 'ai-response-1b', parent_id: 'user-msg-1', is_active: true },
-        'user-msg-2': { id: 'user-msg-2', parent_id: 'ai-response-1b', is_active: true },
-        'ai-response-2': { id: 'ai-response-2', parent_id: 'user-msg-2', is_active: true }
+        'conversation-start': { id: 'conversation-start', parentId: null, isActive: true },
+        'user-msg-1': { id: 'user-msg-1', parentId: 'conversation-start', isActive: true },
+        'ai-response-1a': { id: 'ai-response-1a', parentId: 'user-msg-1', isActive: false },
+        'ai-response-1b': { id: 'ai-response-1b', parentId: 'user-msg-1', isActive: true },
+        'user-msg-2': { id: 'user-msg-2', parentId: 'ai-response-1b', isActive: true },
+        'ai-response-2': { id: 'ai-response-2', parentId: 'user-msg-2', isActive: true }
       }
 
       const branchList = getBranchList(messageMap)

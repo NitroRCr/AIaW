@@ -37,7 +37,7 @@ import {
 } from "@/features/plugins/utils/plugins"
 
 import { supabase } from "@/services/data/supabase/client"
-import { UserPlugin } from "@/services/data/supabase/types"
+import { mapDbToUserPlugin, mapUserPluginToDb, UserPlugin, DbUserPluginInsert } from "@/services/data/types/plugins"
 
 import { useUserPluginsStore } from "./userPlugins"
 
@@ -72,13 +72,13 @@ export const usePluginsStore = defineStore("plugins", () => {
       return
     }
 
-    installedPlugins.value = data // .map(i => ({ ...i, manifest: i.manifest as PluginManifest }))
+    installedPlugins.value = data.map(mapDbToUserPlugin) // .map(i => ({ ...i, manifest: i.manifest as PluginManifest }))
   }
 
-  async function upsertPlugin (plugin: Omit<UserPlugin, "user_id">) {
+  async function upsertPlugin(plugin: UserPlugin<DbUserPluginInsert>) {
     const { data, error } = await supabase
       .from("user_plugins")
-      .upsert(plugin)
+      .upsert(mapUserPluginToDb(plugin) as DbUserPluginInsert)
       .select()
       .single()
 
@@ -90,10 +90,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     if (installedPlugins.value.find((i) => i.id === plugin.id)) {
       installedPlugins.value = installedPlugins.value.map((i) =>
-        i.id === plugin.id ? data : i
+        i.id === plugin.id ? mapDbToUserPlugin(data) : i
       )
     } else {
-      installedPlugins.value.push(data)
+      installedPlugins.value.push(mapDbToUserPlugin(data))
     }
 
     return data.id
@@ -156,8 +156,8 @@ export const usePluginsStore = defineStore("plugins", () => {
       type: "lobechat",
       available: true,
       manifest,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     })
 
     data.value[key] = lobeDefaultData(manifest)
@@ -169,9 +169,9 @@ export const usePluginsStore = defineStore("plugins", () => {
       type: "gradio",
       available: true,
       manifest,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as UserPlugin<DbUserPluginInsert>)
     data.value[manifest.id] = gradioDefaultData(manifest)
   }
 
@@ -192,7 +192,7 @@ export const usePluginsStore = defineStore("plugins", () => {
       type: "mcp",
       available: true,
       manifest: dump,
-    })
+    } as UserPlugin<DbUserPluginInsert>)
     data.value[manifest.id] = mcpDefaultData(manifest)
   }
 

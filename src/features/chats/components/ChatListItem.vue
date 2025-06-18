@@ -5,7 +5,7 @@
       path:
         chat.type === 'private'
           ? `/chats/${chat.id}`
-          : `/workspaces/${chat.workspace_id}/chats/${chat.id}`,
+          : `/workspaces/${chat.workspaceId}/chats/${chat.id}`,
       query: route.query,
     }"
     active-class="bg-sec-c text-on-sec-c"
@@ -66,22 +66,22 @@ import { dialogOptions } from "@/shared/utils/values"
 
 import { useWorkspaceChats } from "@/features/chats/composables/useWorkspaceChats"
 
-import { ChatMapped } from "@/services/data/supabase/types"
+import { Chat } from "@/services/data/types/chat"
 
 const props = defineProps<{
-  chat: ChatMapped
+  chat: Chat
 }>()
 
 const $q = useQuasar()
 const route = useRoute()
 const selected = defineModel<string>("selected")
 
-const workspaceId = computed(() => props.chat.workspace_id)
+const workspaceId = computed(() => props.chat.workspaceId)
 const { updateChat, removeChat } = useWorkspaceChats(workspaceId)
 
 const menuChatRef = ref<QMenu | null>(null)
 
-function renameItem (chat: ChatMapped) {
+function renameItem (chat: Chat) {
   $q.dialog({
     title: "Rename chat",
     prompt: {
@@ -97,7 +97,7 @@ function renameItem (chat: ChatMapped) {
   })
 }
 
-function deleteItem (chat: ChatMapped) {
+function deleteItem (chat: Chat) {
   $q.dialog({
     title: "Delete chat",
     message: "Are you sure you want to delete this chat?",

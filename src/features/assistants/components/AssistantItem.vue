@@ -23,7 +23,7 @@
           text-on-pri-c
           ml-2
           py-1
-          v-if="assistant && !assistant.workspace_id"
+          v-if="assistant && !assistant.workspaceId"
         >
           {{ $t("assistantItem.global") }}
         </q-badge>
@@ -40,10 +40,10 @@
 <script setup lang="ts">
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 
-import { AssistantMapped } from "@/services/data/supabase/types"
+import { Assistant } from "@/services/data/types/assistant"
 
 defineProps<{
-  assistant?: AssistantMapped
+  assistant?: Assistant
   main?: boolean
 }>()
 </script>

@@ -1,22 +1,11 @@
 import { ref, readonly } from "vue"
 
-import { Avatar } from "@/shared/types"
-
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import type { Workspace, WorkspaceMapped } from "@/services/data/supabase/types"
+import { mapDbToWorkspace, Workspace, DbWorkspaceRow } from "@/services/data/types/workspace"
 
-export function mapWorkspaceTypes (item: Workspace): WorkspaceMapped {
-  const { avatar, ...rest } = item
-
-  return {
-    avatar: (avatar ?? { type: "text", text: item.name.slice(0, 1) }) as Avatar,
-    ...rest,
-  } as WorkspaceMapped
-}
-
-const workspaces = ref<WorkspaceMapped[]>([])
+const workspaces = ref<Workspace[]>([])
 let isSubscribed = false
 let subscription: ReturnType<typeof supabase.channel> | null = null
 const isLoaded = ref(false)
@@ -35,7 +24,7 @@ async function fetchWorkspaces () {
     return
   }
 
-  workspaces.value = data.map((w) => mapWorkspaceTypes(w as Workspace))
+  workspaces.value = data.map(mapDbToWorkspace)
   isLoaded.value = true
 }
 
@@ -54,7 +43,7 @@ function subscribeToWorkspaces () {
         table: "workspaces",
       },
       async (payload) => {
-        workspaces.value.unshift(mapWorkspaceTypes(payload.new as Workspace))
+        workspaces.value.unshift(mapDbToWorkspace(payload.new as DbWorkspaceRow))
       }
     )
     .on(
@@ -65,7 +54,7 @@ function subscribeToWorkspaces () {
         table: "workspaces",
       },
       (payload) => {
-        const deletedId = (payload.old as Workspace).id
+        const deletedId = (payload.old as DbWorkspaceRow).id
         workspaces.value = workspaces.value.filter((c) => c.id !== deletedId)
       }
     )
@@ -77,7 +66,7 @@ function subscribeToWorkspaces () {
         table: "workspaces",
       },
       async (payload) => {
-        const updated = mapWorkspaceTypes(payload.new as Workspace)
+        const updated = mapDbToWorkspace(payload.new as DbWorkspaceRow)
         workspaces.value = workspaces.value.map((c) =>
           c.id === updated.id ? updated : c
         )

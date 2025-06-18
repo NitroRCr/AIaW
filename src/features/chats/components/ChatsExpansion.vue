@@ -47,7 +47,7 @@ import { useUserStore, useUserPerfsStore } from "@/shared/store"
 import { isPlatformEnabled } from "@/shared/utils/functions"
 
 import { supabase } from "@/services/data/supabase/client"
-import { ProfileMapped } from "@/services/data/supabase/types"
+import { Profile } from "@/services/data/types/profile"
 
 import ChatList from "./ChatList.vue"
 import SearchChats from "./SearchChats.vue"
@@ -72,7 +72,7 @@ const showUserSelectDialog = () => {
   })
 }
 
-const onSelectUser = async (user: ProfileMapped) => {
+const onSelectUser = async (user: Profile) => {
   const { data: chatId, error } = await supabase.rpc(
     "start_private_chat_with",
     {

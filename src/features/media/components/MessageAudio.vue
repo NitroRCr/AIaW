@@ -9,13 +9,13 @@
 <script setup lang="ts">
 import { getFileUrl } from "@/shared/composables/storage/utils"
 
-import { StoredItem } from "@/services/data/supabase/types"
+import { StoredItemResult } from "@/services/data/types/storedItem"
 
 const props = defineProps<{
-  audio: StoredItem
+  audio: StoredItemResult
 }>()
 
 defineEmits(["remove"])
 
-const url = getFileUrl(props.audio.file_url)
+const url = getFileUrl(props.audio.fileUrl)
 </script>

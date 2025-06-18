@@ -4,7 +4,7 @@ import { ApiResultItem } from "@/shared/types"
 import { genId } from "@/shared/utils/functions"
 
 import { supabase } from "@/services/data/supabase/client"
-import { StoredItemMapped } from "@/services/data/supabase/types"
+import { StoredItem } from "@/services/data/types/storedItem"
 
 import { BucketName } from "./types"
 import { BASE_URL } from "./utils"
@@ -47,36 +47,56 @@ async function detectMimeType (arrayBuffer: ArrayBuffer) {
  * URL generation, and specialized handling of API result items. Supports multiple
  * storage buckets including files, avatars, and other media types.
  *
- * @returns Object containing all storage operation methods and utilities
+ * @returns {Object} Storage operations API containing:
+ * - uploadAvatar: (file: File) => Promise<string>
+ * - deleteAvatar: (path: string) => Promise<void>
+ * - uploadFile: (file: File, bucket?: BucketName) => Promise<string>
+ * - getFileUrl: (path: string, bucket?: BucketName) => Promise<string>
+ * - deleteFile: (path: string, bucket?: BucketName) => Promise<void>
+ * - getFileSizeByUrl: (path: string, bucket?: BucketName) => Promise<number|null>
+ * - uploadApiResultItem: (item: ApiResultItem) => Promise<StoredItem|null>
+ * - saveApiResultItem: (item: ApiResultItem, storedItemData: Partial<StoredItem>) => Promise<StoredItem|null>
+ * - saveApiResultItems: (items: ApiResultItem[], storedItemData: Partial<StoredItem>) => Promise<Array<StoredItem|null>>
  *
- * @example
- * ```typescript
+ * @example {@lang typescript}
  * const { uploadFile, getFileUrl, deleteFile } = useStorage()
  *
- * // Upload a file
- * const path = await uploadFile(file, 'files')
+ * // File lifecycle management
+ * const handleFileUpload = async (file: File) => {
+ *   try {
+ *     const path = await uploadFile(file)
+ *     const url = await getFileUrl(path)
+ *     const size = await getFileSizeByUrl(path)
  *
- * // Get public URL
- * const url = await getFileUrl(path, 'files')
- *
- * // Delete the file
- * await deleteFile(path, 'files')
- * ```
+ *     return { path, url, size }
+ *   } catch (error) {
+ *     console.error('File operation failed:', error)
+ *     throw error
+ *   }
+ * }
  */
 export function useStorage () {
   /**
    * Uploads a file to the specified Supabase storage bucket
    *
-   * @param file - The File object to upload to storage
-   * @param bucketName - The target storage bucket name (defaults to 'files')
-   * @returns Promise resolving to the storage path of the uploaded file
-   * @throws Error if the upload operation fails or bucket is inaccessible
+   * @param {File} file - The File object to upload
+   * @param {BucketName} [bucketName=files] - Target storage bucket name
+   * @returns {Promise<string>} Resolves to storage path of uploaded file
+   * @throws {Error} When:
+   * - File is invalid or empty
+   * - Bucket does not exist
+   * - Network request fails
+   * - Supabase returns an upload error
    *
-   * @example
-   * ```typescript
-   * const file = document.querySelector('input[type="file"]').files[0]
-   * const path = await uploadFile(file, 'documents')
-   * ```
+   * @example {@lang typescript}
+   * const input = document.querySelector<HTMLInputElement>('input[type="file"]')
+   * if (input?.files?.[0]) {
+   *   try {
+   *     const path = await uploadFile(input.files[0], 'documents')
+   *   } catch (error) {
+   *     // Handle upload error
+   *   }
+   * }
    */
   const uploadFile = async (file: File, bucketName: BucketName = 'files') => {
     const { data, error } = await supabase.storage
@@ -128,15 +148,17 @@ export function useStorage () {
   /**
    * Generates a public URL for accessing a file in the storage bucket
    *
-   * @param path - The storage path of the file within the bucket
-   * @param bucketName - The storage bucket name (defaults to 'files')
-   * @returns Promise resolving to the public URL string for the file
+   * @param {string} path - Storage path within bucket
+   * @param {BucketName} [bucketName=files] - Storage bucket name
+   * @returns {Promise<string>} Publicly accessible URL for the file
+   * @throws {TypeError} If path is not a string
    *
-   * @example
-   * ```typescript
-   * const url = await getFileUrl('documents/report.pdf', 'files')
-   * // Returns: https://your-project.supabase.co/storage/v1/object/public/files/documents/report.pdf
-   * ```
+   * @example {@lang typescript}
+   * // Get URL for a PDF document
+   * const pdfUrl = await getFileUrl('reports/Q3-report.pdf')
+   *
+   * // Get URL from different bucket
+   * const avatarUrl = await getFileUrl('users/123/avatar.jpg', 'avatar.images')
    */
   const getFileUrl = async (path: string, bucketName: BucketName = 'files') => {
     const { data } = supabase.storage.from(bucketName).getPublicUrl(path)
@@ -148,15 +170,18 @@ export function useStorage () {
   /**
    * Permanently deletes a file from the specified storage bucket
    *
-   * @param path - The storage path of the file to delete
-   * @param bucketName - The storage bucket name (defaults to 'files')
-   * @returns Promise that resolves when deletion is complete
-   * @throws Error if deletion fails or file doesn't exist
+   * @param {string} path - Storage path to delete
+   * @param {BucketName} [bucketName=files] - Storage bucket name
+   * @returns {Promise<void>} Resolves when deletion completes
+   * @throws {Error} When:
+   * - Path does not exist
+   * - Insufficient permissions
+   * - Network request fails
    *
-   * @example
-   * ```typescript
-   * await deleteFile('temp/upload_123.txt', 'files')
-   * ```
+   * @example {@lang typescript}
+   * // Delete a temporary file
+   * await deleteFile('temp/upload_123.txt')
+   *   .catch(error => console.error('Deletion failed:', error))
    */
   const deleteFile = async (path: string, bucketName: BucketName = 'files') => {
     const { data, error } = await supabase.storage
@@ -205,18 +230,21 @@ export function useStorage () {
    * Processes the file buffer, detects MIME type, generates a unique filename,
    * and uploads to the default files bucket.
    *
-   * @param item - The API result item containing file data with contentBuffer property
-   * @returns Promise resolving to StoredItemMapped object with file metadata, or null if item is not a file
-   * @throws Error if MIME type detection fails or upload operation fails
+   * @param {ApiResultItem} item - API result item with file data
+   * @returns {Promise<StoredItem|null>} File metadata with storage URL
+   * @throws {TypeError} If item.contentBuffer is missing for file type
+   * @throws {Error} When:
+   * - MIME type detection fails
+   * - File upload fails
    *
-   * @example
-   * ```typescript
-   * const apiItem = { type: 'file', contentBuffer: buffer, name: 'document.pdf' }
-   * const storedItem = await uploadApiResultItem(apiItem)
-   * if (storedItem) {
-   *   console.log(`Uploaded to: ${storedItem.file_url}`)
+   * @example {@lang typescript}
+   * const processFileResult = async (result: ApiResultItem) => {
+   *   if (result.type === 'file') {
+   *     const storedItem = await uploadApiResultItem(result)
+   *     return storedItem?.fileUrl
+   *   }
+   *   return null
    * }
-   * ```
    */
   const uploadApiResultItem = async (item: ApiResultItem) => {
     if (item.type === "file") {
@@ -234,10 +262,10 @@ export function useStorage () {
 
         return {
           name,
-          file_url: path,
-          mime_type: fileType.mime,
+          fileUrl: path,
+          mimeType: fileType.mime,
           type: "file", // fileType.mime.startsWith('image/') ? 'image' : 'file'
-        } as StoredItemMapped
+        } as StoredItem
       } else {
         throw Error("Failed to detect mime type")
       }
@@ -253,22 +281,25 @@ export function useStorage () {
    * For text items: returns the text content along with provided metadata.
    * Merges the result with additional stored item data.
    *
-   * @param item - The API result item to process and save
-   * @param storedItemData - Additional metadata to merge with the stored item
-   * @returns Promise resolving to complete StoredItemMapped object, or null if processing fails
+   * @param {ApiResultItem} item - Item to process (file or text)
+   * @param {Partial<StoredItem>} storedItemData - Additional metadata to merge
+   * @returns {Promise<StoredItem|null>} Combined stored item data
+   * @throws {Error} When:
+   * - File upload fails (for file items)
+   * - Invalid item structure
    *
-   * @example
-   * ```typescript
-   * const item = { type: 'text', contentText: 'Hello world' }
-   * const metadata = { user_id: '123', created_at: new Date() }
-   * const stored = await saveApiResultItem(item, metadata)
-   * ```
+   * @example {@lang typescript}
+   * // Save text content with metadata
+   * await saveApiResultItem(
+   *   { type: 'text', contentText: 'Analysis result' },
+   *   { workspaceId: 'abc123', userId: 'user_456' }
+   * )
    */
   // TODO: move outside storage
   const saveApiResultItem = async (
     item: ApiResultItem,
-    storedItemData: Partial<StoredItemMapped>
-  ): Promise<StoredItemMapped | null> => {
+    storedItemData: Partial<StoredItem>
+  ) => {
     if (item.type === "file") {
       const fileItem = await uploadApiResultItem(item)
 
@@ -282,8 +313,9 @@ export function useStorage () {
 
     // Text items store in DB, not in storage
     return {
-      content_text: item.contentText,
+      contentText: item.contentText,
       type: item.type,
+      name: item.name,
       ...storedItemData,
     }
   }
@@ -294,21 +326,25 @@ export function useStorage () {
    * Processes all items simultaneously for better performance when handling
    * multiple files or text items.
    *
-   * @param items - Array of API result items to process and save
-   * @param storedItemData - Common metadata to apply to all stored items
-   * @returns Promise resolving to array of StoredItemMapped objects (or null for failed items)
+   * @param {ApiResultItem[]} items - Items to process in parallel
+   * @param {Partial<StoredItem>} storedItemData - Common metadata for all items
+   * @returns {Promise<Array<StoredItem|null>>} Array of stored items with preserved order
+   * @throws {AggregateError} If any item processing fails (when using Promise.any)
    *
-   * @example
-   * ```typescript
-   * const items = [fileItem1, textItem1, fileItem2]
-   * const metadata = { workspace_id: 'ws123', user_id: 'user456' }
-   * const results = await saveApiResultItems(items, metadata)
-   * const successCount = results.filter(r => r !== null).length
-   * ```
+   * @example {@lang typescript}
+   * // Batch process multiple API results
+   * const results = await saveApiResultItems(
+   *   [fileItem, textItem, imageItem],
+   *   { source: 'api-import' }
+   * )
+   *
+   * // Handle successes and failures
+   * const successfulItems = results.filter(Boolean) as StoredItem[]
    */
+  // TODO: move storedItems part -> dialogMessages
   const saveApiResultItems = async (
     items: ApiResultItem[],
-    storedItemData: Partial<StoredItemMapped>
+    storedItemData: Partial<StoredItem>
   ) => {
     return Promise.all(items.map((item) => saveApiResultItem(item, storedItemData)))
   }

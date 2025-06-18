@@ -4,25 +4,14 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 
 import { useUserStore } from "@/shared/store"
-import { Avatar } from "@/shared/types"
-import { defaultTextAvatar } from "@/shared/utils/functions"
 
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import { ProfileMapped } from "@/services/data/supabase/types"
-
-function mapProfileTypes (item: any): ProfileMapped {
-  const { avatar, ...rest } = item
-
-  return {
-    avatar: (avatar ?? defaultTextAvatar(item.name)) as Avatar,
-    ...rest,
-  } as ProfileMapped
-}
+import { mapDbToProfile, Profile } from "@/services/data/types/profile"
 
 export const useProfileStore = defineStore("profile", () => {
-  const profiles = ref<Record<string, ProfileMapped>>({})
+  const profiles = ref<Record<string, Profile>>({})
   const user = useUserStore()
   const myProfile = computed(() => profiles.value[user.currentUserId])
   const isInitialized = ref(false)
@@ -39,11 +28,11 @@ export const useProfileStore = defineStore("profile", () => {
 
     profiles.value = data.reduce(
       (acc, profile) => {
-        acc[profile.id] = mapProfileTypes(profile)
+        acc[profile.id] = mapDbToProfile(profile)
 
         return acc
       },
-      {} as Record<string, ProfileMapped>
+      {} as Record<string, Profile>
     )
   }
 
@@ -64,7 +53,7 @@ export const useProfileStore = defineStore("profile", () => {
       console.error("Error fetching profile:", error)
     }
 
-    profiles.value[id] = mapProfileTypes(data)
+    profiles.value[id] = mapDbToProfile(data)
 
     return profiles.value[id]
   }
@@ -91,16 +80,16 @@ export const useProfileStore = defineStore("profile", () => {
       return null
     }
 
-    profiles.value[id] = mapProfileTypes(data)
+    profiles.value[id] = mapDbToProfile(data)
 
     return data
   }
 
-  const throttledUpdate = throttle(async (profile: ProfileMapped) => {
+  const throttledUpdate = throttle(async (profile: Profile) => {
     await update(profile.id, profile)
   }, 2000)
 
-  async function put (profile: ProfileMapped) {
+  async function put (profile: Profile) {
     if (profile.id) {
       return throttledUpdate(profile)
     }

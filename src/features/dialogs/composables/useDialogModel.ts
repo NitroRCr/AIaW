@@ -4,18 +4,19 @@ import { useUserPerfsStore } from "@/shared/store"
 
 import { useGetModel } from "@/features/providers/composables/useGetModel"
 
-import { AssistantMapped, DialogMapped } from "@/services/data/supabase/types"
+import { Assistant } from "@/services/data/types/assistant"
+import { Dialog } from "@/services/data/types/dialogs"
 
 export const useDialogModel = (
-  dialog: Ref<DialogMapped>,
-  assistant: Ref<AssistantMapped>
+  dialog: Ref<Dialog>,
+  assistant: Ref<Assistant>
 ) => {
   const { getModel, getSdkModel } = useGetModel()
   const modelOptions = ref({})
   const { data: perfs } = useUserPerfsStore()
 
   const model = computed(() =>
-    getModel(dialog.value?.model_override || assistant.value?.model)
+    getModel(dialog.value?.modelOverride || assistant.value?.model)
   )
 
   const sdkModel = computed(() =>

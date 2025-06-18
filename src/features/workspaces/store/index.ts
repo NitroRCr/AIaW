@@ -3,17 +3,13 @@ import { defineStore } from "pinia"
 import { ref } from "vue"
 import { useI18n } from "vue-i18n"
 
-import { DefaultWsIndexContent } from "@/shared/utils/template/templates"
+import { IconAvatar } from "@/shared/types"
 
+import { DefaultWsIndexContent } from "@/features/dialogs/utils"
 import { useWorkspacesWithSubscription } from "@/features/workspaces/composables/useWorkspacesWithSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
-import type {
-  WorkspaceMapped,
-  WorkspaceMemberMapped,
-  WorkspaceMemberRole,
-  WorkspaceRole,
-} from "@/services/data/supabase/types"
+import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspaceMember, mapWorkspaceToDb, Workspace, WorkspaceMember, WorkspaceMemberRole, WorkspaceRole } from "@/services/data/types/workspace"
 
 const SELECT_WORKSPACE_MEMBERS = "*, profile:profiles(id, name)"
 
@@ -39,51 +35,40 @@ const SELECT_WORKSPACE_MEMBERS = "*, profile:profiles(id, name)"
  */
 export const useWorkspacesStore = defineStore("workspaces", () => {
   const { workspaces, isLoaded } = useWorkspacesWithSubscription()
-  const workspaceMembers = ref<WorkspaceMemberMapped[]>([])
+  const workspaceMembers = ref<WorkspaceMember[]>([])
   const { t } = useI18n()
 
-  async function addWorkspace (props: Partial<WorkspaceMapped>) {
+  async function addWorkspace (props: Partial<Workspace>) {
     const workspace = {
       name: t("stores.workspaces.newWorkspace"),
       type: "workspace",
-      avatar: { type: "icon", icon: "sym_o_deployed_code" },
+      avatar: { type: "icon", icon: "sym_o_deployed_code" } as IconAvatar,
       vars: {},
-      index_content: DefaultWsIndexContent,
-      parent_id: null,
+      indexContent: DefaultWsIndexContent,
+      parentId: null,
       ...props,
-    }
-    const { data, error } = await supabase
-      .from("workspaces")
-      .insert(workspace)
-      .select()
-      .single()
+    } as Workspace
 
-    if (error) {
-      console.error("❌ Failed to add workspace:", error.message)
-
-      return null
-    }
-
-    return data
+    return insertItem(workspace)
   }
 
-  const update = async (id: string, changes: Partial<WorkspaceMapped>) => {
+  const update = async (id: string, changes:Workspace<DbWorkspaceUpdate>) => {
     return await supabase
       .from("workspaces")
-      .update(changes)
+      .update(mapWorkspaceToDb(changes) as DbWorkspaceUpdate)
       .eq("id", id)
       .select()
       .single()
   }
 
   const throttledUpdate = throttle(
-    (workspace: Partial<WorkspaceMapped>) => update(workspace.id, workspace),
+    (workspace: Workspace<DbWorkspaceUpdate>) => update(workspace.id, workspace),
     2000
   )
 
   async function updateItem (
     id: string,
-    changes: Partial<WorkspaceMapped>,
+    changes:Workspace<DbWorkspaceUpdate>,
     throttle = false
   ) {
     if (throttle) {
@@ -101,10 +86,10 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
   }
 
-  async function insertItem (workspace: WorkspaceMapped) {
+  async function insertItem (workspace: Workspace) {
     const { data, error } = await supabase
       .from("workspaces")
-      .insert(workspace)
+      .insert(mapWorkspaceToDb(workspace) as DbWorkspaceInsert)
       .select()
       .single()
 
@@ -117,7 +102,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     return data
   }
 
-  async function putItem (workspace: WorkspaceMapped) {
+  async function putItem (workspace: Workspace) {
     if (workspace.id) {
       return await updateItem(workspace.id, workspace, true)
     }
@@ -155,12 +140,13 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
+    const member = mapDbToWorkspaceMember(data as DbWorkspaceMember)
     workspaceMembers.value = [
       ...workspaceMembers.value,
-      data as WorkspaceMemberMapped,
+      member,
     ]
 
-    return data as WorkspaceMemberMapped
+    return member
   }
 
   async function removeWorkspaceMember (workspaceId: string, userId: string) {
@@ -176,7 +162,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
 
     workspaceMembers.value = workspaceMembers.value.filter(
-      (member) => member.user_id !== userId
+      (member) => member.userId !== userId
     )
   }
 
@@ -197,7 +183,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
 
     workspaceMembers.value = workspaceMembers.value.map((member) =>
-      member.user_id === userId ? { ...member, role } : member
+      member.userId === userId ? { ...member, role } : member
     )
   }
 
@@ -212,16 +198,16 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
-    workspaceMembers.value = data as WorkspaceMemberMapped[]
+    workspaceMembers.value = data.map(mapDbToWorkspaceMember)
 
-    return data as WorkspaceMemberMapped[]
+    return workspaceMembers.value
   }
 
   async function isUserWorkspaceAdmin (workspaceId: string, userId: string) {
     const isOwner =
       workspaces.value.find(
         (workspace) =>
-          workspace.id === workspaceId && workspace.owner_id === userId
+          workspace.id === workspaceId && workspace.ownerId === userId
       ) !== undefined
 
     if (isOwner) {
@@ -229,7 +215,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
 
     const member = workspaceMembers.value.find(
-      (member) => member.user_id === userId
+      (member) => member.userId === userId
     )
 
     if (member) {

@@ -1,14 +1,12 @@
-import { computed, Ref, watch } from "vue"
+import { computed, Ref } from "vue"
 
 import { useStorage } from "@/shared/composables/storage/useStorage"
 import { ApiResultItem } from "@/shared/types"
 
 import { UserMessageContent } from "@/features/dialogs/types"
 
-import {
-  MessageContentMapped,
-  StoredItemMapped,
-} from "@/services/data/supabase/types"
+import { DbMessageContentInsert, MessageContentNested } from "@/services/data/types/messageContents"
+import { StoredItem } from "@/services/data/types/storedItem"
 
 import { useDialogMessages } from "./useDialogMessages"
 
@@ -37,14 +35,14 @@ export const useDialogInput = (
       lastMessageId.value,
       {
         // use shallow keyPath to avoid dexie's sync bug
-        message_contents: [
+        messageContents: [
           {
             ...inputMessageContent.value,
             text,
           },
-        ] as MessageContentMapped[],
+        ] as MessageContentNested<DbMessageContentInsert>[],
         status: "inputing",
-      }
+      }, true
     )
   }
 
@@ -57,17 +55,17 @@ export const useDialogInput = (
    * @param items - API result items to add
    */
   async function addInputItems(items: ApiResultItem[]): Promise<void> {
-    const storedItems: StoredItemMapped[] = await storage.saveApiResultItems(items, { dialog_id: dialogId.value })
+    const storedItemsResults = await storage.saveApiResultItems(items, { dialogId: dialogId.value, messageContentId: lastMessageId.value })
 
     await updateMessage(
       lastMessageId.value,
       {
-        message_contents: [
+        messageContents: [
           {
             ...inputMessageContent.value,
-            stored_items: [
-              ...inputMessageContent.value.stored_items,
-              ...storedItems.filter((i) => i),
+            storedItems: [
+              ...inputMessageContent.value.storedItems,
+              ...storedItemsResults,
             ],
           },
         ],
@@ -78,15 +76,15 @@ export const useDialogInput = (
   /**
    * The content of the input message
    */
-  const inputMessageContent = computed<UserMessageContent>(
-    () => lastMessage.value?.message_contents[0] as UserMessageContent
+  const inputMessageContent = computed(
+    () => lastMessage.value?.messageContents[0] as UserMessageContent
   )
 
   /**
    * The stored items in the input message
    */
-  const inputContentItems = computed<StoredItemMapped[]>(
-    () => inputMessageContent.value?.stored_items || []
+  const inputContentItems = computed<StoredItem[]>(
+    () => inputMessageContent.value?.storedItems || []
   )
 
   /**
@@ -95,15 +93,11 @@ export const useDialogInput = (
   const inputEmpty = computed<boolean>(
     () =>
       !inputMessageContent.value?.text &&
-      !inputMessageContent.value?.stored_items.length
+      !inputMessageContent.value?.storedItems.length
   )
 
-  // Debug logging
-  watch(lastMessage, (newMessage) => {
-    console.log("-----useDialogInput lastMessage", newMessage)
-  })
-
   return {
+    inputMessageId: lastMessageId,
     updateInputText,
     inputMessageContent,
     inputContentItems,

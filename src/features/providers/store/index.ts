@@ -3,7 +3,7 @@ import { defineStore } from "pinia"
 import { computed, reactive } from "vue"
 import { useI18n } from "vue-i18n"
 
-import { Avatar, Provider, ProviderType } from "@/shared/types"
+import { Provider, ProviderType } from "@/shared/types"
 import { removeDuplicates } from "@/shared/utils/functions"
 import {
   modelOptions as baseModelOptions,
@@ -13,12 +13,7 @@ import {
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import {
-  CustomProviderMapped,
-  SubproviderMapped,
-} from "@/services/data/supabase/types"
-
-const SELECT_QUERY = `*, subproviders(*)`
+import { CustomProvider, mapDbToCustomProvider, mapDbToSubprovider, mapSubproviderToDb, Subprovider } from "@/services/data/types/provider"
 
 const extractCustomProviderId = (provider: Provider) => {
   if (provider.type.startsWith("custom:")) {
@@ -28,32 +23,32 @@ const extractCustomProviderId = (provider: Provider) => {
   return null
 }
 
-const mapCustomProvider = (provider: any) => {
-  return {
-    ...provider,
-    avatar: (provider.avatar as Avatar) || {
-      type: "icon",
-      icon: "sym_o_dashboard_customize",
-      hue: Math.floor(Math.random() * 360),
-    },
-    fallback_provider: provider.fallback_provider as Provider,
-    subproviders: (provider.subproviders || []).map((sp) => ({
-      ...sp,
-      model_map: sp.model_map as Record<string, string>,
-      provider: sp.provider as Provider,
-    })),
-  } as CustomProviderMapped
-}
+// const mapCustomProvider = (provider: any) => {
+//   return {
+//     ...provider,
+//     avatar: (provider.avatar as Avatar) || {
+//       type: "icon",
+//       icon: "sym_o_dashboard_customize",
+//       hue: Math.floor(Math.random() * 360),
+//     },
+//     fallback_provider: provider.fallback_provider as Provider,
+//     subproviders: (provider.subproviders || []).map((sp) => ({
+//       ...sp,
+//       model_map: sp.model_map as Record<string, string>,
+//       provider: sp.provider as Provider,
+//     })),
+//   } as CustomProvider
+// }
 
 export const useProvidersStore = defineStore("providers", () => {
-  const providersMap = reactive<Record<string, CustomProviderMapped>>({})
+  const providersMap = reactive<Record<string, CustomProvider>>({})
   const providers = computed(() => Object.values(providersMap))
 
   const fetchCustomProviders = async () => {
     // Fetch all custom providers with their subproviders in one query
     const { data: providersData, error: providersError } = await supabase
       .from("custom_providers")
-      .select(SELECT_QUERY)
+      .select("*, subproviders(*)")
 
     if (providersError) {
       console.error(providersError)
@@ -61,16 +56,18 @@ export const useProvidersStore = defineStore("providers", () => {
       return
     }
 
+    const providersResult = providersData.map(mapDbToCustomProvider)
+
     // Map providers and their subproviders
     Object.assign(
       providersMap,
-      providersData.reduce(
+      providersResult.reduce(
         (acc, provider) => {
-          acc[provider.id] = mapCustomProvider(provider)
+          acc[provider.id] = provider
 
           return acc
         },
-        {} as Record<string, CustomProviderMapped>
+        {} as Record<string, CustomProvider>
       )
     )
   }
@@ -88,7 +85,7 @@ export const useProvidersStore = defineStore("providers", () => {
   }
 
   function createCustomProvider (
-    provider: CustomProviderMapped,
+    provider: CustomProvider,
     options,
     stack = []
   ) {
@@ -98,18 +95,18 @@ export const useProvidersStore = defineStore("providers", () => {
       for (const subprovider of provider.subproviders) {
         if (!subprovider.provider) continue
 
-        if (modelId in subprovider.model_map) {
+        if (modelId in subprovider.modelMap) {
           const p = createProvider(subprovider.provider, options, [
             ...stack,
             provider.id,
           ])
 
-          return p?.(subprovider.model_map[modelId], modelOptions)
+          return p?.(subprovider.modelMap[modelId], modelOptions)
         }
       }
 
-      if (provider.fallback_provider) {
-        return createProvider(provider.fallback_provider, options, [
+      if (provider.fallbackProvider) {
+        return createProvider(provider.fallbackProvider, options, [
           ...stack,
           provider.id,
         ])?.(modelId, modelOptions)
@@ -135,17 +132,17 @@ export const useProvidersStore = defineStore("providers", () => {
   }
 
   async function getCustomModelList (
-    provider: CustomProviderMapped,
+    provider: CustomProvider,
     stack = []
   ) {
     if (stack.includes(provider.id)) return []
 
     const list = provider.subproviders
-      .map((sp) => Object.keys(sp.model_map))
+      .map((sp) => Object.keys(sp.modelMap))
       .flat()
-    provider.fallback_provider &&
+    provider.fallbackProvider &&
       list.push(
-        ...(await getModelList(provider.fallback_provider, [
+        ...(await getModelList(provider.fallbackProvider, [
           ...stack,
           provider.id,
         ]))
@@ -169,15 +166,15 @@ export const useProvidersStore = defineStore("providers", () => {
     removeDuplicates([
       ...baseModelOptions,
       ...Object.values(providersMap).flatMap((p) =>
-        p.subproviders.flatMap((sp) => Object.keys(sp.model_map))
+        p.subproviders.flatMap((sp) => Object.keys(sp.modelMap))
       ),
     ])
   )
   const { t } = useI18n()
 
   async function upsertSubproviders (
-    provider: CustomProviderMapped,
-    subproviders: SubproviderMapped[]
+    provider: CustomProvider,
+    subproviders: Subprovider[]
   ) {
     if (subproviders.length === 0) {
       return []
@@ -186,10 +183,7 @@ export const useProvidersStore = defineStore("providers", () => {
     const { data: subprovidersData, error: subprovidersError } = await supabase
       .from("subproviders")
       .upsert(
-        subproviders.map((sp) => ({
-          ...sp,
-          custom_provider_id: provider.id,
-        }))
+        subproviders.map((sp) => mapSubproviderToDb(provider.id, sp))
       )
       .select("*")
 
@@ -199,10 +193,10 @@ export const useProvidersStore = defineStore("providers", () => {
       return
     }
 
-    return subprovidersData
+    return subprovidersData.map(mapDbToSubprovider)
   }
 
-  async function add (props: Partial<CustomProviderMapped> = {}) {
+  async function add (props: Partial<CustomProvider> = {}) {
     // Convert subproviders to the local DB shape if present
     const { subproviders = [], ...providerItem } = props
     const { data, error } = await supabase
@@ -216,7 +210,7 @@ export const useProvidersStore = defineStore("providers", () => {
         },
         ...providerItem,
       })
-      .select(SELECT_QUERY)
+      .select("*, subproviders(*)")
       .single()
 
     if (error) {
@@ -224,26 +218,27 @@ export const useProvidersStore = defineStore("providers", () => {
       throw error
     }
 
-    const providerResult = mapCustomProvider(data as CustomProviderMapped)
+    const providerResult = mapDbToCustomProvider(data)
+
     providerResult.subproviders = (await upsertSubproviders(
       providerResult,
       subproviders
-    )) as SubproviderMapped[]
+    ))
     providersMap[data.id] = providerResult
 
-    return providersMap[data.id] as CustomProviderMapped
+    return providersMap[data.id] as CustomProvider
   }
 
   async function update (id: string, changes) {
     const { subproviders = [], ...providerItem } = changes
-    let providerResult: CustomProviderMapped = providersMap[id]
+    let providerResult: CustomProvider = providersMap[id]
 
     if (Object.keys(providerItem).length > 0) {
       const { data, error } = await supabase
         .from("custom_providers")
         .update(providerItem)
         .eq("id", id)
-        .select(SELECT_QUERY)
+        .select("*, subproviders(*)")
         .single()
 
       if (error) {
@@ -252,19 +247,19 @@ export const useProvidersStore = defineStore("providers", () => {
         return
       }
 
-      providerResult = mapCustomProvider(data as CustomProviderMapped)
+      providerResult = mapDbToCustomProvider(data)
     }
 
     providerResult.subproviders = (await upsertSubproviders(
       providerResult,
       subproviders
-    )) as SubproviderMapped[]
+    )) as Subprovider[]
     providersMap[id] = providerResult
 
     return providerResult
   }
 
-  async function put (provider: CustomProviderMapped) {
+  async function put (provider: CustomProvider) {
     if (provider.id) {
       return await update(provider.id, provider)
     } else {

@@ -47,21 +47,21 @@ import { dialogOptions } from "@/shared/utils/values"
 import { useArtifactsStore } from "@/features/artifacts/store"
 import SelectWorkspaceDialog from "@/features/workspaces/components/SelectWorkspaceDialog.vue"
 
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
 
 const $q = useQuasar()
 const { t } = useI18n()
 const artifactsStore = useArtifactsStore()
 const userDataStore = useUserDataStore()
 const props = defineProps<{
-  artifact: ArtifactMapped
+  artifact: Artifact
 }>()
 
 const isOpen = computed(() =>
   userDataStore.data.openedArtifacts.find((id) => id === props.artifact.id)
 )
 
-function renameItem (artifact: ArtifactMapped) {
+function renameItem (artifact: Artifact) {
   $q.dialog({
     title: t("artifactItemMenu.rename"),
     prompt: {
@@ -80,7 +80,7 @@ function renameItem (artifact: ArtifactMapped) {
   })
 }
 
-function moveItem (artifact: ArtifactMapped) {
+function moveItem (artifact: Artifact) {
   $q.dialog({
     component: SelectWorkspaceDialog,
     componentProps: {
@@ -89,16 +89,16 @@ function moveItem (artifact: ArtifactMapped) {
   }).onOk((workspaceId) => {
     artifactsStore.update({
       ...artifact,
-      workspace_id: workspaceId,
+      workspaceId,
     })
   })
 }
 
-function downloadItem ({ name, versions, curr_index }: ArtifactMapped) {
-  exportFile(name, versions[curr_index].text)
+function downloadItem ({ name, versions, currIndex }: Artifact) {
+  exportFile(name, versions[currIndex].text)
 }
 
-function deleteItem (artifact: ArtifactMapped) {
+function deleteItem (artifact: Artifact) {
   $q.dialog({
     title: t("artifactItemMenu.deleteConfirmTitle"),
     message: t("artifactItemMenu.deleteConfirmMessage", {
@@ -116,7 +116,7 @@ function deleteItem (artifact: ArtifactMapped) {
   })
 }
 
-function saveItem (artifact: ArtifactMapped) {
+function saveItem (artifact: Artifact) {
   artifactsStore.update(saveArtifactChanges(artifact))
 }
 </script>

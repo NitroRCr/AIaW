@@ -5,13 +5,14 @@ import type { Avatar } from "@/shared/types"
 import { defaultTextAvatar } from "@/shared/utils/functions"
 
 import { supabase } from "@/services/data/supabase/client"
-import type { ChatMapped } from "@/services/data/supabase/types"
-const chats = ref<ChatMapped[]>([])
+import { mapDbToChat, type Chat } from "@/services/data/types/chat"
+import { mapDbToUserProfile } from "@/services/data/types/profile"
+const chats = ref<Chat[]>([])
 let isSubscribed = false
 let subscription: ReturnType<typeof supabase.channel> | null = null
 
 async function extendChatsWithDisplayName (
-  chatsArr: ChatMapped[],
+  chatsArr: Chat[],
   currentUserId: string | null
 ) {
   // For each chat, if not group, fetch members and set displayName
@@ -23,7 +24,7 @@ async function extendChatsWithDisplayName (
         // Fetch chat members with profile
         const { data: members, error } = await supabase
           .from("chat_members")
-          .select("user_id, profiles(name,avatar)")
+          .select("user_id, profile:profiles(name,avatar)")
           .eq("chat_id", chat.id)
 
         if (error || !members) {
@@ -31,14 +32,14 @@ async function extendChatsWithDisplayName (
         }
 
         // Find first member that is not myself
-        const other = members.find((m: any) => m.user_id !== currentUserId)
-        const displayName = other?.profiles?.name || chat.name || ""
+        const other = members.map(mapDbToUserProfile).find((m: any) => m.userId !== currentUserId)
+        const displayName = other?.profile?.name || chat.name || ""
 
         return {
           ...chat,
           name: displayName,
           avatar:
-            (other?.profiles?.avatar as Avatar) ||
+            (other?.profile?.avatar as Avatar) ||
             defaultTextAvatar(displayName),
         }
       }
@@ -61,7 +62,7 @@ async function fetchChats (currentUserId: string | null) {
   }
 
   chats.value = await extendChatsWithDisplayName(
-    (data as ChatMapped[]) ?? [],
+    data.map(mapDbToChat),
     currentUserId
   )
 }
@@ -82,7 +83,7 @@ function subscribeToChats (currentUserId: string | null) {
       async (payload) => {
         // On insert, extend with displayName
         const extended = await extendChatsWithDisplayName(
-          [payload.new as ChatMapped],
+          [payload.new as Chat],
           currentUserId
         )
         chats.value.unshift(extended[0])
@@ -96,7 +97,7 @@ function subscribeToChats (currentUserId: string | null) {
         table: "chats",
       },
       (payload) => {
-        const deletedId = (payload.old as ChatMapped).id
+        const deletedId = (payload.old as Chat).id
         chats.value = chats.value.filter((c) => c.id !== deletedId)
       }
     )
@@ -109,7 +110,7 @@ function subscribeToChats (currentUserId: string | null) {
       },
       async (payload) => {
         const extended = await extendChatsWithDisplayName(
-          [payload.new as ChatMapped],
+          [payload.new as Chat],
           currentUserId
         )
         chats.value = chats.value.map((c) =>

@@ -18,10 +18,10 @@ import { codeExtensions } from "@/shared/utils/values"
 
 import ViewFileDialog from "@/features/media/components/ViewFileDialog.vue"
 
-import { StoredItemMapped } from "@/services/data/supabase/types"
+import { StoredItem } from "@/services/data/types/storedItem"
 
 const props = defineProps<{
-  file: StoredItemMapped
+  file: StoredItem
   removable?: boolean
 }>()
 

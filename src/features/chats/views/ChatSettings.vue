@@ -117,7 +117,7 @@ const workspaceStore = useWorkspacesStore()
 
 const workspace = computed(() =>
   workspaceStore.workspaces.find(
-    (workspace) => workspace.id === chat.value?.workspace_id
+    (workspace) => workspace.id === chat.value?.workspaceId
   )
 )
 const currentChat = computed(() =>

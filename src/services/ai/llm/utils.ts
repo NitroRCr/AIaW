@@ -10,11 +10,11 @@ import {
 } from "@/features/dialogs/utils/dialogTemplateDefinitions"
 import { engine } from "@/features/dialogs/utils/templateEngine"
 
-import { MessageContentMapped } from "@/services/data/supabase/types"
+import { MessageContentNested } from "@/services/data/types/messageContents"
 
 const generateTitle = async (
   model: LanguageModelV1,
-  contents: Readonly<MessageContentMapped[]>,
+  contents: Readonly<MessageContentNested[]>,
   lang: string
 ) => {
   const { text } = await generateText({
@@ -43,7 +43,7 @@ const generateArtifactName = async (
 
 const generateExtractArtifact = async (
   model: LanguageModelV1,
-  content: MessageContentMapped[],
+  content: MessageContentNested[],
   lang?: string
 ) => {
   const { text } = await generateText({

@@ -139,7 +139,7 @@ import { useAssistantsStore } from "@/features/assistants/store"
 import { usePluginsStore } from "@/features/plugins/store"
 import PromptVarInput from "@/features/prompt/components/PromptVarInput.vue"
 
-import { AssistantMapped } from "@/services/data/supabase/types"
+import { Assistant } from "@/services/data/types/assistant"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -151,7 +151,7 @@ const props = defineProps<{
   id: string
   assistantId: string
 }>()
-const assistant = syncRef<AssistantMapped>(
+const assistant = syncRef<Assistant>(
   () => assistantsStore.assistants.find((a) => a.id === props.assistantId),
   (val) => {
     assistantsStore.put(toRaw(val))

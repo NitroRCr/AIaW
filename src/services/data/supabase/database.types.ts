@@ -402,7 +402,7 @@ export type Database = {
       stored_items: {
         Row: {
           content_text: string | null
-          dialog_id: string
+          dialog_id: string | null
           file_url: string | null
           id: string
           message_content_id: string
@@ -412,7 +412,7 @@ export type Database = {
         }
         Insert: {
           content_text?: string | null
-          dialog_id: string
+          dialog_id?: string | null
           file_url?: string | null
           id?: string
           message_content_id: string
@@ -422,7 +422,7 @@ export type Database = {
         }
         Update: {
           content_text?: string | null
-          dialog_id?: string
+          dialog_id?: string | null
           file_url?: string | null
           id?: string
           message_content_id?: string

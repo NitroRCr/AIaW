@@ -55,7 +55,7 @@
             bg-sur
             no-highlight
             :show-code-row-number="false"
-            :auto-fold-threshold="message.generating_session ? Infinity : 0"
+            :auto-fold-threshold="message.generatingSession ? Infinity : 0"
           />
           <div
             ref="textDiv"
@@ -121,7 +121,7 @@
           </div>
           <div
             v-if="
-              content.type === 'user-message' && content.stored_items.length
+              content.type === 'user-message' && content.storedItems.length
             "
             flex
             flex-wrap
@@ -130,16 +130,16 @@
             gap-2
           >
             <message-image
-              v-for="image in content.stored_items.filter((i) =>
-                i.mime_type?.startsWith('image/')
+              v-for="image in content.storedItems.filter((i) =>
+                i.mimeType?.startsWith('image/')
               )"
               :key="image.id"
               :image="image"
               h="100px"
             />
             <message-file
-              v-for="file in content.stored_items.filter(
-                (i) => !i.mime_type?.startsWith('image/')
+              v-for="file in content.storedItems.filter(
+                (i) => !i.mimeType?.startsWith('image/')
               )"
               :key="file.id"
               :file="file"
@@ -207,7 +207,7 @@
           transition="opacity 250"
           whitespace-nowrap
         >
-          <span>{{ message.model_name }}</span>
+          <span>{{ message.modelName }}</span>
           <span ml-3>{{ idDateString(message.id) }}</span>
         </div>
       </div>
@@ -244,7 +244,7 @@
             @click="deleteBranch"
           />
         </template>
-        <template v-if="['default', 'failed'].includes(message.status)">
+        <template v-if="['default', 'failed'].includes(message.status) && textContent">
           <copy-btn
             round
             flat
@@ -395,19 +395,17 @@ import MessageImage from "@/features/media/components/MessageImage.vue"
 import ToolContent from "@/features/plugins/components/ToolContent.vue"
 import { usePluginsStore } from "@/features/plugins/store"
 
-import {
-  DialogMessageMapped,
-  MessageContentMapped,
-} from "@/services/data/supabase/types"
+import { DialogMessageNested } from "@/services/data/types/dialogMessage"
+import { MessageContentNested } from "@/services/data/types/messageContents"
 
 const props = defineProps<{
-  message: DialogMessageMapped
+  message: DialogMessageNested
   childNum: number
   scrollContainer: HTMLElement
 }>()
 const mdId = `md-${genId()}`
 const dialogsStore = useDialogsStore()
-const { updateMessage } = useDialogMessages(toRef(props.message, "dialog_id"))
+const { updateMessage } = useDialogMessages(toRef(props.message, "dialogId"))
 const $q = useQuasar()
 
 function moreInfo () {
@@ -419,7 +417,7 @@ function moreInfo () {
 const sourceCodeMode = ref(false)
 
 const contents = computed(() =>
-  props.message.message_contents.map((x) => {
+  props.message.messageContents.map((x) => {
     if (x.type === "assistant-message" || x.type === "user-message") {
       return {
         ...x,
@@ -445,17 +443,17 @@ const emit = defineEmits<{
 }>()
 
 watchEffect(async () => {
-  const sessionId = props.message.generating_session
+  const sessionId = props.message.generatingSession
 
   if (sessionId) {
     !(await sessions.ping(sessionId)) &&
       updateMessage(
         props.message.id,
         {
-          generating_session: null,
+          generatingSession: null,
           status: "failed",
           error: "aborted",
-          message_contents: props.message.message_contents.map((content) => {
+          messageContents: props.message.messageContents.map((content) => {
             if (
               content.type === "assistant-tool" &&
               content.status === "calling"
@@ -468,20 +466,20 @@ watchEffect(async () => {
             }
 
             return content
-          }) as MessageContentMapped[],
+          }) as MessageContentNested[],
         }
       )
   }
 })
 
 const textIndex = computed(() =>
-  props.message.message_contents.findIndex((c) =>
+  props.message.messageContents.findIndex((c) =>
     ["user-message", "assistant-message"].includes(c.type)
   )
 )
 const textContent = computed(
   () =>
-    props.message.message_contents[textIndex.value] as
+    props.message.messageContents[textIndex.value] as
       | UserMessageContent
       | AssistantMessageContent
 )
@@ -489,13 +487,13 @@ const textContent = computed(
 const { data: perfs } = useUserPerfsStore()
 const assistantsStore = useAssistantsStore()
 const pluginsStore = usePluginsStore()
-const dialog = computed(() => dialogsStore.dialogs[props.message.dialog_id])
+const dialog = computed(() => dialogsStore.dialogs[props.message.dialogId])
 
 const assistant = computed(() => {
-  if (!dialog.value?.assistant_id) return null
+  if (!dialog.value?.assistantId) return null
 
   return assistantsStore.assistants.find(
-    (a) => a.id === dialog.value.assistant_id
+    (a) => a.id === dialog.value.assistantId
   )
 })
 
@@ -516,7 +514,7 @@ const avatar = computed(() =>
   props.message.type === "user"
     ? perfs.userAvatar
     : assistantsStore.assistants.find(
-      (a) => a.id === props.message.assistant_id
+      (a) => a.id === props.message.assistantId
     )?.avatar
 )
 
@@ -524,7 +522,7 @@ const name = computed(() =>
   props.message.type === "user"
     ? null
     : assistantsStore.assistants.find(
-      (a) => a.id === props.message.assistant_id
+      (a) => a.id === props.message.assistantId
     )?.name
 )
 
@@ -538,7 +536,7 @@ const router = useRouter()
 
 function onAvatarClick () {
   if (props.message.type === "assistant") {
-    router.push(`../assistants/${props.message.assistant_id}`)
+    router.push(`../assistants/${props.message.assistantId}`)
   } else if (props.message.type === "user") {
     $q.dialog({
       component: PickAvatarDialog,

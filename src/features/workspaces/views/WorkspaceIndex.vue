@@ -30,7 +30,7 @@ import { DefaultWsIndexContent } from "@/features/dialogs/utils/dialogTemplateDe
 import { engine } from "@/features/dialogs/utils/templateEngine"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { WorkspaceMapped } from "@/services/data/supabase/types"
+import { Workspace } from "@/services/data/types/workspace"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
@@ -39,7 +39,7 @@ defineEmits(["toggle-drawer"])
 const store = useWorkspacesStore()
 
 const workspace = syncRef(
-  inject("workspace") as Ref<WorkspaceMapped>,
+  inject("workspace") as Ref<Workspace>,
   (val) => {
     store.putItem(toRaw(val))
   },
@@ -47,7 +47,7 @@ const workspace = syncRef(
 )
 
 const contentMd = computed(() =>
-  engine.parseAndRenderSync(workspace.value.index_content, {
+  engine.parseAndRenderSync(workspace.value.indexContent, {
     workspace: workspace.value || DefaultWsIndexContent,
   })
 )

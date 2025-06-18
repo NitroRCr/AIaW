@@ -128,10 +128,10 @@ import MenuItem from "@/shared/components/menu/MenuItem.vue"
 import { useRootWorkspace } from "@/features/workspaces/composables"
 import { useWorkspaceActions } from "@/features/workspaces/composables/useWorkspaceActions"
 
-import type { WorkspaceMapped } from "@/services/data/supabase/types"
+import { Workspace } from "@/services/data/types/workspace"
 
 const props = defineProps<{
-  item: WorkspaceMapped
+  item: Workspace
   accept: "workspace" | "folder"
 }>()
 

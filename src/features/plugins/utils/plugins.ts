@@ -363,6 +363,7 @@ function buildGradioPlugin(
     const options = settings._hfToken
       ? { hf_token: settings._hfToken }
       : undefined
+    console.log("----GradioPlugin predict", manifest, options)
     const app = await GradioClient.connect(manifest.baseUrl, options)
     const { data } = await app.predict(endpoint.path, {
       ...settings[endpoint.name],

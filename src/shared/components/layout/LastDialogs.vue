@@ -8,7 +8,7 @@
       v-for="dialog in lastDialogsWithWorkspace"
       :key="dialog.id"
       clickable
-      @click="goToDialog(dialog.workspace_id, dialog.id)"
+      @click="goToDialog(dialog.workspaceId, dialog.id)"
       dense
       class="q-pa-xs q-mb-xs"
     >
@@ -42,19 +42,19 @@ import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import { useDialogsStore } from "@/features/dialogs/store/dialogs"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { DialogMapped } from "@/services/data/supabase/types"
+import { Dialog } from "@/services/data/types/dialogs"
 
 const MAX_LAST_DIALOGS = 3
 const router = useRouter()
 const workspacesStore = useWorkspacesStore()
 const { dialogs } = storeToRefs(useDialogsStore())
-const dialogsMapped = computed(() => Object.values<DialogMapped>(dialogs.value))
+const dialogsMapped = computed(() => Object.values<Dialog>(dialogs.value))
 
 const lastDialogs = computed(() => {
   return [...dialogsMapped.value]
     .sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     .slice(0, MAX_LAST_DIALOGS)
 })
@@ -63,7 +63,7 @@ const lastDialogsWithWorkspace = computed(() =>
   workspacesStore.workspaces.length > 0
     ? lastDialogs.value.map((d) => {
       const workspace = workspacesStore.workspaces?.find(
-        (w) => w.id === d.workspace_id
+        (w) => w.id === d.workspaceId
       )
 
       return {

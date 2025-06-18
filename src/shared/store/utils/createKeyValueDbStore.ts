@@ -114,6 +114,7 @@ export function createKeyValueDbStore<T extends object> (
       updateData(data)
     }, 2000)
 
+    // Auto save data to database
     watch(
       data,
       () => {

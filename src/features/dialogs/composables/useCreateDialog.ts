@@ -5,7 +5,7 @@ import { useUserDataStore } from "@/shared/store"
 
 import { useDialogMessagesStore, useDialogsStore } from "@/features/dialogs/store"
 
-import { Dialog } from "@/services/data/supabase/types"
+import { Dialog } from "@/services/data/types/dialogs"
 
 export function useCreateDialog (workspaceId: string) {
   const router = useRouter()
@@ -18,10 +18,10 @@ export function useCreateDialog (workspaceId: string) {
 
     await dialogsStore.addDialog(
       {
-        workspace_id: workspaceId,
+        workspaceId,
         name: t("createDialog.newDialog"),
-        assistant_id: userStore.data.defaultAssistantIds[workspaceId] || null,
-        input_vars: {},
+        assistantId: userStore.data.defaultAssistantIds[workspaceId] || null,
+        inputVars: {},
         ...props,
       }
     ).then(async ({ id }) => {
@@ -30,12 +30,10 @@ export function useCreateDialog (workspaceId: string) {
         null as string,
         {
           type: "user",
-          message_contents: [
+          messageContents: [
             {
               type: "user-message",
               text: "",
-              name: "",
-              stored_items: [],
             },
           ],
           status: "inputing",

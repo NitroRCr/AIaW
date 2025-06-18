@@ -54,7 +54,7 @@
       >
         <md-preview
           v-if="['markdown', 'textbox'].includes(component)"
-          :model-value="content.result[index].content_text"
+          :model-value="content.result[index].contentText"
           v-bind="mdPreviewProps"
           bg-sur-c-low
           rd-md
@@ -63,7 +63,7 @@
           v-else-if="['json', 'code'].includes(component)"
           :model-value="
             wrapCode(
-              content.result[index].content_text,
+              content.result[index].contentText,
               component === 'json' ? 'json' : ''
             )
           "
@@ -97,7 +97,7 @@ import MessageAudio from "@/features/media/components/MessageAudio.vue"
 import MessageImage from "@/features/media/components/MessageImage.vue"
 import { usePluginsStore } from "@/features/plugins/store"
 
-import { StoredItemMapped } from "@/services/data/supabase/types"
+import { StoredItem } from "@/services/data/types/storedItem"
 
 const { t } = useI18n()
 
@@ -107,12 +107,12 @@ const props = defineProps<{
 
 const pluginsStore = usePluginsStore()
 const plugin = computed(() =>
-  pluginsStore.plugins.find((p) => p.id === props.content.plugin_id)
+  pluginsStore.plugins.find((p) => p.id === props.content.pluginId)
 )
 const api = computed(() =>
   plugin.value?.apis.find((a) => a.name === props.content.name)
 )
-const pluginData = computed(() => pluginsStore.data[props.content.plugin_id])
+const pluginData = computed(() => pluginsStore.data[props.content.pluginId])
 
 const contentTemplate = `### ${t("toolContent.callParams")}
 
@@ -143,11 +143,11 @@ const contentMd = computed(() => {
       const {
         name = "",
         type,
-        mime_type,
-        content_text,
-      } = item as StoredItemMapped
+        mimeType,
+        contentText,
+      } = item as StoredItem
 
-      return { name, type, mime_type, content_text }
+      return { name, type, mimeType, contentText }
     }),
   })
 })

@@ -3,7 +3,7 @@ import { Platform } from "quasar"
 
 import { Avatar, PlatformEnabled } from "@/shared/types"
 
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
 
 /**
  * Generates a random hexadecimal hash string of specified length
@@ -95,7 +95,7 @@ function defaultAvatar (text: string): Avatar {
 function defaultTextAvatar (text: string): Avatar {
   return {
     type: "text",
-    text: text
+    text: (text || "💩")
       .split(" ")
       .map((word) => word[0])
       .join("")
@@ -541,17 +541,17 @@ function getFileExt (filename: string) {
  * };
  */
 function saveArtifactChanges(
-  artifact: ArtifactMapped
-): Partial<ArtifactMapped> {
+  artifact: Artifact
+): Partial<Artifact> {
   return {
     versions: [
-      ...artifact.versions.slice(0, artifact.curr_index + 1),
+      ...artifact.versions.slice(0, artifact.currIndex + 1),
       {
         date: new Date().toISOString(),
         text: artifact.tmp,
       },
     ],
-    curr_index: artifact.curr_index + 1,
+    currIndex: artifact.currIndex + 1,
   }
 }
 
@@ -571,10 +571,10 @@ function saveArtifactChanges(
  * };
  */
 function restoreArtifactChanges(
-  artifact: ArtifactMapped
-): Partial<ArtifactMapped> {
+  artifact: Artifact
+): Partial<Artifact> {
   return {
-    tmp: artifact.versions[artifact.curr_index].text,
+    tmp: artifact.versions[artifact.currIndex].text,
   }
 }
 
@@ -613,8 +613,8 @@ function blobToBase64(blob: Blob): Promise<string> {
  *   // Prompt user to save changes
  * }
  */
-function artifactUnsaved(artifact: ArtifactMapped): boolean {
-  return artifact.tmp !== artifact.versions[artifact.curr_index].text
+function artifactUnsaved(artifact: Artifact): boolean {
+  return artifact.tmp !== artifact.versions[artifact.currIndex].text
 }
 
 /**

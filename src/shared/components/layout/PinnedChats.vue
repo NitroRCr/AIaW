@@ -4,7 +4,7 @@
       v-for="chat in lastChatsWithWorkspace"
       :key="chat.id"
       clickable
-      @click="goToChat(chat.workspace_id, chat.id)"
+      @click="goToChat(chat.workspaceId, chat.id)"
       dense
       class="q-pa-xs q-mb-xs"
     >
@@ -47,7 +47,7 @@ const lastChats = computed(() => {
   return [...chats.value]
     .sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     .slice(0, MAX_LAST_CHATS)
 })
@@ -56,7 +56,7 @@ const lastChatsWithWorkspace = computed(() =>
   workspacesStore.workspaces.length > 0
     ? lastChats.value.map((d) => {
       const workspace = workspacesStore.workspaces?.find(
-        (w) => w.id === d.workspace_id
+        (w) => w.id === d.workspaceId
       )
 
       return {

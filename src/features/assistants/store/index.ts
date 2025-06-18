@@ -4,23 +4,14 @@ import { defineStore } from "pinia"
 import { ref } from "vue"
 import { useI18n } from "vue-i18n"
 
-import { defaultAvatar, defaultTextAvatar } from "@/shared/utils/functions"
+import { defaultAvatar } from "@/shared/utils/functions"
 
 import { defaultModelSettings } from "@/features/assistants/consts"
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 import { AssistantDefaultPrompt } from "@/features/dialogs/utils/dialogTemplateDefinitions"
 
 import { supabase } from "@/services/data/supabase/client"
-import { AssistantMapped, Assistant } from "@/services/data/supabase/types"
-
-function mapAssistantTypes (item: Assistant): AssistantMapped {
-  const { avatar, ...rest } = item
-
-  return {
-    avatar: avatar ?? defaultTextAvatar(item.name),
-    ...rest,
-  } as AssistantMapped
-}
+import { Assistant, DbAssistantUpdate, mapAssistantToDb, mapDbToAssistant } from "@/services/data/types/assistant"
 
 /**
  * Store for managing AI assistants in the application
@@ -45,7 +36,7 @@ function mapAssistantTypes (item: Assistant): AssistantMapped {
  * - Used by {@link useDialogInput} for setting up conversation contexts
  */
 export const useAssistantsStore = defineStore("assistants", () => {
-  const assistants = ref<AssistantMapped[]>([])
+  const assistants = ref<Assistant[]>([])
   const isLoaded = ref(false)
   const fetchAssistants = async () => {
     const { data, error } = await supabase.from("user_assistants").select("*")
@@ -54,9 +45,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
       console.error("Error fetching assistants:", error)
     }
 
-    console.log("[DEBUG] Fetch assistants", data)
-
-    assistants.value = data.map(mapAssistantTypes)
+    assistants.value = data.map(mapDbToAssistant)
     isLoaded.value = true
   }
 
@@ -76,7 +65,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
       .insert({
         name: t("stores.assistants.newAssistant"),
         avatar: defaultAvatar("AI"),
-        workspace_id: null,
+        workspaceId: null,
         prompt: "",
         prompt_template: AssistantDefaultPrompt,
         prompt_vars: [],
@@ -95,15 +84,15 @@ export const useAssistantsStore = defineStore("assistants", () => {
       console.error("Error adding assistant:", error)
     }
 
-    assistants.value.push(mapAssistantTypes(data))
+    assistants.value.push(mapDbToAssistant(data))
 
     return data
   }
 
-  async function update (id: string, changes) {
+  async function update (id: string, changes: Assistant<DbAssistantUpdate>) {
     const { data, error } = await supabase
       .from("user_assistants")
-      .update(changes)
+      .update(mapAssistantToDb(changes))
       .eq("id", id)
       .select()
       .single()
@@ -114,11 +103,12 @@ export const useAssistantsStore = defineStore("assistants", () => {
       return null
     }
 
+    const result = mapDbToAssistant(data)
     assistants.value = assistants.value.map((a) =>
-      a.id === id ? mapAssistantTypes(data) : a
+      a.id === id ? result : a
     )
 
-    return data
+    return result
   }
 
   const throttledUpdate = throttle(async (assistant: Assistant) => {

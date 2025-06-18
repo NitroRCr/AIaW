@@ -21,11 +21,9 @@ import { usePluginsStore } from "@/features/plugins/store"
 import { useGetModel } from "@/features/providers/composables/useGetModel"
 
 import { getSystemPrompt } from "@/services/ai/llm/utils"
-import {
-  ArtifactMapped,
-  AssistantMapped,
-  StoredItem,
-} from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
+import { Assistant } from "@/services/data/types/assistant"
+import { StoredItem } from "@/services/data/types/storedItem"
 
 import { useDialogMessages } from "./useDialogMessages"
 
@@ -36,7 +34,7 @@ type CallTool = (
 ) => Promise<{ result?: ApiResultItem[]; error?: string }>
 
 export const useAssistantTools = (
-  assistant: Ref<AssistantMapped>,
+  assistant: Ref<Assistant>,
   workspaceId: Ref<string>,
   dialogId: Ref<string>
 ) => {
@@ -48,7 +46,7 @@ export const useAssistantTools = (
   const { getModel } = useGetModel()
 
   const model = computed(() =>
-    getModel(dialog.value?.model_override || assistant.value?.model)
+    getModel(dialog.value?.modelOverride || assistant.value?.model)
   )
 
   const { callApi } = useCallApi(workspaceId, dialogId)
@@ -59,7 +57,7 @@ export const useAssistantTools = (
       )
       : []
   )
-  const artifacts = inject<Ref<ArtifactMapped[]>>("artifacts")
+  const artifacts = inject<Ref<Artifact[]>>("artifacts")
 
   const openedArtifacts = computed(() =>
     artifacts.value.filter((a) => userData.value.openedArtifacts.includes(a.id))
@@ -72,11 +70,11 @@ export const useAssistantTools = (
     return {
       _currentTime: new Date().toString(),
       _userLanguage: navigator.language,
-      _workspaceId: workspace.value.id,
-      _workspaceName: workspace.value.name,
+      _workspaceId: workspace.value?.id,
+      _workspaceName: workspace.value?.name,
       _assistantId: assistant.value.id,
       _assistantName: assistant.value.name,
-      _dialogId: dialog.value.id,
+      _dialogId: dialog.value?.id,
       _modelId: model.value.name,
       _isDarkMode: $q.dark.isActive,
       _platform: $q.platform,
@@ -107,19 +105,13 @@ export const useAssistantTools = (
   function toToolResultContent (items: (ApiResultItem | StoredItem)[]) {
     const val = []
     for (const item of items) {
-      console.log("-----toToolResultContent item", item)
-
       if (!item) continue // TODO: in case if tool failed ignore it
 
       if (item.type === "text") {
-        // Handle both ApiResultItem (contentText) and StoredItem (content_text)
-        // TODO: keep contentText  use content_text only for stored Item
-        const text =
-          "content_text" in item ? item.content_text : item.contentText
+        const text = item.contentText
         val.push({ type: "text", text })
       } else {
-        // Handle mime type field differences: ApiResultItem uses mimeType, StoredItem uses mime_type
-        const mimeType = "mime_type" in item ? item.mime_type : item.mimeType
+        const mimeType = item.mimeType
 
         if (mimeTypeMatch(mimeType, model.value.inputTypes.tool)) {
           val.push({
@@ -246,12 +238,12 @@ export const useAssistantTools = (
 
     const systemPrompt = getSystemPrompt(
       enabledPlugins.filter((p) => p.prompt),
-      assistant.value.prompt_template,
+      assistant.value.promptTemplate,
       assistant.value.prompt,
       {
         ...commonVars,
         ...workspace.value.vars,
-        ...dialog.value.input_vars,
+        ...dialog.value.inputVars,
       }
     )
 

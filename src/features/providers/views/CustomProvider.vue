@@ -38,7 +38,7 @@
           </q-item-section>
         </q-item>
         <provider-input-items
-          v-model="provider.fallback_provider"
+          v-model="provider.fallbackProvider"
           :label="$t('customProvider.fallbackProvider')"
           :caption="$t('customProvider.fallbackProviderCaption')"
         />
@@ -101,10 +101,7 @@ import ProviderInputItems from "@/features/providers/components/ProviderInputIte
 import SubproviderInput from "@/features/providers/components/SubproviderInput.vue"
 import { useProvidersStore } from "@/features/providers/store"
 
-import {
-  CustomProviderMapped,
-  SubproviderMapped,
-} from "@/services/data/supabase/types"
+import { CustomProvider, Subprovider } from "@/services/data/types/provider"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -117,7 +114,7 @@ defineEmits(["toggle-drawer"])
 
 const store = useProvidersStore()
 
-const provider = syncRef<CustomProviderMapped>(
+const provider = syncRef<CustomProvider>(
   () => store.providers.find((a) => a.id === props.id),
   (val) => {
     store.put(toRaw(val))
@@ -137,7 +134,7 @@ function addSubprovider () {
   })
 }
 
-function removeSubprovider (subprovider: SubproviderMapped) {
+function removeSubprovider (subprovider: Subprovider) {
   store.deleteSubprovider(provider.value.id, subprovider.id)
 }
 

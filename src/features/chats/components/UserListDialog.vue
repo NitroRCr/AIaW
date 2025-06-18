@@ -53,7 +53,7 @@ import AAvatar from "@/shared/components/AAvatar.vue"
 
 import { useProfileStore } from "@/features/profile/store"
 
-import type { ProfileMapped } from "@/services/data/supabase/types"
+import type { Profile } from "@/services/data/types/profile"
 
 const { dialogRef, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 
@@ -62,9 +62,9 @@ const props = defineProps<{
 }>()
 
 const profileStore = useProfileStore()
-const users = ref<ProfileMapped[]>([])
+const users = ref<Profile[]>([])
 
-const onSelectUser = async (user: ProfileMapped) => {
+const onSelectUser = async (user: Profile) => {
   onDialogOK(user.id)
 }
 

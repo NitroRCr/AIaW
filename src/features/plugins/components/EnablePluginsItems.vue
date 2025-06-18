@@ -70,7 +70,7 @@ import { useAssistantsStore } from "@/features/assistants/store"
 import PluginTypeBadge from "@/features/plugins/components/PluginTypeBadge.vue"
 import { usePluginsStore } from "@/features/plugins/store"
 
-import { AssistantMapped } from "@/services/data/supabase/types"
+import { Assistant } from "@/services/data/types/assistant"
 
 const props = defineProps<{
   assistantId: string
@@ -79,7 +79,7 @@ const props = defineProps<{
 
 const store = useAssistantsStore()
 
-const assistant = syncRef<AssistantMapped>(
+const assistant = syncRef<Assistant>(
   () => store.assistants.find((a) => a.id === props.assistantId),
   (val) => {
     store.put(toRaw(val))

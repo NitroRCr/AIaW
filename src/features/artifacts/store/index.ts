@@ -1,11 +1,11 @@
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { reactive, computed } from "vue"
+import { reactive, computed, ref } from "vue"
 
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact, DbArtifactInsert, DbArtifactUpdate, mapArtifactToDb, mapDbToArtifact } from "@/services/data/types/artifact"
 
 /**
  * Store for managing code and document artifacts
@@ -29,8 +29,9 @@ import { ArtifactMapped } from "@/services/data/supabase/types"
  * - Used by {@link EditArtifact} view for artifact editing
  */
 export const useArtifactsStore = defineStore("artifacts", () => {
+  const isLoaded = ref(false)
   const workspaceArtifacts = reactive<
-    Record<string, Record<string, ArtifactMapped>>
+    Record<string, Record<string, Artifact>>
   >({})
   const artifacts = computed(() =>
     Object.values(workspaceArtifacts).flatMap((workspace) =>
@@ -45,45 +46,46 @@ export const useArtifactsStore = defineStore("artifacts", () => {
       console.error(error)
     }
 
-    for (const artifact of data) {
-      const artifactMapped = artifact as ArtifactMapped
+    const artifacts = data.map((a) => mapDbToArtifact(a))
 
-      if (!(artifactMapped.workspace_id in workspaceArtifacts)) {
-        workspaceArtifacts[artifactMapped.workspace_id] = {}
+    for (const artifact of artifacts) {
+      if (!(artifact.workspaceId in workspaceArtifacts)) {
+        workspaceArtifacts[artifact.workspaceId] = {} as Record<string, Artifact>
       }
 
-      workspaceArtifacts[artifactMapped.workspace_id][artifact.id] =
-        artifactMapped
+      workspaceArtifacts[artifact.workspaceId][artifact.id] = artifact
     }
   }
 
-  async function add (artifact: ArtifactMapped) {
+  async function add (item: Artifact<DbArtifactInsert>) {
     const { data, error } = await supabase
       .from("artifacts")
-      .insert(artifact)
-      .select("*")
+      .insert(mapArtifactToDb(item))
+      .select()
       .single()
 
     if (error) {
       console.error(error)
     }
 
-    if (!(data.workspace_id in workspaceArtifacts)) {
-      workspaceArtifacts[data.workspace_id] = {}
+    const artifact = mapDbToArtifact(data)
+
+    if (!(artifact.workspaceId in workspaceArtifacts)) {
+      workspaceArtifacts[artifact.workspaceId] = {}
     }
 
-    workspaceArtifacts[data.workspace_id][data.id] = data as ArtifactMapped
+    workspaceArtifacts[artifact.workspaceId][artifact.id] = artifact
 
-    return data as ArtifactMapped
+    return artifact
   }
 
   // background update with throttle, for "no save button" UI
-  const throttledUpdate = throttle((artifact: Partial<ArtifactMapped>) => {
+  const throttledUpdate = throttle((item: Artifact<DbArtifactUpdate>) => {
     supabase
       .from("artifacts")
-      .update(artifact)
-      .eq("id", artifact.id)
-      .select("*")
+      .update(mapArtifactToDb(item))
+      .eq("id", item.id)
+      .select()
       .single()
       .then((res) => {
         if (res.error) {
@@ -92,15 +94,15 @@ export const useArtifactsStore = defineStore("artifacts", () => {
       })
   }, 2000)
 
-  async function update (artifact: Partial<ArtifactMapped>) {
+  async function update (artifact: Artifact<DbArtifactUpdate>) {
     throttledUpdate(artifact)
-    workspaceArtifacts[artifact.workspace_id][artifact.id] = {
-      ...workspaceArtifacts[artifact.workspace_id][artifact.id],
+    workspaceArtifacts[artifact.workspaceId][artifact.id] = {
+      ...workspaceArtifacts[artifact.workspaceId][artifact.id],
       ...artifact,
-    } as ArtifactMapped
+    } as Artifact
   }
 
-  async function remove (artifact: Partial<ArtifactMapped>) {
+  async function remove (artifact: Partial<Artifact>) {
     const { error } = await supabase
       .from("artifacts")
       .delete()
@@ -110,17 +112,21 @@ export const useArtifactsStore = defineStore("artifacts", () => {
       console.error(error)
     }
 
-    delete workspaceArtifacts[artifact.workspace_id][artifact.id]
+    delete workspaceArtifacts[artifact.workspaceId][artifact.id]
   }
 
   async function init () {
+    isLoaded.value = false
     Object.assign(workspaceArtifacts, {})
     await fetchArtifacts()
+    isLoaded.value = true
   }
 
   useUserLoginCallback(init)
 
   return {
+    isLoaded: computed(() => isLoaded.value),
+
     artifacts,
     workspaceArtifacts,
     init,

@@ -2,13 +2,11 @@ import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCa
 import { useProfileStore } from "@/features/profile/store"
 
 import { supabase } from "@/services/data/supabase/client"
-import type {
-  ChatMessageWithProfile,
-  ProfileMapped,
-} from "@/services/data/supabase/types"
+import { ChatMessage } from "@/services/data/types/chat"
+import { Profile } from "@/services/data/types/profile"
 
 // Cache for sender profiles
-const profileCache = new Map<string, ProfileMapped | null>()
+const profileCache = new Map<string, Profile | null>()
 
 // Subscription reference
 let subscription: ReturnType<typeof supabase.channel> | null = null
@@ -19,7 +17,7 @@ let subscription: ReturnType<typeof supabase.channel> | null = null
  * Optionally, a callback can be provided to handle each new message.
  */
 export function useChatMessagesSubscription (
-  onNewMessage: (message: ChatMessageWithProfile) => void
+  onNewMessage: (message: ChatMessage) => void
 ) {
   const { fetchProfile } = useProfileStore()
   // Subscribe only once
@@ -35,11 +33,11 @@ export function useChatMessagesSubscription (
             table: "messages",
           },
           async (payload) => {
-            const message = payload.new as ChatMessageWithProfile
+            const message = payload.new as ChatMessage
             // Fetch sender profile with cache
-            const profile = await fetchProfile(message.sender_id)
-            profileCache.set(message.sender_id, profile)
-            message.sender = profile as ProfileMapped
+            const profile = await fetchProfile(message.senderId)
+            profileCache.set(message.senderId, profile)
+            message.sender = profile as Profile
 
             onNewMessage(message)
           }

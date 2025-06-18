@@ -40,11 +40,11 @@
             :scroll-container
             @update:model-value="switchBranch(item, $event)"
             @edit="edit(item.message)"
-            @regenerate="regenerate(item.message.parent_id)"
+            @regenerate="regenerate(item.message.parentId)"
             @delete="deleteBranch(item.message.id)"
             @quote="quote"
             @extract-artifact="extractArtifact(item.message, ...$event)"
-            @rendered="item.message.generating_session && lockBottom()"
+            @rendered="item.message.generatingSession && lockBottom()"
             @create-cyberlink="sendCyberlinkPrompt"
             pt-2
             pb-4
@@ -57,7 +57,7 @@
         pos-relative
       >
         <div
-          v-if="inputMessageContent?.stored_items.length"
+          v-if="inputMessageContent?.storedItems.length"
           pos-absolute
           z-3
           top-0
@@ -70,23 +70,23 @@
         >
           <message-image
             v-for="image in inputContentItems.filter((i) =>
-              i.mime_type?.startsWith('image/')
+              i.mimeType?.startsWith('image/')
             )"
             :key="image.id"
             :image="image"
             removable
             h="100px"
-            @remove="deleteStoredItemWithFile(image)"
+            @remove="deleteStoredItemWithFile(inputMessageId, image)"
             shadow
           />
           <message-file
             v-for="file in inputContentItems.filter(
-              (i) => !i.mime_type?.startsWith('image/')
+              (i) => !i.mimeType?.startsWith('image/')
             )"
             :key="file.id"
             :file="file"
             removable
-            @remove="deleteStoredItemWithFile(file)"
+            @remove="deleteStoredItemWithFile(inputMessageId, file)"
             shadow
           />
         </div>
@@ -176,7 +176,7 @@
             >
           </q-btn>
           <q-btn
-            v-if="assistant?.prompt_vars?.length"
+            v-if="assistant?.promptVars?.length"
             flat
             icon="sym_o_tune"
             :title="
@@ -201,6 +201,8 @@
           <add-info-btn
             :plugins="activePlugins"
             :assistant-plugins="assistant?.plugins || {}"
+            :dialog-id="dialogId"
+            :workspace-id="workspaceId"
             @add="addInputItems"
             flat
             round
@@ -254,7 +256,7 @@
             @click="sendUserMessageAndGenerateResponse"
             @abort="abortController?.abort()"
             :loading="
-              isStreaming || !!dialogItems.at(-2)?.message?.generating_session
+              isStreaming || !!dialogItems.at(-2)?.message?.generatingSession
             "
             ml-4
             min-h="40px"
@@ -268,10 +270,10 @@
         >
           <prompt-var-input
             class="mt-2 mr-2"
-            v-for="promptVar of assistant.prompt_vars"
+            v-for="promptVar of assistant.promptVars"
             :key="promptVar.id"
             :prompt-var="promptVar"
-            v-model="dialog.input_vars[promptVar.name]"
+            v-model="dialog.inputVars[promptVar.name]"
             :input-props="{
               dense: true,
               outlined: true,
@@ -345,7 +347,7 @@ import ModelOptionsBtn from "@/features/providers/components/ModelOptionsBtn.vue
 import ModelOverrideMenu from "@/features/providers/components/ModelOverrideMenu.vue"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
-import type { DialogMessageMapped } from "@/services/data/supabase/types"
+import { DialogMessageNested } from "@/services/data/types/dialogMessage"
 
 import ParseFilesDialog from "../components/ParseFilesDialog.vue"
 
@@ -364,13 +366,14 @@ const dialogId = computed(() => props.id)
 const { assistant } = useActiveWorkspace()
 
 const {
-  dialog, workspaceId, dialogItems, switchBranch, fetchMessages,
+  dialog, workspaceId, dialogItems, fetchMessages, switchBranch,
   lastMessageId, getMessageContents, createBranch, deleteBranch, deleteStoredItemWithFile
 } = useDialogMessages(dialogId)
 
 const { addDialogMessage } = useDialogMessagesStore()
 
 const {
+  inputMessageId,
   updateInputText,
   inputMessageContent,
   inputContentItems,
@@ -422,7 +425,7 @@ function focusInput () {
   isPlatformEnabled(perfs.autoFocusDialogInput) && messageInput.value?.focus()
 }
 
-async function edit (message: DialogMessageMapped) {
+async function edit (message: DialogMessageNested) {
   await createBranch(message)
   await nextTick()
   focusInput()
@@ -599,20 +602,13 @@ async function sendPrompt (prompt: string) {
     parentId,
     {
       type: "user",
-      message_contents: [{
+      messageContents: [{
         type: "user-message",
         text: prompt,
-        stored_items: []
       }],
       status: "default"
     }
   )
-
-  // TODO: ?????
-  // const parentChildrenCount = dialog.value.msg_tree[parentId]?.length ?? 1
-  // const newRoute = [...dialog.value.msg_route]
-  // newRoute[chain.value.indexOf(parentId)] = parentChildrenCount - 1
-  // await dialogsStore.updateDialog({ id: dialog.value.id, msg_route: newRoute })
 
   await nextTick()
   await startStream(newUserMessageId)
