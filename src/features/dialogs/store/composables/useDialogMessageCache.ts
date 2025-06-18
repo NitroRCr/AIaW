@@ -27,7 +27,9 @@ export function useDialogMessageCache() {
     const idx = dialogMessages[dialogId].findIndex(m => m.id === message.id)
 
     if (idx !== -1) {
-      dialogMessages[dialogId][idx] = message
+      // preserve messageContents
+      const { messageContents } = dialogMessages[dialogId][idx]
+      dialogMessages[dialogId][idx] = { ...message, messageContents }
     } else {
       dialogMessages[dialogId].push(message)
     }

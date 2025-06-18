@@ -3,7 +3,6 @@ import { pickBy } from "lodash"
 import { computed, ref, Ref } from "vue"
 
 import { useCallApi } from "@/shared/composables/callApi"
-import { useStorage } from "@/shared/composables/storage/useStorage"
 import { Plugin, PluginApi } from "@/shared/types"
 import sessions from "@/shared/utils/sessions"
 
@@ -25,10 +24,12 @@ export const useLlmStream = (workspaceId: Ref<string>,
   dialogId: Ref<string>,
   assistant: Ref<Assistant>) => {
   const { getAssistantTools } = useAssistantTools(assistant, workspaceId, dialogId)
-  const { dialog, dialogItems, dialogMessages, upsertSingleEntity, addMessage, switchActiveMessage, updateMessage } = useDialogMessages(dialogId)
+  const {
+    dialog, dialogItems, dialogMessages, upsertSingleEntity, addMessage, switchActiveMessage, updateMessage,
+    addApiResultStoredItem
+  } = useDialogMessages(dialogId)
   const { model, sdkModel } = useDialogModel(dialog, assistant)
   const { callApi } = useCallApi(workspaceId, dialogId)
-  const storage = useStorage()
   const isStreaming = ref(false)
 
   const currentMessageId = ref<string | null>(null)
@@ -98,10 +99,13 @@ export const useLlmStream = (workspaceId: Ref<string>,
     })
     // Call API
     const { result: apiResult, error } = await callApi(plugin, api, args)
-    const storedItems = await storage.saveApiResultItems(
-      apiResult,
-      { dialogId: dialogId.value }
-    )
+    const storedItems = await Promise.all(apiResult.map(async (item) => {
+      return await addApiResultStoredItem(
+        currentMessageId.value,
+        toolMessageContent.id,
+        item
+      )
+    }))
 
     toolMessageContent.storedItems = storedItems
 

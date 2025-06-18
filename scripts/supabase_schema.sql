@@ -98,6 +98,30 @@ $$;
 ALTER FUNCTION "public"."add_workspace_owner_as_member"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."can_insert_stored_item"("p_message_content_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" SECURITY DEFINER
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.message_contents mc
+    JOIN public.dialog_messages dm ON mc.message_id = dm.id
+    JOIN public.dialogs d ON dm.dialog_id = d.id
+    JOIN public.workspaces w ON d.workspace_id = w.id
+    WHERE
+      mc.id = p_message_content_id AND (
+        w.is_public = true OR
+        EXISTS (
+          SELECT 1 FROM public.workspace_members wm
+          WHERE wm.workspace_id = w.id AND wm.user_id = auth.uid()
+        )
+      )
+  );
+$$;
+
+
+ALTER FUNCTION "public"."can_insert_stored_item"("p_message_content_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."can_insert_workspace_member"("p_workspace_id" "uuid") RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     AS $$
@@ -118,6 +142,22 @@ $$;
 
 
 ALTER FUNCTION "public"."can_insert_workspace_member"("p_workspace_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."can_user_insert_stored_item"("p_message_content_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.message_contents mc
+    JOIN public.dialog_messages dm ON mc.message_id = dm.id
+    JOIN public.dialogs d ON dm.dialog_id = d.id
+    WHERE mc.id = p_message_content_id AND d.user_id = auth.uid()
+  );
+$$;
+
+
+ALTER FUNCTION "public"."can_user_insert_stored_item"("p_message_content_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."create_profile_on_signup"() RETURNS "trigger"
@@ -221,6 +261,22 @@ $_$;
 
 
 ALTER FUNCTION "public"."is_chat_member"("chat_id" "uuid", "user_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."is_stored_item_owner"("p_message_content_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" SECURITY DEFINER
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.message_contents mc
+    JOIN public.dialog_messages dm ON mc.message_id = dm.id
+    JOIN public.dialogs d ON dm.dialog_id = d.id
+    WHERE mc.id = p_message_content_id AND d.user_id = auth.uid()
+  );
+$$;
+
+
+ALTER FUNCTION "public"."is_stored_item_owner"("p_message_content_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."is_workspace_admin"("p_workspace_id" "uuid", "p_user_id" "uuid") RETURNS boolean
@@ -490,14 +546,13 @@ ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."stored_items" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "dialog_id" "uuid" NOT NULL,
     "message_content_id" "uuid" NOT NULL,
     "type" "text" NOT NULL,
     "content_text" "text",
     "name" "text",
     "mime_type" "text",
     "file_url" "text",
-    CONSTRAINT "stored_items_type_check" CHECK (("type" = ANY (ARRAY['text'::"text", 'file'::"text", 'quote'::"text"])))
+    CONSTRAINT "stored_items_type_check" CHECK (("type" = ANY (ARRAY['text'::"text", 'file'::"text", 'quote'::"text", 'image'::"text"])))
 );
 
 
@@ -803,11 +858,6 @@ ALTER TABLE ONLY "public"."profiles"
 
 
 ALTER TABLE ONLY "public"."stored_items"
-    ADD CONSTRAINT "stored_items_dialog_id_fkey" FOREIGN KEY ("dialog_id") REFERENCES "public"."dialogs"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."stored_items"
     ADD CONSTRAINT "stored_items_message_content_id_fkey" FOREIGN KEY ("message_content_id") REFERENCES "public"."message_contents"("id") ON DELETE CASCADE;
 
 
@@ -935,12 +985,6 @@ CREATE POLICY "Owner can delete message contents" ON "public"."message_contents"
 
 
 
-CREATE POLICY "Owner can delete stored items" ON "public"."stored_items" FOR DELETE USING ((EXISTS ( SELECT 1
-   FROM "public"."dialogs" "d"
-  WHERE (("d"."id" = "stored_items"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
-
-
-
 CREATE POLICY "Owner can insert dialog messages" ON "public"."dialog_messages" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."dialogs" "d"
   WHERE (("d"."id" = "dialog_messages"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
@@ -951,12 +995,6 @@ CREATE POLICY "Owner can insert message contents" ON "public"."message_contents"
    FROM ("public"."dialog_messages" "dm"
      JOIN "public"."dialogs" "d" ON (("dm"."dialog_id" = "d"."id")))
   WHERE (("dm"."id" = "message_contents"."message_id") AND ("d"."user_id" = "auth"."uid"())))));
-
-
-
-CREATE POLICY "Owner can insert stored items" ON "public"."stored_items" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."dialogs" "d"
-  WHERE (("d"."id" = "stored_items"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
 
 
 
@@ -973,12 +1011,6 @@ CREATE POLICY "Owner can read message contents" ON "public"."message_contents" F
 
 
 
-CREATE POLICY "Owner can read stored items" ON "public"."stored_items" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."dialogs" "d"
-  WHERE (("d"."id" = "stored_items"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
-
-
-
 CREATE POLICY "Owner can update dialog messages" ON "public"."dialog_messages" FOR UPDATE USING ((EXISTS ( SELECT 1
    FROM "public"."dialogs" "d"
   WHERE (("d"."id" = "dialog_messages"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
@@ -989,12 +1021,6 @@ CREATE POLICY "Owner can update message contents" ON "public"."message_contents"
    FROM ("public"."dialog_messages" "dm"
      JOIN "public"."dialogs" "d" ON (("dm"."dialog_id" = "d"."id")))
   WHERE (("dm"."id" = "message_contents"."message_id") AND ("d"."user_id" = "auth"."uid"())))));
-
-
-
-CREATE POLICY "Owner can update stored items" ON "public"."stored_items" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM "public"."dialogs" "d"
-  WHERE (("d"."id" = "stored_items"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
 
 
 
@@ -1068,6 +1094,10 @@ CREATE POLICY "User can delete own stored reactives" ON "public"."user_data" FOR
 
 
 
+CREATE POLICY "User can delete own stored_items" ON "public"."stored_items" FOR DELETE USING ("public"."can_user_insert_stored_item"("message_content_id"));
+
+
+
 CREATE POLICY "User can insert own artifact" ON "public"."artifacts" FOR INSERT WITH CHECK (("user_id" = "auth"."uid"()));
 
 
@@ -1076,7 +1106,15 @@ CREATE POLICY "User can insert own stored reactives" ON "public"."user_data" FOR
 
 
 
+CREATE POLICY "User can insert own stored_items" ON "public"."stored_items" FOR INSERT WITH CHECK ("public"."can_user_insert_stored_item"("message_content_id"));
+
+
+
 CREATE POLICY "User can read own stored reactives" ON "public"."user_data" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "User can read own stored_items" ON "public"."stored_items" FOR SELECT USING ("public"."can_user_insert_stored_item"("message_content_id"));
 
 
 
@@ -1085,6 +1123,10 @@ CREATE POLICY "User can update own artifact" ON "public"."artifacts" FOR UPDATE 
 
 
 CREATE POLICY "User can update own stored reactives" ON "public"."user_data" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "User can update own stored_items" ON "public"."stored_items" FOR UPDATE USING ("public"."can_user_insert_stored_item"("message_content_id"));
 
 
 
@@ -1188,6 +1230,17 @@ CREATE POLICY "View own memberships" ON "public"."workspace_members" FOR SELECT 
 
 
 
+CREATE POLICY "Workspace admin or owner can delete stored_items" ON "public"."stored_items" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM ((("public"."message_contents" "mc"
+     JOIN "public"."dialog_messages" "dm" ON ((("mc"."id" = "stored_items"."message_content_id") AND ("mc"."message_id" = "dm"."id"))))
+     JOIN "public"."dialogs" "d" ON (("dm"."dialog_id" = "d"."id")))
+     JOIN "public"."workspaces" "w" ON (("d"."workspace_id" = "w"."id")))
+  WHERE ((EXISTS ( SELECT 1
+           FROM "public"."workspace_members" "wm"
+          WHERE (("wm"."workspace_id" = "w"."id") AND ("wm"."user_id" = "auth"."uid"()) AND ("wm"."role" = 'admin'::"text")))) OR ("d"."user_id" = "auth"."uid"())))));
+
+
+
 CREATE POLICY "Workspace chat admin delete" ON "public"."messages" FOR DELETE USING ((EXISTS ( SELECT 1
    FROM ("public"."chats" "c"
      JOIN "public"."workspace_members" "wm" ON (("c"."workspace_id" = "wm"."workspace_id")))
@@ -1227,6 +1280,28 @@ CREATE POLICY "Workspace members can read" ON "public"."workspaces" FOR SELECT U
 
 
 
+CREATE POLICY "Workspace members can update stored_items" ON "public"."stored_items" FOR UPDATE USING ((EXISTS ( SELECT 1
+   FROM ((("public"."message_contents" "mc"
+     JOIN "public"."dialog_messages" "dm" ON ((("mc"."id" = "stored_items"."message_content_id") AND ("mc"."message_id" = "dm"."id"))))
+     JOIN "public"."dialogs" "d" ON (("dm"."dialog_id" = "d"."id")))
+     JOIN "public"."workspaces" "w" ON (("d"."workspace_id" = "w"."id")))
+  WHERE (EXISTS ( SELECT 1
+           FROM "public"."workspace_members" "wm"
+          WHERE (("wm"."workspace_id" = "w"."id") AND ("wm"."user_id" = "auth"."uid"())))))));
+
+
+
+CREATE POLICY "Workspace members or public can read stored_items" ON "public"."stored_items" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM ((("public"."message_contents" "mc"
+     JOIN "public"."dialog_messages" "dm" ON ((("mc"."id" = "stored_items"."message_content_id") AND ("mc"."message_id" = "dm"."id"))))
+     JOIN "public"."dialogs" "d" ON (("dm"."dialog_id" = "d"."id")))
+     JOIN "public"."workspaces" "w" ON (("d"."workspace_id" = "w"."id")))
+  WHERE (("w"."is_public" = true) OR (EXISTS ( SELECT 1
+           FROM "public"."workspace_members" "wm"
+          WHERE (("wm"."workspace_id" = "w"."id") AND ("wm"."user_id" = "auth"."uid"()))))))));
+
+
+
 CREATE POLICY "Workspace members or public workspace can read artifacts" ON "public"."artifacts" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM "public"."workspaces"
   WHERE (("workspaces"."id" = "artifacts"."workspace_id") AND (("workspaces"."is_public" = true) OR (EXISTS ( SELECT 1
@@ -1250,12 +1325,6 @@ CREATE POLICY "Workspace write access" ON "public"."workspaces" FOR UPDATE USING
 CREATE POLICY "access messages via dialog" ON "public"."dialog_messages" USING ((EXISTS ( SELECT 1
    FROM "public"."dialogs" "d"
   WHERE (("d"."id" = "dialog_messages"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
-
-
-
-CREATE POLICY "access stored items via dialog" ON "public"."stored_items" USING ((EXISTS ( SELECT 1
-   FROM "public"."dialogs" "d"
-  WHERE (("d"."id" = "stored_items"."dialog_id") AND ("d"."user_id" = "auth"."uid"())))));
 
 
 
@@ -1533,9 +1602,21 @@ GRANT ALL ON FUNCTION "public"."add_workspace_owner_as_member"() TO "service_rol
 
 
 
+GRANT ALL ON FUNCTION "public"."can_insert_stored_item"("p_message_content_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."can_insert_stored_item"("p_message_content_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."can_insert_stored_item"("p_message_content_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_insert_workspace_member"("p_workspace_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."can_insert_workspace_member"("p_workspace_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_insert_workspace_member"("p_workspace_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."can_user_insert_stored_item"("p_message_content_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."can_user_insert_stored_item"("p_message_content_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."can_user_insert_stored_item"("p_message_content_id" "uuid") TO "service_role";
 
 
 
@@ -1566,6 +1647,12 @@ GRANT ALL ON FUNCTION "public"."inherit_workspace_members_from_parent"() TO "ser
 GRANT ALL ON FUNCTION "public"."is_chat_member"("chat_id" "uuid", "user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_chat_member"("chat_id" "uuid", "user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_chat_member"("chat_id" "uuid", "user_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."is_stored_item_owner"("p_message_content_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."is_stored_item_owner"("p_message_content_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_stored_item_owner"("p_message_content_id" "uuid") TO "service_role";
 
 
 

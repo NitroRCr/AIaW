@@ -7,8 +7,6 @@ import { DbStoredItemInsert, DbStoredItemUpdate, mapDbToStoredItem, mapStoredIte
 
 import { useDialogMessageCache } from "./composables/useDialogMessageCache"
 
-// const SELECT_DIALOG_MESSAGES = "*, message_contents(*, stored_items(*))"
-
 type UpdateSingleEntityParams = {
   dialogId: string
   messageId: string
@@ -62,7 +60,7 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
 
   // Insert or update message content with stored items
   async function upsertMessageContent<T extends MessageContentNested<DbMessageContentUpdate, DbStoredItemUpdate>>(dialogId: string, messageId: string, messageContent: T) {
-    const { storedItems = [], ...messageContentRaw } = messageContent
+    const { storedItems: _, ...messageContentRaw } = messageContent
     const dbItem = mapMessageContentToDb({ ...messageContentRaw, messageId })
 
     const { data, error } = await supabase.from("message_contents")
@@ -78,9 +76,10 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     const result = mapDbToMessageContentNested(data)
     cache.updateMessageContent(dialogId, messageId, result)
 
-    for (const item of storedItems) {
-      await upsertStoredItem(dialogId, messageId, { type: item.type, ...item, dialogId, messageContentId: result.id })
-    }
+    // stored items was already upserted with addStoredItem
+    // for (const item of storedItems) {
+    //   await upsertStoredItem(dialogId, messageId, { type: item.type, ...item, messageContentId: result.id })
+    // }
 
     return cache.getDialogMessageContent(dialogId, messageId, result.id)
   }
@@ -114,22 +113,6 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     return dialogMessage
   }
 
-  // function updateDialogMessageCache(dialogId: string, message: DialogMessageNested) {
-  //   if (dialogMessages[dialogId]) {
-  //     const hasMessage = dialogMessages[dialogId].find((m) => m.id === message.id)
-
-  //     if (hasMessage) {
-  //       dialogMessages[dialogId] = dialogMessages[dialogId].map((m) =>
-  //         m.id === message.id ? message : m
-  //       )
-  //     } else {
-  //       dialogMessages[dialogId].push(message)
-  //     }
-  //   } else {
-  //     dialogMessages[dialogId] = [message]
-  //   }
-  // }
-
   async function upsertDialogMessage(
     dialogId: string,
     message: DialogMessageNestedUpdate,
@@ -161,18 +144,8 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     if (messageContents) {
       for (const content of messageContents) {
         await upsertMessageContent(dialogId, result.id, content)
-        // if (content.id) {
-        //   result.messageContents = result.messageContents.map((c) =>
-        //     c.id === content.id ? messageContent : c
-        //   )
-        // } else {
-        //   result.messageContents.push(messageContent)
-        // }
       }
     }
-
-    // update dialogMessages cache
-    // cache.updateDialogMessage(dialogId, result)
 
     return cache.getDialogMessage(dialogId, result.id)
   }
@@ -219,23 +192,6 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     if (!cacheOnly) {
       await upsertDialogMessageNested(dialogId, dialogMessage)
     }
-
-    // const dialogMessage = merge(
-    //   dialogMessages[dialogId].find((m) => m.id === messageId) || {},
-    //   message
-    // ) as DialogMessageNested
-
-    // const shouldSave =
-    //   dialogMessage.status &&
-    //   !["streaming", "inputing", "pending"].includes(dialogMessage.status)
-
-    // if (!shouldSave) {
-    //   updateDialogMessageCache(dialogId, dialogMessage)
-    // } else {
-    //   await upsertDialogMessageNested(dialogId, dialogMessage)
-    // }
-
-    // await upsertDialogMessageNested(dialogId, dialogMessage)
   }
 
   /**
@@ -257,9 +213,9 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     await fetchDialogMessages(dialogId)
   }
 
-  async function addStoredItem(messageId: string, messageContentId: string, storedItem: StoredItem) {
+  async function addStoredItem(dialogId: string, messageId: string, storedItem: StoredItem<DbStoredItemInsert>) {
     const { data, error } = await supabase.from("stored_items")
-      .insert(mapStoredItemToDb(storedItem) as DbStoredItemInsert)
+      .insert(mapStoredItemToDb(storedItem))
       .select()
       .single()
 
@@ -270,20 +226,7 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
 
     const result = mapDbToStoredItem(data)
 
-    // const messageContent = dialogMessages[storedItem.dialogId].find((m) => m.id === messageContentId)?.messageContents.find((c) => c.id === result.messageContentId)
-
-    // // TODO: simplify caching
-    // if (messageContent) {
-    //   messageContent.storedItems = [...messageContent.storedItems, result]
-    // }
-
-    // dialogMessages[storedItem.dialogId] = dialogMessages[storedItem.dialogId].map((m) =>
-    //   m.id === messageContentId
-    //     ? { ...m, messageContents: [...m.messageContents, messageContent] }
-    //     : m
-    // )
-
-    cache.updateStoredItem(storedItem.dialogId, messageId, messageContentId, result)
+    cache.updateStoredItem(dialogId, messageId, result.messageContentId, result)
 
     return result
   }
@@ -307,12 +250,10 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     cache.removeStoredItem(dialogId, messageId, storedItem.messageContentId, storedItem.id)
   }
 
+  // to update single entity WITHOUT nested entities
   const upsertSingleEntity = async (entity: UpdateSingleEntityParams) => {
     const result: Partial<UpdateSingleEntityParams> = {}
     const { dialogId, messageId, message, messageContent, storedItem, cacheOnly } = entity
-
-    // const message = dialogMessages[entity.dialogId].find((m) => m.id === entity.messageId)
-    // const messageContents = message?.messageContents
 
     if (message) {
       const plainMessage = cache.mergeDialogMessage(dialogId, message, ["messageContents"])
@@ -332,42 +273,10 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
       } else {
         result.messageContent = cache.mergeMessageContent(dialogId, messageId, messageContent)
       }
-
-      // const cacheMessageContent = messageContents.find((c) => c.id === entity.messageContent.id)
-      // const messageContent = entity.cacheOnly ? merge(cacheMessageContent, entity.messageContent) : await upsertMessageContent(entity.dialogId, entity.messageId, entity.messageContent)
-      // if (entity.messageContent.id) {
-      //   const newMessageContents = messageContents.map((c) =>
-      //     c.id === entity.messageContent.id ? messageContent : c
-      //   )
-      //   dialogMessages[entity.dialogId] = dialogMessages[entity.dialogId].map((m) =>
-      //     m.id === entity.messageId ? { ...m, messageContents: newMessageContents } : m
-      //   )
-      // } else {
-      //   dialogMessages[entity.dialogId] = dialogMessages[entity.dialogId].map((m) =>
-      //     m.id === entity.messageId ? { ...m, messageContents: [...m.messageContents, messageContent] } : m
-      //   )
-      // }
-
-      // result.messageContent = messageContent
     }
 
     if (entity.storedItem) {
-      const plainStoredItem = await upsertStoredItem(dialogId, messageId, storedItem)
-      // const messageContent = messageContents.find((c) => c.id === plainStoredItem.messageContentId)
-
-      // if (plainStoredItem.id) {
-      //   messageContent.storedItems = messageContent.storedItems.map((i) =>
-      //     i.id === plainStoredItem.id ? plainStoredItem : i
-      //   )
-      // } else {
-      //   messageContent.storedItems = [...messageContent.storedItems, plainStoredItem]
-      // }
-
-      // dialogMessages[entity.dialogId] = dialogMessages[entity.dialogId].map((m) =>
-      //   m.id === entity.messageId ? { ...m, messageContents: [messageContent] } : m
-      // )
-
-      result.storedItem = plainStoredItem
+      result.storedItem = await upsertStoredItem(dialogId, messageId, storedItem)
     }
 
     return result
@@ -382,6 +291,6 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     deleteStoredItem,
     switchActiveDialogMessage,
     upsertSingleEntity,
-    addStoredItem
+    addStoredItem,
   }
 })

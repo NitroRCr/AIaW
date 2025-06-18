@@ -1,11 +1,9 @@
 import { computed, Ref } from "vue"
 
-import { useStorage } from "@/shared/composables/storage/useStorage"
 import { ApiResultItem } from "@/shared/types"
 
 import { UserMessageContent } from "@/features/dialogs/types"
 
-import { DbMessageContentInsert, MessageContentNested } from "@/services/data/types/messageContents"
 import { StoredItem } from "@/services/data/types/storedItem"
 
 import { useDialogMessages } from "./useDialogMessages"
@@ -22,8 +20,7 @@ import { useDialogMessages } from "./useDialogMessages"
 export const useDialogInput = (
   dialogId: Ref<string>,
 ) => {
-  const { updateMessage, lastMessageId, lastMessage } = useDialogMessages(dialogId)
-  const storage = useStorage()
+  const { upsertSingleEntity, addApiResultStoredItem, lastMessageId, lastMessage } = useDialogMessages(dialogId)
 
   /**
    * Updates the text content of the input message
@@ -31,19 +28,15 @@ export const useDialogInput = (
    * @param text - The new text content
    */
   async function updateInputText(text: string): Promise<void> {
-    await updateMessage(
-      lastMessageId.value,
-      {
-        // use shallow keyPath to avoid dexie's sync bug
-        messageContents: [
-          {
-            ...inputMessageContent.value,
-            text,
-          },
-        ] as MessageContentNested<DbMessageContentInsert>[],
-        status: "inputing",
-      }, true
-    )
+    await upsertSingleEntity({
+      dialogId: dialogId.value,
+      messageId: lastMessageId.value,
+      messageContent: {
+        id: inputMessageContent.value.id,
+        text,
+      },
+      cacheOnly: true,
+    })
   }
 
   /**
@@ -55,22 +48,9 @@ export const useDialogInput = (
    * @param items - API result items to add
    */
   async function addInputItems(items: ApiResultItem[]): Promise<void> {
-    const storedItemsResults = await storage.saveApiResultItems(items, { dialogId: dialogId.value, messageContentId: lastMessageId.value })
-
-    await updateMessage(
-      lastMessageId.value,
-      {
-        messageContents: [
-          {
-            ...inputMessageContent.value,
-            storedItems: [
-              ...inputMessageContent.value.storedItems,
-              ...storedItemsResults,
-            ],
-          },
-        ],
-      }
-    )
+    await Promise.all(items.map(async (item) => {
+      await addApiResultStoredItem(lastMessageId.value, inputMessageContent.value.id, item)
+    }))
   }
 
   /**

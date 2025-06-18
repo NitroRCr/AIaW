@@ -2,13 +2,14 @@ import { storeToRefs } from "pinia"
 import { computed, Ref } from "vue"
 
 import { useStorage } from "@/shared/composables/storage/useStorage"
+import { ApiResultItem } from "@/shared/types"
 
 import { useDialogsStore, useDialogMessagesStore } from "@/features/dialogs/store"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import { DialogMessageNested, DialogMessageNestedUpdate, DbDialogMessageUpdate } from "@/services/data/types/dialogMessage"
 import { DbMessageContentUpdate } from "@/services/data/types/messageContents"
-import { DbStoredItemUpdate, StoredItem } from "@/services/data/types/storedItem"
+import { DbStoredItemInsert, DbStoredItemUpdate, StoredItem } from "@/services/data/types/storedItem"
 
 import { getBranchList, getDialogItemList, TreeListItem } from "./utils/dialogTreeUtils"
 
@@ -16,11 +17,11 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
   const { dialogs } = storeToRefs(useDialogsStore())
   const {
     addDialogMessage, updateDialogMessageNested, upsertSingleEntity, switchActiveDialogMessage, deleteDialogMessage,
-    deleteStoredItem, fetchDialogMessages, addStoredItem: addStoredItemToMessageContent
+    deleteStoredItem, fetchDialogMessages, addStoredItem
   } = useDialogMessagesStore()
   const { dialogMessages: allDialogMessages } = storeToRefs(useDialogMessagesStore())
   const { workspaces } = storeToRefs(useWorkspacesStore())
-  const { deleteFile } = useStorage()
+  const { deleteFile, uploadApiResultItem } = useStorage()
   const dialog = computed(() => dialogs.value[dialogId.value])
   const workspaceId = computed(() => dialog.value?.workspaceId || null)
   const workspace = computed(() => workspaces.value.find(ws => ws.id === dialog.value?.workspaceId))
@@ -112,8 +113,35 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
   }
 
   // TODO: implement this in useDialogInput
-  const addStoredItem = async (messageId: string, storedItem: StoredItem) => {
-    await addStoredItemToMessageContent(dialogId.value, messageId, storedItem)
+  const addMessageStoredItem = async (messageId: string, messageContentId: string, storedItem: StoredItem) => {
+    await addStoredItem(dialogId.value, messageId, {
+      ...storedItem,
+      messageContentId,
+    })
+  }
+
+  const addApiResultStoredItem = async (messageId: string, messageContentId: string, item: ApiResultItem) => {
+    let storedItem: StoredItem<DbStoredItemInsert> | null = null
+
+    if (item.type === "file") {
+      const fileItem = await uploadApiResultItem(item)
+      storedItem = {
+        ...fileItem,
+        messageContentId,
+      }
+    } else {
+      const { contentText, type, name } = item
+
+      storedItem = {
+        contentText,
+        type,
+        name,
+        messageContentId,
+      }
+    }
+
+    // Text items store in DB, not in storage
+    return await addStoredItem(dialogId.value, messageId, storedItem)
   }
 
   function switchBranch (item: TreeListItem<DialogMessageNested>, index: number) {
@@ -139,6 +167,7 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
     deleteStoredItemWithFile,
     fetchMessages,
     upsertSingleEntity,
-    addStoredItem
+    addApiResultStoredItem,
+    addMessageStoredItem
   }
 }

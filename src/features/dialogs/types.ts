@@ -1,6 +1,7 @@
 import { StoredItem, StoredItemResult } from "@/services/data/types/storedItem"
 
 type UserMessageContent = {
+  id: string
   type: "user-message"
   text: string
   storedItems: StoredItem[]

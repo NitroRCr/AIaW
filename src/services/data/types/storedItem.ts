@@ -9,7 +9,7 @@ type DbStoredItemUpdate = Database["public"]["Tables"]["stored_items"]["Update"]
 
 type DbStoredItem = DbStoredItemRow | DbStoredItemInsert | DbStoredItemUpdate
 
-type StoredItemContentType = "text" | "file" | "quote"
+type StoredItemContentType = "image" | "file" | "text" | "quote"
 
 type StoredItemMap = {
   type: StoredItemContentType

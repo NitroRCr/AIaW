@@ -107,11 +107,11 @@ export const useDialogsStore = defineStore("dialogs", () => {
    * @returns {Promise<Dialog>} The created dialog with generated ID
    */
   async function addDialog (
-    dialog: Partial<Dialog>,
+    dialog: Dialog<DbDialogInsert>,
   ) {
     const { data, error } = await supabase
       .from("dialogs")
-      .insert(mapDialogToDb(dialog as Dialog<DbDialogInsert>))
+      .insert(mapDialogToDb(dialog))
       .select()
       .single()
 

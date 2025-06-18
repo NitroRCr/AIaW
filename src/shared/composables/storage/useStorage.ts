@@ -1,10 +1,9 @@
 import { fileTypeFromBuffer } from "file-type"
 
-import { ApiResultItem } from "@/shared/types"
+import { ApiResultItem, StorageApiResultItem } from "@/shared/types"
 import { genId } from "@/shared/utils/functions"
 
 import { supabase } from "@/services/data/supabase/client"
-import { StoredItem } from "@/services/data/types/storedItem"
 
 import { BucketName } from "./types"
 import { BASE_URL } from "./utils"
@@ -264,89 +263,14 @@ export function useStorage () {
           name,
           fileUrl: path,
           mimeType: fileType.mime,
-          type: "file", // fileType.mime.startsWith('image/') ? 'image' : 'file'
-        } as StoredItem
+          type: fileType.mime.startsWith("image/") ? "image" : "file"
+        } as StorageApiResultItem
       } else {
         throw Error("Failed to detect mime type")
       }
     }
 
     return null
-  }
-
-  /**
-   * Saves an API result item to storage, handling both file and text content types
-   *
-   * For file items: uploads the file to storage and returns combined metadata.
-   * For text items: returns the text content along with provided metadata.
-   * Merges the result with additional stored item data.
-   *
-   * @param {ApiResultItem} item - Item to process (file or text)
-   * @param {Partial<StoredItem>} storedItemData - Additional metadata to merge
-   * @returns {Promise<StoredItem|null>} Combined stored item data
-   * @throws {Error} When:
-   * - File upload fails (for file items)
-   * - Invalid item structure
-   *
-   * @example {@lang typescript}
-   * // Save text content with metadata
-   * await saveApiResultItem(
-   *   { type: 'text', contentText: 'Analysis result' },
-   *   { workspaceId: 'abc123', userId: 'user_456' }
-   * )
-   */
-  // TODO: move outside storage
-  const saveApiResultItem = async (
-    item: ApiResultItem,
-    storedItemData: Partial<StoredItem>
-  ) => {
-    if (item.type === "file") {
-      const fileItem = await uploadApiResultItem(item)
-
-      if (fileItem) {
-        return {
-          ...fileItem,
-          ...storedItemData,
-        }
-      }
-    }
-
-    // Text items store in DB, not in storage
-    return {
-      contentText: item.contentText,
-      type: item.type,
-      name: item.name,
-      ...storedItemData,
-    }
-  }
-
-  /**
-   * Saves multiple API result items concurrently using parallel processing
-   *
-   * Processes all items simultaneously for better performance when handling
-   * multiple files or text items.
-   *
-   * @param {ApiResultItem[]} items - Items to process in parallel
-   * @param {Partial<StoredItem>} storedItemData - Common metadata for all items
-   * @returns {Promise<Array<StoredItem|null>>} Array of stored items with preserved order
-   * @throws {AggregateError} If any item processing fails (when using Promise.any)
-   *
-   * @example {@lang typescript}
-   * // Batch process multiple API results
-   * const results = await saveApiResultItems(
-   *   [fileItem, textItem, imageItem],
-   *   { source: 'api-import' }
-   * )
-   *
-   * // Handle successes and failures
-   * const successfulItems = results.filter(Boolean) as StoredItem[]
-   */
-  // TODO: move storedItems part -> dialogMessages
-  const saveApiResultItems = async (
-    items: ApiResultItem[],
-    storedItemData: Partial<StoredItem>
-  ) => {
-    return Promise.all(items.map((item) => saveApiResultItem(item, storedItemData)))
   }
 
   return {
@@ -357,7 +281,5 @@ export function useStorage () {
     deleteFile,
     getFileSizeByUrl,
     uploadApiResultItem,
-    saveApiResultItem,
-    saveApiResultItems
   }
 }

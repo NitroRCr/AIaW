@@ -93,6 +93,13 @@ interface ApiResultItem {
   mimeType?: string
 }
 
+interface StorageApiResultItem {
+  name: string
+  fileUrl: string
+  mimeType: string
+  type: "image" | "file"
+}
+
 interface ToolResultContent {
   type: "text" | "file" | "image"
   text?: string
@@ -508,4 +515,5 @@ export type {
   ArtifactVersion,
   PluginPrompt,
   ToolResultContent,
+  StorageApiResultItem
 }
