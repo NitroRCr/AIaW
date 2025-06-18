@@ -37,10 +37,19 @@ const mapDbToWorkspace = <T extends WorkspaceDbType>(dbWorkspace: T) => {
 const mapWorkspaceToDb = <T extends WorkspaceDbType>(workspace: Workspace<T>) =>
   entityToDto(workspace) as T
 
-const mapDbToWorkspaceMember = (dbWorkspaceMember: DbWorkspaceMember) =>
-  dtoToEntity(dbWorkspaceMember) as WorkspaceMember
+const mapDbToWorkspaceMember = (dbWorkspaceMember: DbWorkspaceMember) => {
+  const workspaceMember = dtoToEntity(dbWorkspaceMember) as WorkspaceMember
 
-export { mapDbToWorkspace, mapDbToWorkspaceMember, mapWorkspaceToDb }
+  return {
+    ...workspaceMember,
+    profile: mapAvatarOrDefault(workspaceMember.profile, workspaceMember.profile.name)
+  }
+}
+
+const mapWorkspaceMemberToDb = (workspaceMember: WorkspaceMember) =>
+  entityToDto(workspaceMember) as DbWorkspaceMember
+
+export { mapDbToWorkspace, mapDbToWorkspaceMember, mapWorkspaceMemberToDb, mapWorkspaceToDb }
 export type {
   WorkspaceMember, Workspace,
   WorkspaceMemberRole, WorkspaceRole,

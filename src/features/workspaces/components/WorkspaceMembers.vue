@@ -55,7 +55,6 @@ import { useUserStore } from "@/shared/store"
 import UserListDialog from "@/features/chats/components/UserListDialog.vue"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { Profile } from "@/services/data/types/profile"
 import { WorkspaceMember, WorkspaceMemberRole } from "@/services/data/types/workspace"
 
 const props = defineProps<{
@@ -72,8 +71,8 @@ const showUserSelectDialog = () => {
     componentProps: {
       currentUserId: userStore.currentUserId,
     },
-  }).onOk((user) => {
-    onAddMember(user)
+  }).onOk((userId) => {
+    onAddMember(userId)
   })
 }
 const onUpdateMemberRole = async (member: WorkspaceMember) => {
@@ -89,10 +88,10 @@ const onRemoveMember = async (member: WorkspaceMember) => {
   members.value = members.value.filter((m) => m.userId !== member.userId)
 }
 
-const onAddMember = async (user: Profile) => {
+const onAddMember = async (userId: string) => {
   const member = await workspacesStore.addWorkspaceMember(
     props.workspaceId,
-    user.id,
+    userId,
     "member"
   )
   members.value = [...members.value, member]

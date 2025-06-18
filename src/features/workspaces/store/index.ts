@@ -11,8 +11,6 @@ import { useWorkspacesWithSubscription } from "@/features/workspaces/composables
 import { supabase } from "@/services/data/supabase/client"
 import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspaceMember, mapWorkspaceToDb, Workspace, WorkspaceMember, WorkspaceMemberRole, WorkspaceRole } from "@/services/data/types/workspace"
 
-const SELECT_WORKSPACE_MEMBERS = "*, profile:profiles(id, name)"
-
 /**
  * Store for managing workspaces and workspace members
  *
@@ -132,7 +130,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     const { data, error } = await supabase
       .from("workspace_members")
       .insert({ workspace_id: workspaceId, user_id: userId, role })
-      .select(SELECT_WORKSPACE_MEMBERS)
+      .select("*, profile:profiles(*)")
       .single()
 
     if (error) {
@@ -171,11 +169,13 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     userId: string,
     role: WorkspaceMemberRole
   ) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("workspace_members")
       .update({ role })
       .eq("workspace_id", workspaceId)
       .eq("user_id", userId)
+      .select()
+      .single()
 
     if (error) {
       console.error("❌ Failed to update workspace member:", error.message)
@@ -183,14 +183,14 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
 
     workspaceMembers.value = workspaceMembers.value.map((member) =>
-      member.userId === userId ? { ...member, role } : member
+      member.userId === userId ? mapDbToWorkspaceMember(data as DbWorkspaceMember) : member
     )
   }
 
   async function getWorkspaceMembers (workspaceId: string) {
     const { data, error } = await supabase
       .from("workspace_members")
-      .select(SELECT_WORKSPACE_MEMBERS)
+      .select("*, profile:profiles(*)")
       .eq("workspace_id", workspaceId)
 
     if (error) {
