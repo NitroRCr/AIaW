@@ -73,13 +73,16 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import AAvatar from "@/shared/components/avatar/AAvatar.vue"
-import SelectWorkspaceDialog from "@/features/workspaces/components/SelectWorkspaceDialog.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { useAssistantActions } from "@/features/workspaces/composables/useAssistantActions"
-import { caselessIncludes, pageFhStyle } from "@/shared/utils/functions"
 import { computed, reactive, ref } from "vue"
 import { useI18n } from "vue-i18n"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import { caselessIncludes, pageFhStyle } from "@/shared/utils/functions"
+
+import SelectWorkspaceDialog from "@/features/workspaces/components/SelectWorkspaceDialog.vue"
+import { useAssistantActions } from "@/features/workspaces/composables/useAssistantActions"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 const { t } = useI18n()
 defineEmits(["toggle-drawer"])

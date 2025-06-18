@@ -1,12 +1,14 @@
 import { useQuasar } from "quasar"
-import SelectWorkspaceDialog from "@features/workspaces/components/SelectWorkspaceDialog.vue"
-import { useAssistantsStore } from "@features/assistants/store"
-import { useUserDataStore, useUserPerfsStore } from "@shared/store"
-import { useWorkspacesStore } from "@features/workspaces/store"
-import { defaultAvatar } from "@shared/utils/functions"
-import { dialogOptions } from "@/shared/utils/values"
 import { useI18n } from "vue-i18n"
+
+import { useUserDataStore, useUserPerfsStore } from "@/shared/store"
+import { defaultAvatar } from "@/shared/utils/functions"
+import { dialogOptions } from "@/shared/utils/values"
+
+import { useAssistantsStore } from "@/features/assistants/store"
 import { useCheckLogin } from "@/features/auth/composables"
+import SelectWorkspaceDialog from "@/features/workspaces/components/SelectWorkspaceDialog.vue"
+import { useWorkspacesStore } from "@/features/workspaces/store"
 
 export function useWorkspaceActions () {
   const workspacesStore = useWorkspacesStore()

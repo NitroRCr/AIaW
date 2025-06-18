@@ -5,6 +5,7 @@
 
 import { copyFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+
 import { configure } from 'quasar/wrappers'
 
 export default configure((ctx) => {

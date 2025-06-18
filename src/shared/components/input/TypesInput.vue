@@ -64,6 +64,7 @@
 <script setup lang="ts">
 import { QInput } from "quasar"
 import { computed } from "vue"
+
 import LazyInput from "./LazyInput.vue"
 
 const props = defineProps<{

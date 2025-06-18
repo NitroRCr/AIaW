@@ -12,12 +12,10 @@ import {
   useFormProps,
   useFormInputNameAttr,
 } from "quasar/src/composables/use-form/private.use-form.js"
-
 import { stop } from "quasar/src/utils/event/event.js"
 import { createComponent } from "quasar/src/utils/private.create/create.js"
 import { addFocusFn } from "quasar/src/utils/private.focus/focus-manager.js"
 import { injectProp } from "quasar/src/utils/private.inject-obj-prop/inject-obj-prop.js"
-import keyComposition from "@shared/composables/keyComposition"
 import {
   h,
   ref,
@@ -28,6 +26,8 @@ import {
   nextTick,
   getCurrentInstance,
 } from "vue"
+
+import keyComposition from "@/shared/composables/keyComposition"
 
 export default createComponent({
   name: "AInput",

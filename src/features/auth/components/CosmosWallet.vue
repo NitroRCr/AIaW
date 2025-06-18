@@ -39,8 +39,10 @@
 
 <script setup lang="ts">
 import { computed, inject, ref } from "vue"
-import MnemonicDialog from "./MnemonicDialog.vue"
+
 import { CosmosWallet } from "@/services/cosmos/CosmosWallet"
+
+import MnemonicDialog from "./MnemonicDialog.vue"
 
 const wallet = inject<CosmosWallet>("cosmos")
 const showMnemonicDialog = ref(false)

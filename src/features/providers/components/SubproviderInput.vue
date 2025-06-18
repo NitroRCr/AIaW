@@ -24,8 +24,10 @@
 </template>
 
 <script setup lang="ts">
-import { SubproviderMapped } from "@/services/supabase/types"
 import { computed } from "vue"
+
+import { SubproviderMapped } from "@/services/supabase/types"
+
 import GetModelList from "./GetModelList.vue"
 import ModelsInput from "./ModelsInput.vue"
 import ProviderInputItems from "./ProviderInputItems.vue"

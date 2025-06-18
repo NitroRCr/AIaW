@@ -1,5 +1,5 @@
-import { useCreateArtifact } from "./createArtifact"
 import { useCloseArtifact } from "./closeArtifact"
+import { useCreateArtifact } from "./createArtifact"
 
 export {
   useCreateArtifact,

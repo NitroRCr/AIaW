@@ -17,19 +17,15 @@ import {
   String as TString,
 } from "@sinclair/typebox"
 import { Parser } from "expr-eval"
-import { i18n } from "@/boot/i18n"
-import artifacts from "../buildin/artifactsPlugin"
-import { AudioEncoderSupported, extractAudioBlob } from "@/features/media/utils/audioProcess"
+
 import { DocParseBaseURL } from "@/shared/utils/config"
-import { corsFetch } from "@shared/utils/corsFetch"
-import { parseDoc } from "@features/artifacts/utils/docParse"
+import { corsFetch } from "@/shared/utils/corsFetch"
 import {
   base64ToArrayBuffer,
   defaultTextAvatar,
   parsePageRange,
   parseSeconds,
 } from "@/shared/utils/functions"
-import { getClient } from "./mcpClient"
 import { IsTauri } from "@/shared/utils/platformApi"
 import {
   GradioFixedInput,
@@ -45,7 +41,16 @@ import {
   McpPluginManifest,
   Avatar,
 } from "@/shared/utils/types"
+
+import { parseDoc } from "@/features/artifacts/utils/docParse"
+import { AudioEncoderSupported, extractAudioBlob } from "@/features/media/utils/audioProcess"
+
+import artifacts from "../buildin/artifactsPlugin"
 import webSearchPlugin from "../buildin/webSearchPlugin"
+
+import { getClient } from "./mcpClient"
+
+import { i18n } from "@/boot/i18n"
 
 const { t } = i18n.global
 

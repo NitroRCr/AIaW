@@ -9,8 +9,9 @@ import { GenericAuthorization } from "cosmjs-types/cosmos/authz/v1beta1/authz"
 import { MsgGrant, MsgRevoke } from "cosmjs-types/cosmos/authz/v1beta1/tx"
 import { SendAuthorization } from "cosmjs-types/cosmos/bank/v1beta1/authz"
 import { Any } from "cosmjs-types/google/protobuf/any"
-import { EncryptionService } from "@services/security/encryption/EncryptionService"
-import { config } from "@services/blockchain/constants"
+
+import { config } from "@/services/blockchain/constants"
+import { EncryptionService } from "@/services/security/encryption/EncryptionService"
 
 export interface WalletInfo {
   address: string

@@ -1,5 +1,6 @@
 import { OfflineSigner, OfflineDirectSigner } from "@cosmjs/proto-signing"
 import { defineStore } from "pinia"
+
 import {
   WalletService,
   WalletInfo,

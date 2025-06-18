@@ -4,15 +4,19 @@ import { coins } from "@cosmjs/proto-signing"
 import { MsgExec } from "cosmjs-types/cosmos/authz/v1beta1/tx"
 import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx"
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx"
-import { WalletService } from "@/services"
-import { config } from "@/services/constants"
+
+import { IsTauri } from "@/shared/utils/platformApi"
+import { Plugin } from "@/shared/utils/types"
+
+import { useAuthStore } from "@/features/auth/store/auth"
+
 import {
   CYBER_CONTRACT_ADDRESS,
   getLocalStorageWalletState,
 } from "@/services/blockchain/kepler/KeplerWallet"
-import { useAuthStore } from "@features/auth/store/auth"
-import { IsTauri } from "@/shared/utils/platformApi"
-import { Plugin } from "@shared/utils/types"
+import { config } from "@/services/constants"
+
+import { WalletService } from "@/services"
 
 // Function to get wallet state depending on platform
 const getWalletState = () => {

@@ -6,7 +6,9 @@
 </template>
 <script setup lang="ts">
 import { CodeJar } from "codejar"
+// eslint-disable-next-line import/order
 import { withLineNumbers } from "codejar-linenumbers"
+
 import "codejar-linenumbers/js/codejar-linenumbers.css"
 
 import { computed, onMounted, ref, watchEffect } from "vue"

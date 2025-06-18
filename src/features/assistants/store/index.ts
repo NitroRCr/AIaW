@@ -1,13 +1,16 @@
 /* eslint-disable camelcase */
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { defaultModelSettings } from "@/features/assistants/consts"
-import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
-import { supabase } from "@/services/supabase/client"
-import { defaultAvatar, defaultTextAvatar } from "@/shared/utils/functions"
-import { AssistantDefaultPrompt } from "@/features/dialogs/utils/templates"
 import { ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { defaultAvatar, defaultTextAvatar } from "@/shared/utils/functions"
+
+import { defaultModelSettings } from "@/features/assistants/consts"
+import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
+import { AssistantDefaultPrompt } from "@/features/dialogs/utils/templates"
+
+import { supabase } from "@/services/supabase/client"
 import { AssistantMapped, Assistant } from "@/services/supabase/types"
 
 function mapAssistantTypes (item: Assistant): AssistantMapped {

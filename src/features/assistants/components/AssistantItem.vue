@@ -38,8 +38,9 @@
 </template>
 
 <script setup lang="ts">
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+
 import { AssistantMapped } from "@/services/supabase/types"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
 
 defineProps<{
   assistant?: AssistantMapped

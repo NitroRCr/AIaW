@@ -23,11 +23,13 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
 import { useQuasar } from "quasar"
-import { useProfileStore } from "@features/profile/store"
-import { useUserStore } from "@shared/store/user"
 import { useRouter, useRoute } from "vue-router"
-import { AAvatar } from "@shared/components/avatar"
-import AuthDialog from "@features/auth/components/AuthDialog.vue"
+
+import { AAvatar } from "@/shared/components/avatar"
+import { useUserStore } from "@/shared/store/user"
+
+import AuthDialog from "@/features/auth/components/AuthDialog.vue"
+import { useProfileStore } from "@/features/profile/store"
 
 const $q = useQuasar()
 

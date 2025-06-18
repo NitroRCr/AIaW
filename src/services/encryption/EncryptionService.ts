@@ -1,2 +1,2 @@
 // Re-export for backward compatibility
-export * from "@services/security/encryption/EncryptionService"
+export * from "@/services/security/encryption/EncryptionService"

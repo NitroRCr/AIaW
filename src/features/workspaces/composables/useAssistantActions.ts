@@ -1,11 +1,13 @@
 import { Validator } from "@cfworker/json-schema"
 import { useQuasar } from "quasar"
-import { defaultModelSettings } from "@/features/assistants/consts"
-import { useAssistantsStore } from "@features/assistants/store"
-import { AssistantDefaultPrompt } from "@/shared/utils/template/templates"
-import { MarketAssistantSchema } from "@/shared/utils/types"
 import { toRaw } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { AssistantDefaultPrompt } from "@/shared/utils/template/templates"
+import { MarketAssistantSchema } from "@/shared/utils/types"
+
+import { defaultModelSettings } from "@/features/assistants/consts"
+import { useAssistantsStore } from "@/features/assistants/store"
 
 export function useAssistantActions () {
   const assistantsStore = useAssistantsStore()

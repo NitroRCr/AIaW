@@ -84,16 +84,19 @@
 
 <script setup lang="ts">
 import { MdPreview } from "md-editor-v3"
-import { useMdPreviewProps } from "@/shared/composables/mdPreviewProps"
-import { usePluginsStore } from "@/features/plugins/store"
-import { wrapCode } from "@shared/utils/functions"
-import { engine } from "@features/dialogs/utils/templateEngine"
 import { computed } from "vue"
 import { useI18n } from "vue-i18n"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import { useMdPreviewProps } from "@/shared/composables/mdPreviewProps"
+import { wrapCode } from "@/shared/utils/functions"
+
+import { AssistantToolContent } from "@/features/dialogs/types"
+import { engine } from "@/features/dialogs/utils/templateEngine"
 import MessageAudio from "@/features/media/components/MessageAudio.vue"
 import MessageImage from "@/features/media/components/MessageImage.vue"
-import { AssistantToolContent } from "@/features/dialogs/types"
+import { usePluginsStore } from "@/features/plugins/store"
+
 import { StoredItemMapped } from "@/services/supabase/types"
 
 const { t } = useI18n()

@@ -1,14 +1,16 @@
 import { MdPreviewProps } from "md-editor-v3"
 import { Dark } from "quasar"
+import { watchEffect } from "vue"
+
 import {
   Avatar,
   Model,
   PlatformEnabled,
   Provider,
   ShortcutKey,
-} from "@shared/utils/types"
+} from "@/shared/utils/types"
 import { models } from "@/shared/utils/values"
-import { watchEffect } from "vue"
+
 import { createUserDataStore } from "./utils/createUserDataStore"
 
 interface Perfs {

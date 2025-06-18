@@ -1,17 +1,19 @@
 import { storeToRefs } from "pinia"
 import { useQuasar } from "quasar"
-import { defaultModelSettings } from "@/features/assistants/consts"
-import AuthDialog from "@features/auth/components/AuthDialog.vue"
-import { useAssistantsStore } from "@features/assistants/store"
-import { useUserStore } from "@shared/store"
-import { useWorkspacesStore } from "@features/workspaces/store"
-import { defaultAvatar } from "@shared/utils/functions"
-import { localData } from "@/shared/utils/localData"
-import { AssistantDefaultPrompt } from "@features/dialogs/utils/templates"
-import { dialogOptions } from "@/shared/utils/values"
 import { onMounted, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
+
+import { useUserStore } from "@/shared/store"
+import { defaultAvatar } from "@/shared/utils/functions"
+import { localData } from "@/shared/utils/localData"
+import { dialogOptions } from "@/shared/utils/values"
+
+import { defaultModelSettings } from "@/features/assistants/consts"
+import { useAssistantsStore } from "@/features/assistants/store"
+import AuthDialog from "@/features/auth/components/AuthDialog.vue"
+import { AssistantDefaultPrompt } from "@/features/dialogs/utils/templates"
+import { useWorkspacesStore } from "@/features/workspaces/store"
 
 export function useFirstVisit () {
   const $q = useQuasar()

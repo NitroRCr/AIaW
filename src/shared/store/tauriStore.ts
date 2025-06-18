@@ -1,4 +1,5 @@
 import { Store } from "@tauri-apps/plugin-store"
+
 import { IsTauri } from "@/shared/utils/platformApi"
 
 const store = IsTauri ? await Store.load("settings.json") : null

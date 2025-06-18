@@ -1,2 +1,2 @@
 // Re-export for backward compatibility
-export * from "@services/data/supabase/types"
+export * from "@/services/data/supabase/types"

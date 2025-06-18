@@ -1,6 +1,7 @@
 /* eslint-disable no-useless-escape */
 import { Boolean, Object, Optional, Static, String } from "@sinclair/typebox"
-import { i18n } from "src/boot/i18n"
+
+import { i18n } from "@/boot/i18n"
 
 const GenDialogTitle = `
 <instructions>

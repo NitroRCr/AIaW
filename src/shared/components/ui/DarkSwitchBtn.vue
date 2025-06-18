@@ -10,9 +10,10 @@
 </template>
 
 <script setup lang="ts">
-import { useUserPerfsStore } from "@/shared/store/userPerfs"
 import { computed } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { useUserPerfsStore } from "@/shared/store/userPerfs"
 
 const { t } = useI18n()
 const { data: perfs } = useUserPerfsStore()

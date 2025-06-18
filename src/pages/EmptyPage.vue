@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import SettingsArea from "@/shared/components/layout/SettingsArea.vue"
-import { useUiStateStore } from "@shared/store"
+import { useUiStateStore } from "@/shared/store"
 
 const uiStateStore = useUiStateStore()
 </script>

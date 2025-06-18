@@ -30,6 +30,7 @@ import {
 } from "@sinclair/typebox"
 import { computed, watch } from "vue"
 import { useI18n } from "vue-i18n"
+
 import JsonInput from "@/shared/components/ui/JsonInput.vue"
 
 const { t } = useI18n()

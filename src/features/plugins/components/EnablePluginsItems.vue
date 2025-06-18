@@ -60,12 +60,14 @@
 </template>
 
 <script setup lang="ts">
-import { useAssistantsStore } from "@features/assistants/store"
-import { usePluginsStore } from "@features/plugins/store"
-import { AssistantPlugin, Plugin } from "@shared/utils/types"
 import { toRaw, computed, ref, watch } from "vue"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
-import PluginTypeBadge from "@features/plugins/components/PluginTypeBadge.vue"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import { AssistantPlugin, Plugin } from "@/shared/utils/types"
+
+import { useAssistantsStore } from "@/features/assistants/store"
+import PluginTypeBadge from "@/features/plugins/components/PluginTypeBadge.vue"
+import { usePluginsStore } from "@/features/plugins/store"
 
 const props = defineProps<{
   assistantId: string

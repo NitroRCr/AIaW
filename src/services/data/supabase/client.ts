@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createClient } from "@supabase/supabase-js"
+
 import { Database } from "./database.types"
 
 const supabaseUrl = process.env.SUPABASE_URL

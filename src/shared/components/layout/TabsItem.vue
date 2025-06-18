@@ -41,10 +41,11 @@
 </template>
 
 <script setup lang="ts">
-import ChatList from "@features/chats/components/ChatList.vue"
-import DialogList from "@features/dialogs/components/DialogList.vue"
-import { useActiveWorkspace } from "@features/workspaces/composables/useActiveWorkspace"
 import { computed, ref } from "vue"
+
+import ChatList from "@/features/chats/components/ChatList.vue"
+import DialogList from "@/features/dialogs/components/DialogList.vue"
+import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
 const { workspace } = useActiveWorkspace()
 const workspaceId = computed(() => workspace.value?.id as string)

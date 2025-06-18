@@ -76,15 +76,18 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import AAvatar from "@/shared/components/avatar/AAvatar.vue"
-import ATip from "@/shared/components/ATip.vue"
-import InstallPluginBtn from "@/features/plugins/components/InstallPluginBtn.vue"
-import PluginTypeBadge from "@/features/plugins/components/PluginTypeBadge.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { caselessIncludes, pageFhStyle } from "@/shared/utils/functions"
-import { IsTauri } from "@/shared/utils/platformApi"
 import { computed, reactive, ref } from "vue"
 import { useI18n } from "vue-i18n"
+
+import ATip from "@/shared/components/ATip.vue"
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import { caselessIncludes, pageFhStyle } from "@/shared/utils/functions"
+import { IsTauri } from "@/shared/utils/platformApi"
+
+import InstallPluginBtn from "@/features/plugins/components/InstallPluginBtn.vue"
+import PluginTypeBadge from "@/features/plugins/components/PluginTypeBadge.vue"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 defineEmits(["toggle-drawer"])
 

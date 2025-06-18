@@ -3,8 +3,10 @@
 </template>
 
 <script setup lang="ts">
-import { codeExtensions } from "@/shared/utils/values"
 import { computed } from "vue"
+
+import { codeExtensions } from "@/shared/utils/values"
+
 import { ArtifactMapped } from "@/services/supabase/types"
 
 const props = defineProps<{

@@ -29,12 +29,16 @@
 </template>
 
 <script setup lang="ts">
-import { useWorkspaceActions } from "@features/workspaces/composables/workspaceActions"
-import { useUserDataStore } from "@shared/store"
-import { useWorkspacesStore } from "@features/workspaces/store"
 import { useRouter, useRoute } from "vue-router"
-import WorkspaceListSelect from "./WorkspaceListSelect.vue"
+
+import { useUserDataStore } from "@/shared/store"
+
+import { useWorkspaceActions } from "@/features/workspaces/composables/workspaceActions"
+import { useWorkspacesStore } from "@/features/workspaces/store"
+
 import type { WorkspaceMapped } from "@/services/supabase/types"
+
+import WorkspaceListSelect from "./WorkspaceListSelect.vue"
 
 const { addWorkspace, addFolder } = useWorkspaceActions()
 const userDataStore = useUserDataStore()

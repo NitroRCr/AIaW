@@ -118,15 +118,19 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
 import { useQuasar } from "quasar"
+import { computed } from "vue"
+import { useI18n } from "vue-i18n"
+
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import JsonInput from "@/shared/components/ui/JsonInput.vue"
 import ListInput from "@/shared/components/ui/ListInput.vue"
-import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import { useSetTitle } from "@/shared/composables/setTitle"
-import ErrorNotFound from "@/pages/ErrorNotFound.vue"
+
 import { usePluginsStore } from "@/features/plugins/store"
-import { computed } from "vue"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 
 const props = defineProps<{
   id: string
@@ -155,7 +159,6 @@ function pickAvatar () {
   })
 }
 
-import { useI18n } from "vue-i18n"
 const { t } = useI18n()
 useSetTitle(
   computed(

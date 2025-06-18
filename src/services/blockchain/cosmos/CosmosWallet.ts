@@ -9,18 +9,20 @@ import {
   OfflineDirectSigner,
 } from "@cosmjs/proto-signing"
 import { GasPrice } from "@cosmjs/stargate"
+import { ref } from "vue"
+
 import {
   saveMnemonic,
   getMnemonic,
   removeMnemonic,
 } from "@/shared/store/tauriStore"
 import { IsTauri } from "@/shared/utils/platformApi"
-import { ref } from "vue"
-import { config } from "@services/blockchain/constants"
-import { EncryptionService } from "@services/security/encryption/EncryptionService"
-import { CYBER_CONTRACT_ADDRESS } from "@services/blockchain/kepler/KeplerWallet"
-import type { TxStatusResponse } from "@services/blockchain/kepler/types"
-import { parseTxStatus } from "@services/blockchain/kepler/utils"
+
+import { config } from "@/services/blockchain/constants"
+import { CYBER_CONTRACT_ADDRESS } from "@/services/blockchain/kepler/KeplerWallet"
+import type { TxStatusResponse } from "@/services/blockchain/kepler/types"
+import { parseTxStatus } from "@/services/blockchain/kepler/utils"
+import { EncryptionService } from "@/services/security/encryption/EncryptionService"
 
 export interface CosmosSignerState {
   isConnected: boolean

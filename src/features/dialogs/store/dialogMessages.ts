@@ -1,8 +1,9 @@
 import { LanguageModelUsage } from "ai"
 import merge from "lodash/merge"
 import { defineStore } from "pinia"
-import { supabase } from "@/services/supabase/client"
 import { reactive } from "vue"
+
+import { supabase } from "@/services/supabase/client"
 import {
   DialogMessageMapped,
   MessageContentMapped,

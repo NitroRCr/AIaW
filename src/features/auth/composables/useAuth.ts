@@ -1,6 +1,7 @@
 import { useQuasar } from "quasar"
-import { supabase } from "@/services/supabase/client"
 import { Ref } from "vue"
+
+import { supabase } from "@/services/supabase/client"
 
 export function useAuth (loading: Ref<boolean>, onComplete: () => void) {
   const $q = useQuasar()

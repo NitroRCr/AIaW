@@ -1,10 +1,11 @@
+import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
+import { useProfileStore } from "@/features/profile/store"
+
 import { supabase } from "@/services/supabase/client"
 import type {
   ChatMessageWithProfile,
   ProfileMapped,
 } from "@/services/supabase/types"
-import { useProfileStore } from "@features/profile/store"
-import { useUserLoginCallback } from "@features/auth/composables/useUserLoginCallback"
 
 // Cache for sender profiles
 const profileCache = new Map<string, ProfileMapped | null>()

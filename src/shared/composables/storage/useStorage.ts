@@ -1,9 +1,12 @@
 import { fileTypeFromBuffer } from "file-type"
-import { supabase } from "@/services/supabase/client"
+
 import { genId } from "@/shared/utils/functions"
-import { AVATAR_BUCKET, BASE_URL } from "./utils"
-import { StoredItemMapped } from "@/services/supabase/types"
 import { ApiResultItem } from "@/shared/utils/types"
+
+import { supabase } from "@/services/supabase/client"
+import { StoredItemMapped } from "@/services/supabase/types"
+
+import { AVATAR_BUCKET, BASE_URL } from "./utils"
 
 async function detectMimeType (arrayBuffer: ArrayBuffer) {
   const uint8Array = new Uint8Array(arrayBuffer)

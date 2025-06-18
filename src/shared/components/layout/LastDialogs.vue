@@ -34,12 +34,15 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
-import { DialogMapped } from "@/services/supabase/types"
-import { useDialogsStore } from "@features/dialogs/store/dialogs"
-import { useWorkspacesStore } from "@features/workspaces/store"
 import { computed } from "vue"
 import { useRouter } from "vue-router"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+
+import { useDialogsStore } from "@/features/dialogs/store/dialogs"
+import { useWorkspacesStore } from "@/features/workspaces/store"
+
+import { DialogMapped } from "@/services/supabase/types"
 
 const MAX_LAST_DIALOGS = 3
 const router = useRouter()

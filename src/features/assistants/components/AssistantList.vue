@@ -27,11 +27,14 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
-import { useAssistantsStore } from "@features/assistants/store"
-import { useUserPerfsStore } from "@shared/store"
-import { defaultAvatar } from "@shared/utils/functions"
 import { computed } from "vue"
 import { useRouter } from "vue-router"
+
+import { useUserPerfsStore } from "@/shared/store"
+import { defaultAvatar } from "@/shared/utils/functions"
+
+import { useAssistantsStore } from "@/features/assistants/store"
+
 import AssistantListItem from "./AssistantListItem.vue"
 
 const { workspaceId } = defineProps<{ workspaceId: string }>()

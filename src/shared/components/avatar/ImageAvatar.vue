@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { getAvatarUrl } from "@shared/composables/storage/utils"
+import { getAvatarUrl } from "@/shared/composables/storage/utils"
 
 const props = defineProps<{
   id: string

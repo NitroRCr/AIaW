@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { useDialogPluginComponent } from "quasar"
 import { ref } from "vue"
+
 import WorkspaceListSelect from "./WorkspaceListSelect.vue"
 
 defineProps<{

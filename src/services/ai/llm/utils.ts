@@ -1,13 +1,16 @@
 import { generateText, LanguageModelV1 } from "ai"
-import { engine } from "@features/dialogs/utils/templateEngine"
+
+import { PluginPrompt } from "@/shared/utils/types"
+
+import { engine } from "@/features/dialogs/utils/templateEngine"
 import {
   GenDialogTitle,
   NameArtifactPrompt,
   ExtractArtifactPrompt,
   PluginsPrompt,
-} from "@features/dialogs/utils/templates"
-import { MessageContentMapped } from "@services/data/supabase/types"
-import { PluginPrompt } from "@shared/utils/types"
+} from "@/features/dialogs/utils/templates"
+
+import { MessageContentMapped } from "@/services/data/supabase/types"
 
 const generateTitle = async (
   model: LanguageModelV1,

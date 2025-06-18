@@ -1,7 +1,8 @@
 import { useQuasar } from "quasar"
-import { OrderItem } from "@shared/utils/types"
 import { Ref } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { OrderItem } from "@/shared/utils/types"
 
 export function useOrder (loading: Ref<boolean>, onDialogOK: (res) => void) {
   const $q = useQuasar()

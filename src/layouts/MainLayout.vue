@@ -116,20 +116,23 @@
 
 <script setup>
 import { useQuasar } from "quasar"
-import AddDialogItem from "@features/dialogs/components/AddDialogItem.vue"
-import { useOpenLastWorkspace } from "@features/workspaces/composables/openLastWorkspace"
-import { useActiveWorkspace } from "@features/workspaces/composables/useActiveWorkspace"
-import { usePluginsStore } from "@features/plugins/store"
-import { useUiStateStore } from "@shared/store"
-import version from "@/version.json"
 import { computed } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute } from "vue-router"
+
 import AssistantSelector from "@/shared/components/layout/AssistantSelector.vue"
 import LastDialogs from "@/shared/components/layout/LastDialogs.vue"
 import PinnedChats from "@/shared/components/layout/PinnedChats.vue"
 import TabsItem from "@/shared/components/layout/TabsItem.vue"
+import { useUiStateStore } from "@/shared/store"
+
+import AddDialogItem from "@/features/dialogs/components/AddDialogItem.vue"
+import { usePluginsStore } from "@/features/plugins/store"
 import WorkspaceSelector from "@/features/workspaces/components/WorkspaceSelector.vue"
+import { useOpenLastWorkspace } from "@/features/workspaces/composables/openLastWorkspace"
+import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
+
+import version from "@/version.json"
 
 defineOptions({
   name: "MainLayout",

@@ -96,15 +96,18 @@
 </template>
 
 <script setup lang="ts">
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { useAuth } from "@features/auth/composables/useAuth"
-import { useProfileStore } from "@features/profile/store"
-import { AAvatar, PickAvatarDialog } from "@shared/components/avatar"
-import { useUserStore } from "@shared/store/user"
-import { pageFhStyle } from "@shared/utils/functions"
 import { useQuasar } from "quasar"
 import { computed, ref, toRaw, toRefs } from "vue"
 import { useRouter } from "vue-router"
+
+import { AAvatar, PickAvatarDialog } from "@/shared/components/avatar"
+import { useUserStore } from "@/shared/store/user"
+import { pageFhStyle } from "@/shared/utils/functions"
+
+import { useAuth } from "@/features/auth/composables/useAuth"
+import { useProfileStore } from "@/features/profile/store"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 const profileStore = useProfileStore()
 const {
@@ -143,6 +146,7 @@ async function saveProfile() {
 
 function pickAvatar () {
   if (!profile.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: { model: profile.value.avatar, defaultTab: "icon" },

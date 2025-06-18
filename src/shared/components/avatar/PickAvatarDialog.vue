@@ -159,17 +159,20 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent } from "quasar"
-import { useStorage } from "@/shared/composables/storage/useStorage"
-import { useUserPerfsStore } from "@shared/store/userPerfs"
-import { genId } from "@shared/utils/functions"
-import { cropSquareBlob } from "@/features/media/utils/imageProcess"
-import { Avatar } from "@shared/utils/types"
-import { materialSymbols } from "@/shared/utils/values"
 import { ref, toRaw } from "vue"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
-import AvatarPanel from "./AvatarPanel.vue"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import HueSlider from "@/shared/components/ui/HueSlider.vue"
+import { useStorage } from "@/shared/composables/storage/useStorage"
+import { useUserPerfsStore } from "@/shared/store/userPerfs"
+import { genId } from "@/shared/utils/functions"
+import { Avatar } from "@/shared/utils/types"
+import { materialSymbols } from "@/shared/utils/values"
+
 import ImageInputArea from "@/features/media/components/ImageInputArea.vue"
+import { cropSquareBlob } from "@/features/media/utils/imageProcess"
+
+import AvatarPanel from "./AvatarPanel.vue"
 
 const props = defineProps<{
   defaultTab: string

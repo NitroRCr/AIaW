@@ -31,9 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import ATip from "@shared/components/ATip.vue"
-import CustomProviders from "@features/providers/components/CustomProviders.vue"
 import { provide, ref } from "vue"
+
+import ATip from "@/shared/components/ATip.vue"
+
+import CustomProviders from "@/features/providers/components/CustomProviders.vue"
 
 const drawerOpen = ref(false)
 const drawerBreakpoint = 960

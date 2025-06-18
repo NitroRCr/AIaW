@@ -5,9 +5,10 @@ import {
 } from "@cosmjs/cosmwasm-stargate"
 import { GasPrice } from "@cosmjs/stargate"
 import { ref, watch } from "vue"
-import { config } from "@services/blockchain/constants"
-import type { KeplerWalletState, TxStatusResponse } from "@services/blockchain/kepler/types"
-import { parseTxStatus } from "@services/blockchain/kepler/utils"
+
+import { config } from "@/services/blockchain/constants"
+import type { KeplerWalletState, TxStatusResponse } from "@/services/blockchain/kepler/types"
+import { parseTxStatus } from "@/services/blockchain/kepler/utils"
 
 declare global {
   interface Window {

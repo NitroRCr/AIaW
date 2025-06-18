@@ -1,12 +1,15 @@
 /* eslint-disable camelcase */
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { useUserLoginCallback } from "@features/auth/composables/useUserLoginCallback"
-import { supabase } from "@/services/supabase/client"
-import { defaultTextAvatar } from "@shared/utils/functions"
-import { Avatar } from "@shared/utils/types"
 import { computed, ref, watch } from "vue"
-import { useUserStore } from "@shared/store/user"
+
+import { useUserStore } from "@/shared/store/user"
+import { defaultTextAvatar } from "@/shared/utils/functions"
+import { Avatar } from "@/shared/utils/types"
+
+import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
+
+import { supabase } from "@/services/supabase/client"
 import { ProfileMapped } from "@/services/supabase/types"
 
 function mapProfileTypes (item: any): ProfileMapped {

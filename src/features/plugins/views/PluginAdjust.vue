@@ -138,18 +138,21 @@
 </template>
 
 <script setup lang="ts">
-import HintCard from "@/shared/components/ui/HintCard.vue"
-import JsonInput from "@/shared/components/ui/JsonInput.vue"
-import PromptVarInput from "@/features/prompt/components/PromptVarInput.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { useSetTitle } from "@/shared/composables/setTitle"
-import ErrorNotFound from "@/pages/ErrorNotFound.vue"
-import { useAssistantsStore } from "@/features/assistants/store"
-import { usePluginsStore } from "@/features/plugins/store"
-import { PluginApi } from "@/shared/utils/types"
+import { useQuasar } from "quasar"
 import { computed, toRaw } from "vue"
 import { useI18n } from "vue-i18n"
-import { useQuasar } from "quasar"
+
+import HintCard from "@/shared/components/ui/HintCard.vue"
+import JsonInput from "@/shared/components/ui/JsonInput.vue"
+import { useSetTitle } from "@/shared/composables/setTitle"
+import { PluginApi } from "@/shared/utils/types"
+
+import { useAssistantsStore } from "@/features/assistants/store"
+import { usePluginsStore } from "@/features/plugins/store"
+import PromptVarInput from "@/features/prompt/components/PromptVarInput.vue"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 
 defineEmits(["toggle-drawer"])
 

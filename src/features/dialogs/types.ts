@@ -1,4 +1,4 @@
-import { StoredItemMapped } from "src/services/supabase/types"
+import { StoredItemMapped } from "@/services/supabase/types"
 
 type UserMessageContent = {
   type: "user-message"

@@ -45,10 +45,13 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import PluginTypeBadge from "./PluginTypeBadge.vue"
-import { usePluginsStore } from "@/features/plugins/store"
 import { useI18n } from "vue-i18n"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+
+import { usePluginsStore } from "@/features/plugins/store"
+
+import PluginTypeBadge from "./PluginTypeBadge.vue"
 
 const { t } = useI18n()
 

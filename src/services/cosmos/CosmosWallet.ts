@@ -1,2 +1,2 @@
 // Re-export for backward compatibility
-export * from "@services/blockchain/cosmos/CosmosWallet"
+export * from "@/services/blockchain/cosmos/CosmosWallet"

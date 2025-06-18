@@ -7,35 +7,39 @@ import {
 } from "ai"
 import { pickBy } from "lodash"
 import { useQuasar } from "quasar"
+import { ref, Ref } from "vue"
+import { useI18n } from "vue-i18n"
+
+import { useCallApi } from "@/shared/composables"
 import { useStorage } from "@/shared/composables/storage/useStorage"
 import { FILES_BUCKET, getFileUrl } from "@/shared/composables/storage/utils"
+import { useUserPerfsStore } from "@/shared/store"
+import { genId, mimeTypeMatch } from "@/shared/utils/functions"
+import sessions from "@/shared/utils/sessions"
+import { ExtractArtifactResult } from "@/shared/utils/template/templates"
+import { ConvertArtifactOptions, Plugin, PluginApi } from "@/shared/utils/types"
+
+import { useCreateArtifact } from "@/features/artifacts/composables/createArtifact"
+import { getAssistantModelSettings } from "@/features/assistants/utils/assistantUtils"
+import { useDialogsStore } from "@/features/dialogs/store/dialogs"
+import { AssistantMessageContent } from "@/features/dialogs/types"
+import { storedItemResultContent } from "@/features/dialogs/utils/dialog"
+
 import {
   generateTitle,
   generateArtifactName,
   generateExtractArtifact,
 } from "@/services/llm/utils"
-import { useDialogsStore } from "@features/dialogs/store/dialogs"
-import { useUserPerfsStore } from "@shared/store"
-import { getAssistantModelSettings } from "@features/assistants/utils/assistantUtils"
-import { storedItemResultContent } from "@features/dialogs/utils/dialog"
-import { genId, mimeTypeMatch } from "@shared/utils/functions"
-import sessions from "@/shared/utils/sessions"
-import { ExtractArtifactResult } from "@/shared/utils/template/templates"
-import { ref, Ref } from "vue"
-import { useI18n } from "vue-i18n"
-import { useCallApi } from "@/shared/composables"
-import { useCreateArtifact } from "@features/artifacts/composables/createArtifact"
-import { useAssistantTools } from "./useAssistantTools"
-import { useDialogMessages } from "./useDialogMessages"
-import { useDialogModel } from "./useDialogModel"
-import { AssistantMessageContent } from "@/features/dialogs/types"
 import {
   AssistantMapped,
   DialogMessageMapped,
   MessageContentMapped,
   MessageContentResult,
 } from "@/services/supabase/types"
-import { ConvertArtifactOptions, Plugin, PluginApi } from "@/shared/utils/types"
+
+import { useAssistantTools } from "./useAssistantTools"
+import { useDialogMessages } from "./useDialogMessages"
+import { useDialogModel } from "./useDialogModel"
 
 export const useLlmDialog = (
   workspaceId: Ref<string>,

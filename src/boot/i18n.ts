@@ -1,10 +1,11 @@
 import { Quasar } from "quasar"
 import { boot } from "quasar/wrappers"
-
-import messages from "src/i18n"
-import { localData } from "@/shared/utils/localData"
 import { nextTick, watch } from "vue"
 import { createI18n } from "vue-i18n"
+
+import { localData } from "@/shared/utils/localData"
+
+import messages from "@/i18n"
 
 export type MessageLanguages = keyof typeof messages
 // Type-define 'en-US' as the master schema for the resource

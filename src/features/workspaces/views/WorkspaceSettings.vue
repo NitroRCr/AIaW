@@ -141,21 +141,25 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
-import AssistantItem from "@features/assistants/components/AssistantItem.vue"
-import LoadingPanel from "@/shared/components/ui/LoadingPanel.vue"
-import NotificationPanel from "@/shared/components/ui/NotificationPanel.vue"
-import PickAvatarDialog from "@shared/components/avatar/PickAvatarDialog.vue"
-import VarsInput from "@/features/prompt/components/VarsInput.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import WorkspaceMembers from "@features/workspaces/components/WorkspaceMembers.vue"
-import { useSetTitle } from "@shared/composables/setTitle"
-import { useIsWorkspaceAdmin } from "@features/workspaces/composables/useIsWorkspaceAdmin"
-import { useAssistantsStore } from "@features/assistants/store"
-import { useUserDataStore } from "@shared/store"
-import { useWorkspacesStore } from "@features/workspaces/store"
 import { computed, toRaw } from "vue"
 import { useI18n } from "vue-i18n"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
+import LoadingPanel from "@/shared/components/ui/LoadingPanel.vue"
+import NotificationPanel from "@/shared/components/ui/NotificationPanel.vue"
+import { useSetTitle } from "@/shared/composables/setTitle"
+import { useUserDataStore } from "@/shared/store"
+
+import AssistantItem from "@/features/assistants/components/AssistantItem.vue"
+import { useAssistantsStore } from "@/features/assistants/store"
+import VarsInput from "@/features/prompt/components/VarsInput.vue"
+import WorkspaceMembers from "@/features/workspaces/components/WorkspaceMembers.vue"
+import { useIsWorkspaceAdmin } from "@/features/workspaces/composables/useIsWorkspaceAdmin"
+import { useWorkspacesStore } from "@/features/workspaces/store"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+
 const { t } = useI18n()
 
 const props = defineProps<{
@@ -187,6 +191,7 @@ const assistantOptions = computed(() =>
 
 function pickAvatar () {
   if (!workspace.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: { model: workspace.value.avatar, defaultTab: "icon" },

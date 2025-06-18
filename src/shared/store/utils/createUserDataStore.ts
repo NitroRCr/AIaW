@@ -2,10 +2,13 @@
 
 import { isEqual, throttle, cloneDeep } from "lodash"
 import { defineStore } from "pinia"
+import { reactive, ref, watch } from "vue"
+
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
+
 import { supabase } from "@/services/supabase/client"
 import { CODE_NO_RECORD_FOUND } from "@/services/supabase/consts"
-import { reactive, ref, watch } from "vue"
+
 import { useUserStore } from "../user"
 
 export function createUserDataStore<T extends object> (

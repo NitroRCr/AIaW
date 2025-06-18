@@ -99,10 +99,12 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent, useQuasar } from "quasar"
-import { usePluginsStore } from "@features/plugins/store"
-import { mimeTypeMatch } from "@shared/utils/functions"
 import { computed, reactive, ref } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { mimeTypeMatch } from "@/shared/utils"
+
+import { usePluginsStore } from "@/features/plugins/store"
 
 const { t } = useI18n()
 

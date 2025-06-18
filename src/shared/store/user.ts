@@ -1,7 +1,8 @@
 import type { User } from "@supabase/supabase-js"
 import { defineStore } from "pinia"
-import { supabase } from "@/services/supabase/client"
 import { ref, computed } from "vue"
+
+import { supabase } from "@/services/supabase/client"
 
 export const useUserStore = defineStore("user", () => {
   const currentUser = ref<User | null>(null)

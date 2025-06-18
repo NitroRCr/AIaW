@@ -18,8 +18,9 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import AssistantsExpansion from "@features/assistants/components/AssistantsExpansion.vue"
 import { computed, provide, ref } from "vue"
+
+import AssistantsExpansion from "@/features/assistants/components/AssistantsExpansion.vue"
 
 const drawerOpen = ref(false)
 const drawerBreakpoint = 960

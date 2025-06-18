@@ -59,13 +59,16 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import { CustomProviderMapped } from "@/services/supabase/types"
-import { useProvidersStore } from "@/features/providers/store"
-import { useUserPerfsStore } from "@shared/store"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import MenuItem from "@/shared/components/menu/MenuItem.vue"
+import { useUserPerfsStore } from "@/shared/store"
+
+import { useProvidersStore } from "@/features/providers/store"
+
+import { CustomProviderMapped } from "@/services/supabase/types"
 
 const { t } = useI18n()
 

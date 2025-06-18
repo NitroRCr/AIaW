@@ -97,15 +97,18 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import AAvatar from "@shared/components/avatar/AAvatar.vue"
-import PickAvatarDialog from "@shared/components/avatar/PickAvatarDialog.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { useAuth } from "@features/auth/composables/useAuth"
-import { useProfileStore } from "@features/profile/store"
-import { useUserStore } from "@shared/store"
-import { pageFhStyle } from "@shared/utils/functions"
 import { computed, ref, toRaw, toRefs } from "vue"
 import { useRouter } from "vue-router"
+
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
+import { useUserStore } from "@/shared/store"
+import { pageFhStyle } from "@/shared/utils/functions"
+
+import { useAuth } from "@/features/auth/composables/useAuth"
+import { useProfileStore } from "@/features/profile/store"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 const profileStore = useProfileStore()
 const {

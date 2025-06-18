@@ -98,19 +98,23 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import SelectFileBtn from "@/shared/components/ui/SelectFileBtn.vue"
-import { useCloseArtifact } from "@/features/artifacts/composables/closeArtifact"
-import { useCreateArtifact } from "@/features/artifacts/composables/createArtifact"
-import { useUserDataStore } from "@shared/store"
-import { caselessIncludes, getFileExt, isTextFile } from "@shared/utils/functions"
-import { dialogOptions } from "@/shared/utils/values"
 import { computed, inject, ref, Ref, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter, useRoute } from "vue-router"
+
+import ATip from "@/shared/components/ATip.vue"
+import SelectFileBtn from "@/shared/components/ui/SelectFileBtn.vue"
+import { useUserDataStore } from "@/shared/store"
+import { caselessIncludes, getFileExt, isTextFile } from "@/shared/utils/functions"
+import { dialogOptions } from "@/shared/utils/values"
+
+import { useCloseArtifact } from "@/features/artifacts/composables/closeArtifact"
+import { useCreateArtifact } from "@/features/artifacts/composables/createArtifact"
+
+import { ArtifactMapped, Workspace } from "@/services/supabase/types"
+
 import ArtifactItemIcon from "./ArtifactItemIcon.vue"
 import ArtifactItemMenu from "./ArtifactItemMenu.vue"
-import ATip from "@shared/components/ATip.vue"
-import { ArtifactMapped, Workspace } from "@/services/supabase/types"
 
 const artifacts: Ref<ArtifactMapped[]> = inject("artifacts")
 

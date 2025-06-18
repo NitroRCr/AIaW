@@ -102,20 +102,24 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
+import { computed, toRaw } from "vue"
+import { useI18n } from "vue-i18n"
+
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
+import { useSetTitle } from "@/shared/composables/setTitle"
+import { pageFhStyle } from "@/shared/utils/functions"
+
 import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
 import SubproviderInput from "@/features/providers/components/SubproviderInput.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { useSetTitle } from "@/shared/composables/setTitle"
-import ErrorNotFound from "@/pages/ErrorNotFound.vue"
+import { useProvidersStore } from "@/features/providers/store"
+
 import {
   SubproviderMapped,
 } from "@/services/supabase/types"
-import { useProvidersStore } from "@/features/providers/store"
-import { pageFhStyle } from "@/shared/utils/functions"
-import { computed, toRaw } from "vue"
-import { useI18n } from "vue-i18n"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 
 const props = defineProps<{
   id: string
@@ -148,6 +152,7 @@ async function saveProvider() {
 
 function addSubprovider () {
   if (!provider.value) return
+
   provider.value.subproviders.push({
     custom_provider_id: provider.value.id,
     provider: null,
@@ -157,7 +162,9 @@ function addSubprovider () {
 
 function removeSubprovider (subprovider: SubproviderMapped) {
   if (!provider.value) return
+
   const index = provider.value.subproviders.findIndex(s => s.id === subprovider.id)
+
   if (index > -1) {
     provider.value.subproviders.splice(index, 1)
   }
@@ -165,6 +172,7 @@ function removeSubprovider (subprovider: SubproviderMapped) {
 
 function pickAvatar () {
   if (!provider.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {

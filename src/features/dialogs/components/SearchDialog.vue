@@ -84,9 +84,11 @@
 <script setup lang="ts">
 import Mark from "mark.js"
 import { QList, useDialogPluginComponent } from "quasar"
-import { useDialogsStore } from "@/features/dialogs/store/dialogs"
-import { escapeRegex } from "@/shared/utils/functions"
 import { nextTick, watch, ref, watchEffect } from "vue"
+
+import { escapeRegex } from "@/shared/utils/functions"
+
+import { useDialogsStore } from "@/features/dialogs/store/dialogs"
 
 const props = defineProps<{
   workspaceId: string

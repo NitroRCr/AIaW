@@ -1,13 +1,17 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { platform } from "@tauri-apps/plugin-os"
 import { Notify } from "quasar"
-import { i18n } from "src/boot/i18n"
-import { version } from "src/version.json"
-import { JSONEqual } from "@shared/utils/functions"
-import { SSEClientTransport } from "./mcpSseTransport"
+
+import { JSONEqual } from "@/shared/utils/functions"
 import { fetch } from "@/shared/utils/platformApi"
+import { TransportConf } from "@/shared/utils/types"
+
 import { TauriShellClientTransport } from "@/features/platform/utils/tauriShellTransport"
-import { TransportConf } from "@shared/utils/types"
+
+import { SSEClientTransport } from "./mcpSseTransport"
+
+import { i18n } from "@/boot/i18n"
+import { version } from "@/version.json"
 
 const KeepAliveTimeout = 300e3
 

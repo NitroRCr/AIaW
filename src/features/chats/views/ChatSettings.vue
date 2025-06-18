@@ -106,16 +106,19 @@
 
 <script setup lang="ts">
 import { QPageContainer, QPage, useQuasar } from "quasar"
+import { computed, toRaw } from "vue"
+
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
-import NotificationPanel from "@/shared/components/ui/NotificationPanel.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+import NotificationPanel from "@/shared/components/ui/NotificationPanel.vue"
+import { pageFhStyle } from "@/shared/utils/functions"
 
 import { useIsChatAdmin } from "@/features/chats/composables/useIsChatAdmin"
 import { useChatsStore } from "@/features/chats/store"
 import { useWorkspacesStore } from "@/features/workspaces/store"
-import { pageFhStyle } from "@/shared/utils/functions"
-import { computed, toRaw } from "vue"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+
 const $q = useQuasar()
 
 defineEmits(["toggle-drawer"])
@@ -164,6 +167,7 @@ async function saveChat() {
 
 function pickAvatar () {
   if (!chat.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: { model: chat.value.avatar, defaultTab: "icon" },

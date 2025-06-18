@@ -1,13 +1,17 @@
 import { computed, Ref, watch } from "vue"
+
 import { useStorage } from "@/shared/composables/storage/useStorage"
 import { FILES_BUCKET } from "@/shared/composables/storage/utils"
-import { useDialogMessages } from "./useDialogMessages"
+import { ApiResultItem } from "@/shared/utils/types"
+
 import { UserMessageContent } from "@/features/dialogs/types"
+
 import {
   MessageContentMapped,
   StoredItemMapped,
 } from "@/services/supabase/types"
-import { ApiResultItem } from "@shared/utils/types"
+
+import { useDialogMessages } from "./useDialogMessages"
 
 export const useDialogInput = (
   dialogId: Ref<string>,

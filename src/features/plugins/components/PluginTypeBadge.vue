@@ -11,9 +11,10 @@
 </template>
 
 <script setup lang="ts">
-import { Plugin } from "@shared/utils/types"
 import { computed } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { Plugin } from "@/shared/utils/types"
 
 const props = defineProps<{
   type: Plugin["type"]

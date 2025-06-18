@@ -492,22 +492,25 @@
 
 <script setup lang="ts">
 import { copyToClipboard, useQuasar } from "quasar"
-import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import { computed, inject, toRaw } from "vue"
+
 import ATip from "@/shared/components/ATip.vue"
-import EnablePluginsItems from "@/features/plugins/components/EnablePluginsItems.vue"
-import ModelInputItems from "@/features/providers/components/ModelInputItems.vue"
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
-import PromptVarEditor from "@/features/prompt/components/PromptVarEditor.vue"
-import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import { useLocateId } from "@shared/composables/locateId"
-import { useSetTitle } from "@shared/composables/setTitle"
-import { getAvatarUrl } from "@shared/composables/storage/utils"
-import ErrorNotFound from "@/pages/ErrorNotFound.vue"
-import { useAssistantsStore } from "@/features/assistants/store"
+import { useLocateId } from "@/shared/composables/locateId"
+import { useSetTitle } from "@/shared/composables/setTitle"
+import { getAvatarUrl } from "@/shared/composables/storage/utils"
 import { pageFhStyle } from "@/shared/utils/functions"
 import { exportFile } from "@/shared/utils/platformApi"
-import { computed, inject, toRaw } from "vue"
+
+import { useAssistantsStore } from "@/features/assistants/store"
+import EnablePluginsItems from "@/features/plugins/components/EnablePluginsItems.vue"
+import PromptVarEditor from "@/features/prompt/components/PromptVarEditor.vue"
+import ModelInputItems from "@/features/providers/components/ModelInputItems.vue"
+import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
+
+import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 
 const props = defineProps<{
   id: string
@@ -541,6 +544,7 @@ async function saveAssistant() {
 
 function pickAvatar () {
   if (!assistant.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {

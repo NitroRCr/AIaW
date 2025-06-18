@@ -84,9 +84,11 @@
 <script setup lang="ts">
 import Mark from "mark.js"
 import { QList, useDialogPluginComponent } from "quasar"
-import { useChatsStore } from "@/features/chats/store"
-import { escapeRegex } from "@shared/utils/functions"
 import { nextTick, watch, ref, watchEffect } from "vue"
+
+import { escapeRegex } from "@/shared/utils/functions"
+
+import { useChatsStore } from "@/features/chats/store"
 
 const props = defineProps<{
   workspaceId: string | null

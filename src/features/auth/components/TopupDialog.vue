@@ -83,10 +83,12 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent } from "quasar"
-import { useOrder } from "@/shared/composables/order"
-import { StripeFee } from "@/shared/utils/config"
 import { computed, ref } from "vue"
 import { useI18n } from "vue-i18n"
+
+import { useOrder } from "@/shared/composables/order"
+import { StripeFee } from "@/shared/utils/config"
+
 import PayMethodItem from "./PayMethodItem.vue"
 
 const { locale } = useI18n()

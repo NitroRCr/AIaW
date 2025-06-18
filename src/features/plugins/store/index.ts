@@ -1,11 +1,22 @@
 import { LobeChatPluginManifest } from "@lobehub/chat-plugin-sdk"
 import { defineStore, storeToRefs } from "pinia"
+import { computed, ref } from "vue"
+import { useI18n } from "vue-i18n"
+
+import { IsTauri } from "@/shared/utils/platformApi"
+import {
+  GradioPluginManifest,
+  HuggingPluginManifest,
+  McpPluginDump,
+  McpPluginManifest,
+} from "@/shared/utils/types"
+
+import { useAssistantsStore } from "@/features/assistants/store"
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
+import artifacts from "@/features/plugins/buildin/artifactsPlugin"
 import authzPlugin from "@/features/plugins/buildin/cosmosAuthz"
 import { keplerPlugin } from "@/features/plugins/buildin/keplerPlugin"
-import { supabase } from "@/services/supabase/client"
-import artifacts from "@/features/plugins/buildin/artifactsPlugin"
-import { IsTauri } from "@/shared/utils/platformApi"
+import webSearchPlugin from "@/features/plugins/buildin/webSearchPlugin"
 import {
   buildGradioPlugin,
   buildLobePlugin,
@@ -24,18 +35,11 @@ import {
   videoTranscriptPlugin,
   whisperPlugin,
 } from "@/features/plugins/utils/plugins"
-import {
-  GradioPluginManifest,
-  HuggingPluginManifest,
-  McpPluginDump,
-  McpPluginManifest,
-} from "@/shared/utils/types"
-import webSearchPlugin from "@/features/plugins/buildin/webSearchPlugin"
-import { computed, ref } from "vue"
-import { useI18n } from "vue-i18n"
-import { useAssistantsStore } from "@/features/assistants/store"
-import { useUserPluginsStore } from "./userPlugins"
+
+import { supabase } from "@/services/supabase/client"
 import { UserPlugin } from "@/services/supabase/types"
+
+import { useUserPluginsStore } from "./userPlugins"
 
 export const usePluginsStore = defineStore("plugins", () => {
   const assistantsStore = useAssistantsStore()

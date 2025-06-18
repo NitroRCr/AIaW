@@ -67,6 +67,18 @@ module.exports = {
     "import/extensions": "off",
     "import/no-unresolved": "off",
     "import/no-extraneous-dependencies": "off",
+    "import/no-relative-packages": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@features/*", "@shared/*", "@services/*", "src/*"],
+            "message": "Use @/ prefix for path aliases (e.g., @/features/*, @/shared/*, @/services/*)"
+          }
+        ]
+      }
+    ],
 
     // The core 'import/named' rules
     // does not work with type definitions
@@ -101,7 +113,7 @@ module.exports = {
 
     "unused-imports/no-unused-imports": "warn",
     "import/order": [
-      "off", // "warn" tmp
+      "warn",
       {
         groups: [
           "builtin",
@@ -111,14 +123,38 @@ module.exports = {
           "sibling",
           "index",
         ],
+        pathGroups: [
+          {
+            pattern: "vue",
+            group: "external",
+            position: "before"
+          },
+          {
+            pattern: "@/shared/**",
+            group: "internal",
+            position: "after"
+          },
+          {
+            pattern: "@/features/**",
+            group: "internal",
+            position: "after"
+          },
+          {
+            pattern: "@/services/**",
+            group: "internal",
+            position: "after"
+          }
+        ],
+        "newlines-between": "always",
         alphabetize: { order: "asc", caseInsensitive: true },
       },
     ],
-    "space-before-blocks": "off", // "warn" tmp
-    "eol-last": "off",
-    "semi": "off",
+    "space-before-blocks": "warn",
+    "eol-last": "warn",
+    "semi": "warn",
+    "no-trailing-spaces": "warn",
     "padding-line-between-statements": [
-      "off", // "warn" tmp
+      "warn",
       { blankLine: "always", prev: "*", next: "function" },
       { blankLine: "always", prev: "*", next: "if" },
       { blankLine: "always", prev: "if", next: "*" },

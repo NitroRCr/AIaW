@@ -41,6 +41,7 @@ import { Schema, Validator } from "@cfworker/json-schema"
 import { PluginSchema } from "@lobehub/chat-plugin-sdk"
 import { useDialogPluginComponent } from "quasar"
 import { computed, ref } from "vue"
+
 import JsonInput from "@/shared/components/input/JsonInput.vue"
 
 const props = defineProps<{

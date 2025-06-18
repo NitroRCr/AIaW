@@ -1,4 +1,5 @@
 import type { IndexedTx, Event } from "@cosmjs/cosmwasm-stargate"
+
 import type { TxStatusResponse } from "./types"
 
 // Fields to extract from cyberlink event

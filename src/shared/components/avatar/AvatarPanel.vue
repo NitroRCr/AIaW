@@ -28,8 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { Avatar } from "@shared/utils/types"
 import { computed } from "vue"
+
+import { Avatar } from "@/shared/utils/types"
+
 import AAvatar from "./AAvatar.vue"
 
 const props = defineProps<{

@@ -1,6 +1,8 @@
-import { useUserStore } from "@shared/store"
-import { useWorkspacesStore } from "@features/workspaces/store"
 import { computed, readonly, Ref, ref, watch } from "vue"
+
+import { useUserStore } from "@/shared/store"
+
+import { useWorkspacesStore } from "@/features/workspaces/store"
 
 export const useIsWorkspaceAdmin = (workspaceId: Ref<string | null>) => {
   const store = useWorkspacesStore()
@@ -12,6 +14,7 @@ export const useIsWorkspaceAdmin = (workspaceId: Ref<string | null>) => {
     [() => workspaceId.value, () => currentUserId],
     async ([id, userId]) => {
       console.log("[DEBUG] useIsWorkspaceAdmin", { id, userId })
+
       if (!id || !userId) {
         isAdmin.value = null
 

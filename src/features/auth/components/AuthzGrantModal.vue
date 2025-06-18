@@ -543,11 +543,14 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import { WalletService } from "@/services"
-import { WalletInfo } from "@/services/blockchain/authz/walletService"
 import { ref, computed, onMounted, watch } from "vue"
-import { useAuthStore } from "@features/auth/store/auth"
-import PinModal from "@features/auth/components/PinModal.vue"
+
+import PinModal from "@/features/auth/components/PinModal.vue"
+import { useAuthStore } from "@/features/auth/store/auth"
+
+import { WalletInfo } from "@/services/blockchain/authz/walletService"
+
+import { WalletService } from "@/services"
 
 interface Props {
   modelValue: boolean

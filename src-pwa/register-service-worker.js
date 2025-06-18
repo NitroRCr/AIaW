@@ -1,8 +1,10 @@
 import { Loading } from 'quasar'
 import { register } from 'register-service-worker'
-import { i18n } from 'src/boot/i18n'
-import { localData } from 'src/utils/local-data'
-import version from 'src/version.json'
+
+import { localData } from '@/shared/utils/localData'
+
+import { i18n } from '@/boot/i18n'
+import version from '@/version.json'
 
 // The ready(), registered(), cached(), updatefound() and updated()
 // events passes a ServiceWorkerRegistration instance in their arguments.

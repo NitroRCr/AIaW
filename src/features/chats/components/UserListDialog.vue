@@ -47,9 +47,12 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent } from "quasar"
-import AAvatar from "@shared/components/AAvatar.vue"
-import { useProfileStore } from "@features/profile/store"
 import { onMounted, ref } from "vue"
+
+import AAvatar from "@/shared/components/AAvatar.vue"
+
+import { useProfileStore } from "@/features/profile/store"
+
 import type { ProfileMapped } from "@/services/supabase/types"
 
 const { dialogRef, onDialogOK, onDialogCancel } = useDialogPluginComponent()

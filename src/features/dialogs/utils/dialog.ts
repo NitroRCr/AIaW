@@ -1,6 +1,8 @@
 import { pickBy } from "lodash"
+
 import { getFileUrl } from "@/shared/composables/storage/utils"
-import { ToolResultContent } from "@shared/utils/types"
+import { ToolResultContent } from "@/shared/utils/types"
+
 import { MessageContentResult } from "@/services/supabase/types"
 
 // TODO: multimodal version ???
