@@ -96,7 +96,7 @@ import { AAvatar } from "@/shared/components/avatar"
 import { useMdPreviewProps } from "@/shared/composables/mdPreviewProps"
 import { useUserStore } from "@/shared/store/user"
 import { useUserPrefsStore } from "@/shared/store/userPrefs"
-import { ApiResultItem, TextAvatar } from "@/shared/types"
+import { ApiResultItem } from "@/shared/types"
 import { genId } from "@/shared/utils/functions"
 
 import { ChatMessage } from "@/services/data/types/chat"
@@ -130,11 +130,7 @@ const colMode = computed(() => denseMode.value && !isMine.value)
 const avatar = computed(() =>
   isMine.value
     ? perfs.userAvatar
-    : ({
-        type: "text",
-        text: props.message.sender?.name.slice(0, 1),
-        hue: 100,
-      } as TextAvatar)
+    : (props.message.sender?.avatar)
 )
 
 // const router = useRouter()

@@ -34,9 +34,12 @@ const mapDbToChat = (chat: DbChat) => {
 
   return mapAvatarOrDefault(result, result.name)
 }
+const mapChatToDb = <T extends DbChat>(chat: Chat<T>) => {
+  return entityToDto(chat)
+}
 
 const mapDbToChatMessage = <T extends DbChatMessage>(message: T) => {
-  return dtoToEntity(message) as ChatMessage<T>
+  return dtoToEntity(message) as ChatMessage
 }
 
 const mapChatMessageToDb = <T extends DbChatMessage = DbChatMessageRow>(item: ChatMessage<T>) => {
@@ -45,8 +48,9 @@ const mapChatMessageToDb = <T extends DbChatMessage = DbChatMessageRow>(item: Ch
   return { ...entityToDto(rest), sender }
 }
 
-export { mapDbToChat, mapDbToChatMessage, mapChatMessageToDb }
+export { mapDbToChat, mapDbToChatMessage, mapChatMessageToDb, mapChatToDb }
 export type {
   Chat, ChatMessage, ChatType,
+  DbChat, DbChatMessage,
   DbChatInsert, DbChatMessageInsert
 }

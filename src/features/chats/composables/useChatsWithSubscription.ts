@@ -2,6 +2,7 @@ import { ref, readonly, watch } from "vue"
 
 import { useUserStore } from "@/shared/store"
 import type { Avatar } from "@/shared/types"
+import { mapAvatarOrDefault } from "@/shared/utils/avatar"
 import { defaultTextAvatar } from "@/shared/utils/functions"
 
 import { supabase } from "@/services/data/supabase/client"
@@ -19,7 +20,7 @@ async function extendChatsWithDisplayName (
   const extended = await Promise.all(
     chatsArr.map(async (chat) => {
       if (chat.type === "workspace" || chat.type === "group") {
-        return { ...chat, avatar: chat.avatar || defaultTextAvatar(chat.name) }
+        return mapAvatarOrDefault(chat, chat.name)
       } else {
         // Fetch chat members with profile
         const { data: members, error } = await supabase

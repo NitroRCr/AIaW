@@ -2,7 +2,7 @@ import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCa
 import { useProfileStore } from "@/features/profile/store"
 
 import { supabase } from "@/services/data/supabase/client"
-import { ChatMessage } from "@/services/data/types/chat"
+import { ChatMessage, DbChatMessage, mapDbToChatMessage } from "@/services/data/types/chat"
 import { Profile } from "@/services/data/types/profile"
 
 // Cache for sender profiles
@@ -33,7 +33,7 @@ export function useChatMessagesSubscription (
             table: "messages",
           },
           async (payload) => {
-            const message = payload.new as ChatMessage
+            const message = mapDbToChatMessage(payload.new as DbChatMessage)
             // Fetch sender profile with cache
             const profile = await fetchProfile(message.senderId)
             profileCache.set(message.senderId, profile)

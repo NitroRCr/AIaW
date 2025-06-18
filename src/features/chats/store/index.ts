@@ -7,7 +7,7 @@ import { useUserStore } from "@/shared/store"
 import { useChatsWithSubscription } from "@/features/chats/composables/useChatsWithSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
-import { Chat, DbChatInsert, mapDbToChat } from "@/services/data/types/chat"
+import { Chat, DbChatInsert, mapChatToDb, mapDbToChat } from "@/services/data/types/chat"
 
 /**
  * Store for managing user-to-user chats in the application
@@ -63,7 +63,7 @@ export const useChatsStore = defineStore("chats", () => {
     console.log("addChat", chat)
     const { data, error } = await supabase
       .from("chats")
-      .insert(chat)
+      .insert(mapChatToDb(chat))
       .select()
       .single()
 
@@ -99,7 +99,7 @@ export const useChatsStore = defineStore("chats", () => {
   const update = async (id: string, chat: Partial<Chat>): Promise<Chat | undefined> => {
     const { data, error } = await supabase
       .from("chats")
-      .update(chat)
+      .update(mapChatToDb(chat))
       .eq("id", id)
       .select()
       .single()

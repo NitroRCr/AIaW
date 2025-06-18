@@ -1,3 +1,4 @@
+import { storeToRefs } from "pinia"
 import { computed, Ref } from "vue"
 
 import { useChatsStore } from "@/features/chats/store"
@@ -6,13 +7,14 @@ import { Chat } from "@/services/data/types/chat"
 
 export function useWorkspaceChats (workspaceId: Ref<string | null>) {
   const chatsStore = useChatsStore()
-  const chats = computed<readonly Chat[]>(() =>
+  const { chats } = storeToRefs(chatsStore)
+  const workspaceChats = computed<readonly Chat[]>(() =>
     workspaceId.value
-      ? chatsStore.chats.filter(
+      ? chats.value.filter(
         (chat) =>
           chat.workspaceId === workspaceId.value || chat.type === "private"
       )
-      : chatsStore.chats
+      : chats.value
   )
 
   const addChat = async (chat: Partial<Chat>) => {
@@ -26,7 +28,7 @@ export function useWorkspaceChats (workspaceId: Ref<string | null>) {
   }
 
   return {
-    chats,
+    chats: workspaceChats,
     addChat,
     updateChat,
     removeChat,

@@ -42,6 +42,8 @@ const props = defineProps<{
   avatar: Avatar
 }>()
 
+if (!props.avatar) debugger
+
 const $q = useQuasar()
 const style = computed(() => {
   if (!props.avatar.hue) return {}
