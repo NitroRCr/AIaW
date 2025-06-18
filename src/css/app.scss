@@ -119,8 +119,8 @@ body.body--light {
 
 :not(pre) > code {
   --at-apply: "bg-sur-c text-on-sur-var rd px-1 mx-1";
-  font-family:
-    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
 }
 
 [role="dialog"] .q-transition--scale-enter-from,
