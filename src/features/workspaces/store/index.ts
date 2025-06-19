@@ -9,7 +9,7 @@ import { DefaultWsIndexContent } from "@/features/dialogs/utils"
 import { useWorkspacesWithSubscription } from "@/features/workspaces/composables/useWorkspacesWithSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
-import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspaceMember, mapWorkspaceToDb, Workspace, WorkspaceMember, WorkspaceMemberRole, WorkspaceRole } from "@/services/data/types/workspace"
+import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspaceMember, mapWorkspaceToDb, Workspace, WorkspaceMember, WorkspaceMemberRole } from "@/services/data/types/workspace"
 
 /**
  * Store for managing workspaces and workspace members
@@ -233,25 +233,25 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   }
 
   async function isUserWorkspaceAdmin (workspaceId: string, userId: string) {
-    const isOwner =
-      workspaces.value.find(
-        (workspace) =>
-          workspace.id === workspaceId && workspace.ownerId === userId
-      ) !== undefined
+    // const isOwner =
+    //   workspaces.value.find(
+    //     (workspace) =>
+    //       workspace.id === workspaceId && workspace.ownerId === userId
+    //   ) !== undefined
 
-    if (isOwner) {
-      return "owner" as WorkspaceRole
-    }
+    // if (isOwner) {
+    //   return "owner" as WorkspaceRole
+    // }
 
     const member = workspaceMembers.value.find(
       (member) => member.userId === userId
     )
 
     if (member) {
-      return member.role as WorkspaceRole
+      return member.role as WorkspaceMemberRole
     }
 
-    return "none" as WorkspaceRole
+    return "none" as WorkspaceMemberRole
   }
 
   return {

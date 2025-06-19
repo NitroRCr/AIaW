@@ -181,7 +181,6 @@ import {
   mimeTypeMatch,
   pageFhStyle,
   textBeginning,
-  wrapCode,
   wrapQuote
 } from "@/shared/utils/functions"
 
@@ -316,30 +315,30 @@ async function regenerate(parentId: string) {
  *
  * @param ev - The clipboard event containing the pasted content
  */
-function handleCodePasteFormatting (ev: ClipboardEvent) {
-  if (!perfs.codePasteOptimize) return
+// function handleCodePasteFormatting (ev: ClipboardEvent) {
+//   if (!perfs.codePasteOptimize) return
 
-  const { clipboardData } = ev
-  const i = clipboardData.types.findIndex((t) => t === "vscode-editor-data")
+//   const { clipboardData } = ev
+//   const i = clipboardData.types.findIndex((t) => t === "vscode-editor-data")
 
-  if (i !== -1) {
-    const code = clipboardData
-      .getData("text/plain")
-      .replace(/\r\n/g, "\n")
-      .replace(/\r/g, "\n")
+//   if (i !== -1) {
+//     const code = clipboardData
+//       .getData("text/plain")
+//       .replace(/\r\n/g, "\n")
+//       .replace(/\r/g, "\n")
 
-    if (!/\n/.test(code)) return
+//     if (!/\n/.test(code)) return
 
-    const data = clipboardData.getData("vscode-editor-data")
-    const lang = JSON.parse(data).mode ?? ""
+//     const data = clipboardData.getData("vscode-editor-data")
+//     const lang = JSON.parse(data).mode ?? ""
 
-    if (lang === "markdown") return
+//     if (lang === "markdown") return
 
-    const wrappedCode = wrapCode(code, lang)
-    document.execCommand("insertText", false, wrappedCode)
-    ev.preventDefault()
-  }
-}
+//     const wrappedCode = wrapCode(code, lang)
+//     document.execCommand("insertText", false, wrappedCode)
+//     ev.preventDefault()
+//   }
+// }
 
 function onProcessFiles (files: File[]) {
   parseFiles(files)

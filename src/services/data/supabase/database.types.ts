@@ -698,38 +698,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_insert_stored_item: {
-        Args: { p_message_content_id: string }
+      can_manage_chat: {
+        Args: { chat_id_param: string }
         Returns: boolean
       }
-      can_insert_workspace_member: {
-        Args: { p_workspace_id: string }
-        Returns: boolean
-      }
-      can_user_insert_stored_item: {
-        Args: { p_message_content_id: string }
-        Returns: boolean
-      }
-      delete_chat_if_authorized: {
-        Args: { chat_id: string }
+      debug_workspaces: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      get_all_child_workspaces: {
-        Args: { root_id: string }
-        Returns: {
-          id: string
-        }[]
+      get_workspace_role: {
+        Args: { workspace_id: string; user_id: string }
+        Returns: string
       }
       is_chat_member: {
-        Args: { chat_id: string; user_id: string }
+        Args: { chat_id_param: string }
         Returns: boolean
       }
-      is_stored_item_owner: {
-        Args: { p_message_content_id: string }
+      is_chat_owner: {
+        Args: { chat_id_param: string }
         Returns: boolean
       }
-      is_workspace_admin: {
-        Args: { p_workspace_id: string; p_user_id: string }
+      is_workspace_admin_or_owner: {
+        Args: { workspace_id_param: string }
+        Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { workspace_id_param: string }
+        Returns: boolean
+      }
+      is_workspace_owner: {
+        Args: { user_id: string }
         Returns: boolean
       }
       start_private_chat_with: {
@@ -738,7 +736,7 @@ export type Database = {
       }
     }
     Enums: {
-      chat_type: "workspace" | "group" | "private"
+      chat_type: "workspace" | "private"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -854,7 +852,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      chat_type: ["workspace", "group", "private"],
+      chat_type: ["workspace", "private"],
     },
   },
 } as const

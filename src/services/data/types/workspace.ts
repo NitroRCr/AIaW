@@ -12,8 +12,7 @@ type DbWorkspaceInsert = Database["public"]["Tables"]["workspaces"]["Insert"]
 type DbWorkspaceUpdate = Database["public"]["Tables"]["workspaces"]["Update"]
 type DbWorkspaceMember = Database["public"]["Tables"]["workspace_members"]["Row"]
 
-type WorkspaceMemberRole = "admin" | "member" | "readonly"
-type WorkspaceRole = "owner" | "admin" | "member" | "readonly" | "none"
+type WorkspaceMemberRole = "admin" | "member" | "guest" | "none"
 
 type WorkspaceDbType = DbWorkspaceRow | DbWorkspaceInsert | DbWorkspaceUpdate
 
@@ -52,6 +51,6 @@ const mapWorkspaceMemberToDb = (workspaceMember: WorkspaceMember) =>
 export { mapDbToWorkspace, mapDbToWorkspaceMember, mapWorkspaceMemberToDb, mapWorkspaceToDb }
 export type {
   WorkspaceMember, Workspace,
-  WorkspaceMemberRole, WorkspaceRole,
+  WorkspaceMemberRole,
   DbWorkspaceRow, DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate
 }

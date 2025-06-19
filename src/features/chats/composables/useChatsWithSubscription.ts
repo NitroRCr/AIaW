@@ -19,9 +19,10 @@ async function extendChatsWithDisplayName (
   // For each chat, if not group, fetch members and set displayName
   const extended = await Promise.all(
     chatsArr.map(async (chat) => {
-      if (chat.type === "workspace" || chat.type === "group") {
+      if (chat.type === "workspace") {
         return mapAvatarOrDefault(chat, chat.name)
       } else {
+        // TODO: cache profiles
         // Fetch chat members with profile
         const { data: members, error } = await supabase
           .from("chat_members")
@@ -84,7 +85,7 @@ function subscribeToChats (currentUserId: string | null) {
       async (payload) => {
         // On insert, extend with displayName
         const extended = await extendChatsWithDisplayName(
-          [payload.new as Chat],
+          [mapDbToChat(payload.new)],
           currentUserId
         )
         chats.value.unshift(extended[0])
@@ -111,7 +112,7 @@ function subscribeToChats (currentUserId: string | null) {
       },
       async (payload) => {
         const extended = await extendChatsWithDisplayName(
-          [payload.new as Chat],
+          [mapDbToChat(payload.new)],
           currentUserId
         )
         chats.value = chats.value.map((c) =>

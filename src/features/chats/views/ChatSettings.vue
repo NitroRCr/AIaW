@@ -38,19 +38,6 @@
       <q-list v-else-if="chat">
         <q-item>
           <q-item-section>
-            {{ $t("chatsPage.isPublic") }}
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              :model-value="chatPublic"
-              @update:model-value="handleChatPublicToggle"
-              :loading="toggleLoading"
-              :disable="toggleLoading"
-            />
-          </q-item-section>
-        </q-item>
-        <q-item>
-          <q-item-section>
             {{ $t("chatsPage.name") }}
           </q-item-section>
           <q-item-section>
@@ -106,8 +93,9 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia"
 import { QPageContainer, QPage, useQuasar } from "quasar"
-import { computed, ref, toRaw, watch } from "vue"
+import { computed, toRaw } from "vue"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
@@ -128,48 +116,11 @@ const props = defineProps<{
 }>()
 
 const chatsStore = useChatsStore()
+const { chats } = storeToRefs(chatsStore)
 const workspaceStore = useWorkspacesStore()
 
 const chatId = computed(() => props.id)
-const chat = computed(() => chatsStore.chats.find(c => c.id === chatId.value))
-
-// Replace problematic computed with separate ref and method
-const chatPublic = ref(false)
-const toggleLoading = ref(false)
-
-// Watch for chat changes to update local state
-watch(chat, (newChat) => {
-  if (newChat) {
-    chatPublic.value = newChat.type === "workspace"
-  }
-}, { immediate: true })
-
-// Method to handle toggle change
-async function handleChatPublicToggle(value: boolean) {
-  if (!chat.value || toggleLoading.value) return
-
-  const previousValue = chatPublic.value
-  chatPublic.value = value // Optimistic update
-  toggleLoading.value = true
-
-  try {
-    const newType = value ? "workspace" : "group"
-    await chatsStore.update(chat.value.id, { type: newType })
-    $q.notify({
-      type: 'positive',
-      message: 'Chat visibility updated'
-    })
-  } catch (error) {
-    // Revert on error
-    chatPublic.value = previousValue
-    $q.notify({
-      type: 'negative',
-      message: 'Error updating chat visibility'
-    })
-  } finally {
-    toggleLoading.value = false
-  }
-}
+const chat = computed(() => chats.value.find(c => c.id === chatId.value))
 
 // Method to handle name update with error handling
 async function handleNameUpdate(value: string) {
