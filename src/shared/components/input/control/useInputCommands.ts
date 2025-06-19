@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import type { Command } from '@/shared/components/input/CommandSuggestionsOverlay.vue'
+import type { Command } from '@/shared/components/input/control/CommandSuggestions.vue'
 import { useUserDataStore } from '@/shared/store'
 
 import { useAssistantsStore } from '@/features/assistants/store'
@@ -38,7 +38,7 @@ export function useInputCommands(
 
     // Add assistant switching commands
     const availableAssistants = assistantsStore.assistants.filter(
-      a => a.workspace_id === workspace.value?.id || a.workspace_id == null
+      a => a.workspaceId === workspace.value?.id || a.workspaceId == null
     )
 
     availableAssistants.forEach(assistant => {

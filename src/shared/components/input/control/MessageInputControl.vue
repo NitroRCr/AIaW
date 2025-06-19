@@ -48,7 +48,7 @@
       items-center
     >
       <q-btn
-        v-if="model && mimeTypeMatch('image/webp', model.inputTypes.user)"
+        v-if="props.model && mimeTypeMatch('image/webp', props.model.inputTypes.user)"
         flat
         icon="sym_o_image"
         :title="$t('dialogView.addImage')"
@@ -85,7 +85,7 @@
         >
       </q-btn>
       <q-btn
-        v-if="assistant?.prompt_vars?.length"
+        v-if="props.assistant?.prompt_vars?.length"
         flat
         icon="sym_o_tune"
         :title="
@@ -98,10 +98,10 @@
         :class="{ 'text-ter': showVars }"
       />
       <model-options-btn
-        v-if="sdkModel"
-        :provider-name="sdkModel.provider"
-        :model-id="sdkModel.modelId"
-        :model-value="modelOptions"
+        v-if="props.sdkModel"
+        :provider-name="props.sdkModel.provider"
+        :model-id="props.sdkModel.modelId"
+        :model-value="props.modelOptions"
         @update:model-value="$emit('update:model-options', $event)"
         flat
         round
@@ -109,8 +109,10 @@
         min-h="2.7em"
       />
       <add-info-btn
-        :plugins="activePlugins"
-        :assistant-plugins="assistant?.plugins || {}"
+        :plugins="props.activePlugins"
+        :assistant-plugins="props.assistant?.plugins || {}"
+        :dialog-id="props.dialogId"
+        :workspace-id="props.workspaceId"
         @add="$emit('add-input-items', $event)"
         flat
         round
@@ -118,27 +120,27 @@
         min-h="2.7em"
       />
       <q-btn
-        v-if="assistant"
+        v-if="props.assistant"
         flat
-        :round="!activePlugins.length"
-        :class="{ 'px-2': activePlugins.length }"
+        :round="!props.activePlugins.length"
+        :class="{ 'px-2': props.activePlugins.length }"
         min-w="2.7em"
         min-h="2.7em"
         icon="sym_o_extension"
         :title="$t('dialogView.plugins')"
       >
         <code
-          v-if="activePlugins.length"
+          v-if="props.activePlugins.length"
           bg-sur-c-high
           px="6px"
         >{{
-          activePlugins.length
+          props.activePlugins.length
         }}</code>
-        <enable-plugins-menu :assistant-id="assistant.id" />
+        <enable-plugins-menu :assistant-id="props.assistant.id" />
       </q-btn>
       <q-space />
       <div
-        v-if="usage"
+        v-if="props.usage"
         my-2
         ml-2
       >
@@ -150,12 +152,12 @@
           bg-sur-c-high
           px-2
           py-1
-        >{{ usage.promptTokens }}+{{ usage.completionTokens }}</code>
+        >{{ props.usage.promptTokens }}+{{ props.usage.completionTokens }}</code>
         <q-tooltip>
           {{ $t("dialogView.messageTokens") }}<br>
-          {{ $t("dialogView.tokenPrompt") }}：{{ usage.promptTokens }}，{{
+          {{ $t("dialogView.tokenPrompt") }}：{{ props.usage.promptTokens }}，{{
             $t("dialogView.tokenCompletion")
-          }}：{{ usage.completionTokens }}
+          }}：{{ props.usage.completionTokens }}
         </q-tooltip>
       </div>
       <abortable-btn
@@ -163,24 +165,24 @@
         :label="$t('dialogView.send')"
         @click="handleSend"
         @abort="$emit('abort')"
-        :loading="loading"
+        :loading="props.loading"
         ml-4
         min-h="40px"
-        :disabled="inputEmpty && pendingFiles.length === 0"
+        :disabled="props.inputEmpty && pendingFiles.length === 0"
       />
     </div>
 
     <div
       flex
-      v-if="assistant"
+      v-if="props.assistant"
       v-show="showVars"
     >
       <prompt-var-input
         class="mt-2 mr-2"
-        v-for="promptVar of assistant.prompt_vars"
+        v-for="promptVar of props.assistant.prompt_vars"
         :key="promptVar.id"
         :prompt-var="promptVar"
-        :model-value="inputVars[promptVar.name]"
+        :model-value="props.inputVars[promptVar.name]"
         @update:model-value="$emit('update-input-vars', promptVar.name, $event)"
         :input-props="{
           dense: true,
@@ -193,7 +195,7 @@
     <!-- Command suggestions overlay wrapping the input -->
     <command-suggestions-overlay
       ref="commandOverlay"
-      :input-text="inputText"
+      :input-text="props.inputText"
       :commands="availableCommands"
       suggestion-position="top"
       @update-input-text="$emit('update-input-text', $event)"
@@ -205,7 +207,7 @@
           class="mt-2"
           max-h-50vh
           of-y-auto
-          :model-value="inputText"
+          :model-value="props.inputText"
           @update:model-value="onInput"
           outlined
           autogrow
@@ -224,9 +226,9 @@
 import { ref } from 'vue'
 
 import AbortableBtn from '@/shared/components/AbortableBtn.vue'
-import CommandSuggestionsOverlay from '@/shared/components/input/CommandSuggestionsOverlay.vue'
-import { useDialogFileHandling } from '@/shared/composables/dialogFileHandling'
-import { useInputCommands } from '@/shared/composables/useInputCommands'
+import CommandSuggestionsOverlay from '@/shared/components/input/control/CommandSuggestions.vue'
+import { useDialogFileHandling } from '@/shared/components/input/control/dialogFileHandling'
+import { useInputCommands } from '@/shared/components/input/control/useInputCommands'
 import { mimeTypeMatch } from '@/shared/utils/functions'
 
 import AddInfoBtn from '@/features/dialogs/components/AddPlugin/AddInfoBtn.vue'
@@ -245,9 +247,11 @@ interface Props {
   inputEmpty?: boolean
   inputText?: string
   inputVars?: Record<string, any>
+  dialogId?: string
+  workspaceId?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   model: undefined,
   assistant: undefined,
   sdkModel: undefined,
@@ -257,7 +261,9 @@ withDefaults(defineProps<Props>(), {
   loading: false,
   inputEmpty: false,
   inputText: '',
-  inputVars: () => ({})
+  inputVars: () => ({}),
+  dialogId: undefined,
+  workspaceId: undefined
 })
 
 const emit = defineEmits<{
