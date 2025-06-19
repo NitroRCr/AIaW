@@ -6,7 +6,7 @@ import { engine } from "@/shared/utils/template/templateEngine"
 
 import { useArtifactsStore } from "@/features/artifacts/store"
 
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
 
 import { i18n } from "@/boot/i18n"
 
@@ -58,7 +58,7 @@ const api: PluginApi = {
       throw new Error(`Artifact ${id} not found`)
     }
 
-    let content = artifact.versions[artifact.curr_index].text
+    let content = artifact.versions[artifact.currIndex].text
     for (const update of updates) {
       const pattern = new RegExp(update.pattern, update.flags)
       content = content.replace(pattern, update.replacement)
@@ -102,7 +102,7 @@ const promptTemplate = `Artifacts 是用户可能修改或复用的独立内容�
 {%- endfor %}
 `
 
-function getPrompt (artifacts: ArtifactMapped[]) {
+function getPrompt (artifacts: Artifact[]) {
   return engine.parseAndRenderSync(promptTemplate, {
     artifacts: artifacts.filter((a) => a.readable),
   })

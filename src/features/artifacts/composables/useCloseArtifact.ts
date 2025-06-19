@@ -9,15 +9,15 @@ import {
 
 import { useArtifactsStore } from "@/features/artifacts/store"
 
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
 
 export function useCloseArtifact () {
   const $q = useQuasar()
   const artifactsStore = useArtifactsStore()
   const userDataStore = useUserDataStore()
 
-  function closeArtifact (artifact: ArtifactMapped) {
-    if (artifact.tmp !== artifact.versions[artifact.curr_index].text) {
+  function closeArtifact (artifact: Artifact) {
+    if (artifact.tmp !== artifact.versions[artifact.currIndex].text) {
       $q.dialog({
         component: SaveDialog,
         componentProps: {
@@ -28,7 +28,7 @@ export function useCloseArtifact () {
           ? saveArtifactChanges(artifact)
           : restoreArtifactChanges(artifact)
         artifactsStore.update({
-          id: artifact.id,
+          ...artifact,
           ...changes,
         })
         userDataStore.data.openedArtifacts =

@@ -4,10 +4,10 @@
       {{ $t("chatsPage.chatSettings") }}
       <q-chip
         size="md"
-        v-if="workspace"
+        v-if="workspace?.avatar"
       >
         <a-avatar
-          :avatar="workspace?.avatar"
+          :avatar="workspace.avatar"
           size="md"
         />
         {{ workspace?.name }}
@@ -19,6 +19,7 @@
       flex
       flex-col
       :style-fn="pageFhStyle"
+      class="relative-position"
     >
       <notification-panel
         v-if="!isPageLoaded"
@@ -30,17 +31,22 @@
         :warning="true"
       />
       <notification-panel
-        v-if="currentChat && currentChat.type === 'private'"
+        v-if="chat && chat.type === 'private'"
         :title="$t('chatsPage.privateChat')"
         :warning="true"
       />
-      <q-list v-else-if="currentChat">
+      <q-list v-else-if="chat">
         <q-item>
           <q-item-section>
             {{ $t("chatsPage.isPublic") }}
           </q-item-section>
           <q-item-section side>
-            <q-toggle v-model="chatPublic" />
+            <q-toggle
+              :model-value="chatPublic"
+              @update:model-value="handleChatPublicToggle"
+              :loading="toggleLoading"
+              :disable="toggleLoading"
+            />
           </q-item-section>
         </q-item>
         <q-item>
@@ -49,7 +55,8 @@
           </q-item-section>
           <q-item-section>
             <q-input
-              v-model="chat.name"
+              :model-value="chat.name"
+              @update:model-value="handleNameUpdate"
               autogrow
               filled
               clearable
@@ -63,7 +70,8 @@
           </q-item-section>
           <q-item-section>
             <q-input
-              v-model="chat.description"
+              :model-value="chat.description"
+              @update:model-value="handleDescriptionUpdate"
               autogrow
               filled
               clearable
@@ -85,6 +93,14 @@
         </q-item>
         <q-separator spaced />
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <sticky-save-button
+        @click="saveChat"
+        :loading="chatsStore.isSaving"
+        :disabled="!chatsStore.hasChanges"
+        :show="chat && chat.type !== 'private'"
+      />
     </q-page>
   </q-page-container>
 </template>
@@ -96,7 +112,6 @@ import { computed, ref, toRaw, watch } from "vue"
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import NotificationPanel from "@/shared/components/NotificationPanel.vue"
-import { syncRef } from "@/shared/composables/syncRef"
 import { pageFhStyle } from "@/shared/utils/functions"
 
 import { useIsChatAdmin } from "@/features/chats/composables/useIsChatAdmin"
@@ -115,42 +130,108 @@ const props = defineProps<{
 const chatsStore = useChatsStore()
 const workspaceStore = useWorkspacesStore()
 
-const workspace = computed(() =>
-  workspaceStore.workspaces.find(
-    (workspace) => workspace.id === chat.value?.workspace_id
-  )
-)
-const currentChat = computed(() =>
-  chatsStore.chats.find((chat) => chat.id === props.id)
-)
-const isPageLoaded = computed(() => currentChat.value !== undefined)
+const chatId = computed(() => props.id)
+const chat = computed(() => chatsStore.chats.find(c => c.id === chatId.value))
 
-const { isAdmin } = useIsChatAdmin(currentChat)
+// Replace problematic computed with separate ref and method
+const chatPublic = ref(false)
+const toggleLoading = ref(false)
 
-const chat = syncRef(
-  currentChat,
-  (val) => {
-    chatsStore.putItem(toRaw(val))
-  },
-  { valueDeep: true }
-)
-
-const chatPublic = ref(chat.value?.type === "workspace")
-
-watch(chatPublic, (newVal) => {
-  if (newVal) {
-    chatsStore.update(currentChat.value!.id, { type: "workspace" })
-  } else {
-    chatsStore.update(currentChat.value!.id, { type: "group" })
+// Watch for chat changes to update local state
+watch(chat, (newChat) => {
+  if (newChat) {
+    chatPublic.value = newChat.type === "workspace"
   }
-})
+}, { immediate: true })
+
+// Method to handle toggle change
+async function handleChatPublicToggle(value: boolean) {
+  if (!chat.value || toggleLoading.value) return
+
+  const previousValue = chatPublic.value
+  chatPublic.value = value // Optimistic update
+  toggleLoading.value = true
+
+  try {
+    const newType = value ? "workspace" : "group"
+    await chatsStore.update(chat.value.id, { type: newType })
+    $q.notify({
+      type: 'positive',
+      message: 'Chat visibility updated'
+    })
+  } catch (error) {
+    // Revert on error
+    chatPublic.value = previousValue
+    $q.notify({
+      type: 'negative',
+      message: 'Error updating chat visibility'
+    })
+  } finally {
+    toggleLoading.value = false
+  }
+}
+
+// Method to handle name update with error handling
+async function handleNameUpdate(value: string) {
+  if (!chat.value) return
+
+  try {
+    await chatsStore.update(chat.value.id, { name: String(value) })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error updating chat name'
+    })
+  }
+}
+
+// Method to handle description update with error handling
+async function handleDescriptionUpdate(value: string) {
+  if (!chat.value) return
+
+  try {
+    await chatsStore.update(chat.value.id, { description: String(value) })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error updating chat description'
+    })
+  }
+}
+
+const workspace = computed(() => workspaceStore.workspaces.find(w => w.id === chat.value?.workspaceId))
+
+const isPageLoaded = computed(() => chat.value !== undefined)
+
+const { isAdmin } = useIsChatAdmin(chat)
+
+async function saveChat() {
+  if (!chat.value) return
+
+  try {
+    await chatsStore.update(chat.value.id, toRaw(chat.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Chat settings saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving chat settings'
+    })
+  }
+}
 
 function pickAvatar () {
+  if (!chat.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
-    componentProps: { model: chat.value?.avatar, defaultTab: "icon" },
-  }).onOk((avatar) => {
-    chatsStore.update(currentChat.value!.id, { avatar })
+    componentProps: { model: chat.value.avatar, defaultTab: "icon" },
+  }).onOk(async (avatar) => {
+    if (chat.value) {
+      await chatsStore.update(chat.value.id, { avatar })
+    }
   })
 }
 </script>

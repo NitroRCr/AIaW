@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, toRef } from "vue"
+import { computed, inject, Ref, toRef } from "vue"
 
 import { IsTauri } from "@/shared/utils/platformApi"
 
@@ -31,22 +31,25 @@ import { useDialogMessages } from "@/features/dialogs/composables/useDialogMessa
 import { CosmosWallet } from "@/services/blockchain/cosmos/CosmosWallet"
 import { KeplerWallet } from "@/services/blockchain/kepler/KeplerWallet"
 import { parseEvents } from "@/services/blockchain/kepler/utils"
-import {
-  DialogMessageMapped,
-  StoredItemMapped,
-} from "@/services/data/supabase/types"
+import { DbDialogMessageUpdate, DialogMessageNested } from "@/services/data/types/dialogMessage"
+import { DbMessageContentUpdate } from "@/services/data/types/messageContents"
+import { DbStoredItemUpdate, StoredItem } from "@/services/data/types/storedItem"
 
 const props = defineProps<{
-  result: StoredItemMapped[]
-  message: DialogMessageMapped
+  result: StoredItem[] | null
+  message: DialogMessageNested<DbDialogMessageUpdate, DbMessageContentUpdate, DbStoredItemUpdate>
 }>()
 const keplrWallet = inject<KeplerWallet>("kepler")
 const cosmosWallet = inject<CosmosWallet>("cosmos")
-const transactionBody = computed(() => JSON.parse(props.result[0].content_text))
-const { updateMessage } = useDialogMessages(toRef(props.message, "dialog_id"))
+// FIXME: Potential parsing error and performance issue in computed property
+// JSON.parse can throw errors if contentText is invalid JSON, which would break reactivity.
+// Also, parsing happens on every props change. Consider adding error handling and caching.
+// Alternative: use try/catch block and store parsed result, or validate data beforehand.
+const transactionBody = computed(() => JSON.parse(props.result[0].contentText))
+const { updateMessage } = useDialogMessages(toRef(props.message, "dialogId") as Ref<string>)
 const handleAccept = async () => {
-  const { message_contents } = props.message
-  const updatedContents = message_contents.filter(
+  const { messageContents } = props.message
+  const updatedContents = messageContents.filter(
     (content) => content.type !== "assistant-tool"
   )
 
@@ -70,18 +73,18 @@ const handleAccept = async () => {
     })
   }
   updateMessage(props.message.id, {
-    generating_session: null,
+    generatingSession: null,
     status: "processed",
-    message_contents: updatedContents,
+    messageContents: updatedContents,
   })
 }
 
 const handleDecline = async () => {
   updateMessage(props.message.id, {
-    generating_session: null,
+    generatingSession: null,
     status: "processed",
     error: "Transaction Declined",
-    message_contents: props.message.message_contents.map((content) => {
+    messageContents: props.message.messageContents.map((content) => {
       if (content.type === "assistant-message") {
         return {
           ...content,

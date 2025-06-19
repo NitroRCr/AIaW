@@ -50,7 +50,7 @@
                 v-if="!workspaceId"
                 icon="sym_o_add_comment"
                 :label="$t('assistantsExpansion.createDialog')"
-                @click="createDialog({ assistant_id: assistant.id })"
+                @click="createDialog({ assistantId: assistant.id })"
               />
               <menu-item
                 v-if="!workspaceId"
@@ -131,7 +131,7 @@ const assistantsStore = useAssistantsStore()
 const userPerfsStore = useUserPerfsStore()
 const assistants = computed(() =>
   assistantsStore.assistants.filter(
-    (a) => a.workspace_id === props.workspaceId || a.workspace_id == null
+    (a) => a.workspaceId === props.workspaceId || a.workspaceId == null
   )
 )
 
@@ -145,7 +145,7 @@ const router = useRouter()
 async function addItem () {
   const assistant = await assistantsStore.add({
     name: "New Assistant",
-    workspace_id: props.workspaceId,
+    workspaceId: props.workspaceId,
     avatar: defaultAvatar("AI"),
     provider: userPerfsStore.data.provider,
     model: userPerfsStore.data.model,

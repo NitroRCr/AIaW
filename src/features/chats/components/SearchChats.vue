@@ -124,7 +124,7 @@ async function search () {
   results.value = (
     await chatsStore.search(q.value, global.value ? null : props.workspaceId)
   ).map((r) => ({
-    workspaceId: r.chat.workspace_id,
+    workspaceId: r.chat.workspaceId,
     chatId: r.chat_id,
     name: r.chat.name,
     messageId: r.id,

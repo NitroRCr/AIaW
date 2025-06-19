@@ -1,73 +1,71 @@
 import { storeToRefs } from "pinia"
-import { computed, Ref, watch } from "vue"
+import { computed, Ref } from "vue"
 
 import { useStorage } from "@/shared/composables/storage/useStorage"
+import { ApiResultItem } from "@/shared/types"
 
 import { useDialogsStore, useDialogMessagesStore } from "@/features/dialogs/store"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { DialogMessageInput, DialogMessageMapped, StoredItemMapped } from "@/services/data/supabase/types"
+import { DialogMessageNested, DialogMessageNestedUpdate, DbDialogMessageUpdate } from "@/services/data/types/dialogMessage"
+import { DbMessageContentUpdate } from "@/services/data/types/messageContents"
+import { DbStoredItemInsert, DbStoredItemUpdate, StoredItem } from "@/services/data/types/storedItem"
 
 import { getBranchList, getDialogItemList, TreeListItem } from "./utils/dialogTreeUtils"
 
 export const useDialogMessages = (dialogId: Ref<string>) => {
   const { dialogs } = storeToRefs(useDialogsStore())
-  const { addDialogMessage, updateDialogMessage, switchActiveDialogMessage, deleteDialogMessage, deleteStoredItem, fetchDialogMessages } = useDialogMessagesStore()
+  const {
+    addDialogMessage, updateDialogMessageNested, upsertSingleEntity, switchActiveDialogMessage, deleteDialogMessage,
+    deleteStoredItem, fetchDialogMessages, addStoredItem
+  } = useDialogMessagesStore()
   const { dialogMessages: allDialogMessages } = storeToRefs(useDialogMessagesStore())
   const { workspaces } = storeToRefs(useWorkspacesStore())
-  const { deleteFile } = useStorage()
+  const { deleteFile, uploadApiResultItem } = useStorage()
   const dialog = computed(() => dialogs.value[dialogId.value])
-  const workspaceId = computed(() => dialog.value.workspace_id)
-  const workspace = computed(() => workspaces.value.find(ws => ws.id === dialog.value.workspace_id))
+  const workspaceId = computed(() => dialog.value?.workspaceId || null)
+  const workspace = computed(() => workspaces.value.find(ws => ws.id === dialog.value?.workspaceId))
 
   const fetchMessages = async () => {
     await fetchDialogMessages(dialogId.value)
   }
 
-  const dialogMessages = computed(
+  const dialogMessages = computed<DialogMessageNested[]>(
     () => allDialogMessages.value[dialogId.value] || []
   )
 
-  // watch(dialogMessages, () => {
-  //   console.log("-----useDialogMessages dialogMessages", dialogMessages.value)
-  // })
-
-  const messageMap = computed<Record<string, DialogMessageMapped>>(() =>
+  const messageMap = computed<Record<string, DialogMessageNested>>(() =>
     Object.fromEntries(dialogMessages.value.map((m) => [m.id, m]))
   )
 
   const branchList = computed(() => getBranchList(messageMap.value))
-  const dialogItems = computed<TreeListItem<DialogMessageMapped>[]>(() => getDialogItemList(null, messageMap.value, branchList.value, []))
+  const dialogItems = computed<TreeListItem<DialogMessageNested>[]>(() => getDialogItemList(null, messageMap.value, branchList.value, []))
 
-  watch(dialogItems, () => {
-    console.log("-----useDialogMessages dialogItems", dialogItems.value)
-  })
   const lastMessageId = computed(() => dialogItems.value.length > 0 ? dialogItems.value[dialogItems.value.length - 1].message.id : null)
   const lastMessage = computed(() => dialogItems.value.length > 0 ? dialogItems.value[dialogItems.value.length - 1].message : null)
 
-  const addMessage = async (parentId: string | null, message: Omit<DialogMessageInput, "dialog_id" | "parent_id">) => {
+  const addMessage = async (parentId: string | null, message: DialogMessageNestedUpdate) => {
     const newMessage = await addDialogMessage(
       dialog.value.id,
       parentId,
       {
         ...message,
-        is_active: true,
+        isActive: true,
       }
     )
 
     return newMessage
   }
 
-  const updateMessage = async (messageId: string, message: Partial<DialogMessageInput>) => {
-    await updateDialogMessage(dialog.value.id, messageId, message)
+  const updateMessage = async (messageId: string,
+    message: DialogMessageNested<DbDialogMessageUpdate, DbMessageContentUpdate, DbStoredItemUpdate>,
+    cacheOnly = false) => {
+    await updateDialogMessageNested(dialog.value.id, messageId, message, cacheOnly)
   }
 
   const switchActiveMessage = async (messageId: string) => {
     for (const branch of branchList.value.values()) {
-      // console.log("-----switchActiveMessage", messageId, branch.includes(messageId))
-
       if (branch.includes(messageId)) {
-        console.log("-----switchActiveMessage2222", messageId, branch)
         await switchActiveDialogMessage(dialog.value.id, messageId, branch)
 
         return true
@@ -80,17 +78,21 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
   function getMessageContents (from: number = 1, to: number = -1) {
     return dialogItems.value
       .slice(from, to)
-      .map((item) => item.message.message_contents)
+      .map((item) => item.message.messageContents)
       .flat()
   }
 
-  async function createBranch(message: DialogMessageMapped) {
-    const { type, message_contents, parent_id } = message
+  async function createBranch(message: DialogMessageNested) {
+    const { parentId, id: _, ...messageRaw } = message
 
-    console.log("-----createBranch", message)
-    const { id } = await addMessage(parent_id, {
-      type,
-      message_contents,
+    // create raw message without any id
+    const { id } = await addMessage(parentId, {
+      ...messageRaw,
+      messageContents: messageRaw.messageContents.map((c) => {
+        const { id: _, ...contentRaw } = c
+
+        return contentRaw
+      }),
       status: "inputing",
     })
 
@@ -102,14 +104,47 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
     // TODO: set active message to next sibling
   }
 
-  const deleteStoredItemWithFile = async (stored_item: StoredItemMapped) => {
-    console.log("-----deleteStoredItem", stored_item)
-    await deleteFile(stored_item.file_url)
-    await deleteStoredItem(stored_item)
+  const deleteStoredItemWithFile = async (messageId: string, storedItem: StoredItem) => {
+    await deleteFile(storedItem.fileUrl)
+
+    if (storedItem.id) {
+      await deleteStoredItem(dialogId.value, messageId, storedItem)
+    }
   }
 
-  function switchBranch (item: TreeListItem<DialogMessageMapped>, index: number) {
-    console.log("----switchBranch", item, index)
+  // TODO: implement this in useDialogInput
+  const addMessageStoredItem = async (messageId: string, messageContentId: string, storedItem: StoredItem) => {
+    await addStoredItem(dialogId.value, messageId, {
+      ...storedItem,
+      messageContentId,
+    })
+  }
+
+  const addApiResultStoredItem = async (messageId: string, messageContentId: string, item: ApiResultItem) => {
+    let storedItem: StoredItem<DbStoredItemInsert> | null = null
+
+    if (item.type === "file") {
+      const fileItem = await uploadApiResultItem(item)
+      storedItem = {
+        ...fileItem,
+        messageContentId,
+      }
+    } else {
+      const { contentText, type, name } = item
+
+      storedItem = {
+        contentText,
+        type,
+        name,
+        messageContentId,
+      }
+    }
+
+    // Text items store in DB, not in storage
+    return await addStoredItem(dialogId.value, messageId, storedItem)
+  }
+
+  function switchBranch (item: TreeListItem<DialogMessageNested>, index: number) {
     switchActiveMessage(item.siblingMessageIds[index - 1])
   }
 
@@ -130,6 +165,9 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
     deleteBranch,
     switchBranch,
     deleteStoredItemWithFile,
-    fetchMessages
+    fetchMessages,
+    upsertSingleEntity,
+    addApiResultStoredItem,
+    addMessageStoredItem
   }
 }

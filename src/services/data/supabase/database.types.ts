@@ -402,7 +402,6 @@ export type Database = {
       stored_items: {
         Row: {
           content_text: string | null
-          dialog_id: string
           file_url: string | null
           id: string
           message_content_id: string
@@ -412,7 +411,6 @@ export type Database = {
         }
         Insert: {
           content_text?: string | null
-          dialog_id: string
           file_url?: string | null
           id?: string
           message_content_id: string
@@ -422,7 +420,6 @@ export type Database = {
         }
         Update: {
           content_text?: string | null
-          dialog_id?: string
           file_url?: string | null
           id?: string
           message_content_id?: string
@@ -431,13 +428,6 @@ export type Database = {
           type?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "stored_items_dialog_id_fkey"
-            columns: ["dialog_id"]
-            isOneToOne: false
-            referencedRelation: "dialogs"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "stored_items_message_content_id_fkey"
             columns: ["message_content_id"]
@@ -708,8 +698,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_insert_stored_item: {
+        Args: { p_message_content_id: string }
+        Returns: boolean
+      }
       can_insert_workspace_member: {
         Args: { p_workspace_id: string }
+        Returns: boolean
+      }
+      can_user_insert_stored_item: {
+        Args: { p_message_content_id: string }
         Returns: boolean
       }
       delete_chat_if_authorized: {
@@ -724,6 +722,10 @@ export type Database = {
       }
       is_chat_member: {
         Args: { chat_id: string; user_id: string }
+        Returns: boolean
+      }
+      is_stored_item_owner: {
+        Args: { p_message_content_id: string }
         Returns: boolean
       }
       is_workspace_admin: {

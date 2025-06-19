@@ -33,15 +33,15 @@ export function useFirstVisit () {
             name: t("db.defaultAssistant"),
             avatar: defaultAvatar("AI"),
             prompt: "",
-            prompt_template: AssistantDefaultPrompt,
-            prompt_vars: [],
+            promptTemplate: AssistantDefaultPrompt,
+            promptVars: [],
             provider: null,
             model: null,
-            model_settings: { ...defaultModelSettings },
+            modelSettings: { ...defaultModelSettings },
             plugins: {},
-            prompt_role: "system",
+            promptRole: "system",
             stream: true,
-            workspace_id: null, // Global Assistant
+            workspaceId: null, // Global Assistant
           })
         }
       }

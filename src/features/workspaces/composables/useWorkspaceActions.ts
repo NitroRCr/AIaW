@@ -36,13 +36,13 @@ export function useWorkspaceActions () {
     }).onOk(async (name) => {
       const workspace = await workspacesStore.addWorkspace({
         name: name.trim(),
-        parent_id: parentId,
+        parentId,
         type: "workspace",
-        is_public: true,
+        isPublic: true,
       })
       const assistant = await assistantsStore.add({
         name: t("workspace.defaultAssistant"),
-        workspace_id: workspace.id,
+        workspaceId: workspace.id,
         avatar: defaultAvatar("AI"),
         provider: userPerfsStore.data.provider,
         model: userPerfsStore.data.model,
@@ -68,7 +68,7 @@ export function useWorkspaceActions () {
     }).onOk((name) => {
       workspacesStore.addWorkspace({
         name: name.trim(),
-        parent_id: parentId,
+        parentId,
         type: "folder",
       })
     })
@@ -82,7 +82,7 @@ export function useWorkspaceActions () {
         exclude,
       },
     }).onOk((parentId) => {
-      workspacesStore.updateItem(id, { parent_id: parentId })
+      workspacesStore.updateItem(id, { parentId })
     })
   }
 

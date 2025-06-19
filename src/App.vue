@@ -20,6 +20,7 @@ import { useRouter } from "vue-router"
 import { useSetTheme } from "@/shared/composables/setTheme"
 import { useUserStore, getMnemonic, useUserDataStore, useUserPerfsStore } from "@/shared/store"
 
+import { useArtifactsStore } from "@/features/artifacts/store"
 import { useAssistantsStore } from "@/features/assistants/store"
 import PinModal from "@/features/auth/components/PinModal.vue"
 import { useFirstVisit } from "@/features/auth/composables/useFirstVisit"
@@ -54,7 +55,7 @@ const { isLoaded: dialogsLoaded } = storeToRefs(useDialogsStore())
 const { isLoaded: pluginsLoaded } = storeToRefs(usePluginsStore())
 const { ready: perfsLoaded } = storeToRefs(useUserPerfsStore())
 const { ready: userDataLoaded } = storeToRefs(useUserDataStore())
-
+const { isLoaded: artifactsLoaded } = storeToRefs(useArtifactsStore())
 const isAppReady = computed(
   () =>
     userInitialized.value &&
@@ -63,7 +64,8 @@ const isAppReady = computed(
     dialogsLoaded.value &&
     pluginsLoaded.value &&
     perfsLoaded.value &&
-    userDataLoaded.value
+    userDataLoaded.value &&
+    artifactsLoaded.value
 )
 
 watch(

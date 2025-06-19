@@ -163,7 +163,8 @@ import { useArtifactsStore } from "@/features/artifacts/store"
 import EditArtifact from "@/features/artifacts/views/EditArtifact.vue"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { ArtifactMapped, WorkspaceMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
+import { Workspace } from "@/services/data/types/workspace"
 
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 
@@ -184,16 +185,16 @@ const listOpen = computed(
     }
 )
 
-const workspace = computed<WorkspaceMapped | undefined>(
+const workspace = computed<Workspace | undefined>(
   () =>
     workspacesStore.workspaces.find(
       (item) => item.id === props.id
-    ) as WorkspaceMapped
+    ) as Workspace
 )
 
 const artifacts = computed(() =>
   Object.values(artifactsStore.workspaceArtifacts[props.id] || {}).map(
-    (a) => a as ArtifactMapped
+    (a) => a as Artifact
   )
 )
 

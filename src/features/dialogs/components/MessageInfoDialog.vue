@@ -39,12 +39,12 @@
               {{ length }}
             </q-item-section>
           </q-item>
-          <q-item v-if="message.model_name">
+          <q-item v-if="message.modelName">
             <q-item-section>
               {{ $t("messageInfoDialog.model") }}
             </q-item-section>
             <q-item-section side>
-              {{ message.model_name }}
+              {{ message.modelName }}
             </q-item-section>
           </q-item>
           <q-item v-if="message.usage">
@@ -78,14 +78,14 @@ import { computed } from "vue"
 
 import { idDateString } from "@/shared/utils/functions"
 
-import type { DialogMessageMapped } from "@/services/data/supabase/types"
+import { DialogMessageNested } from "@/services/data/types/dialogMessage"
 
 const props = defineProps<{
-  message: DialogMessageMapped
+  message: DialogMessageNested
 }>()
 
 const length = computed(() =>
-  props.message.message_contents
+  props.message.messageContents
     .filter((c) => c.type === "assistant-message" || c.type === "user-message")
     .reduce((prev, cur) => prev + cur.text.length, 0)
 )

@@ -31,7 +31,7 @@
             v-if="assistant.model"
             :model="assistant.model.name"
             @click="updateDialogModel(null)"
-            :selected="!dialog.model_override"
+            :selected="!dialog.modelOverride"
             clickable
             v-close-popup
           />
@@ -47,7 +47,7 @@
             v-if="perfs.model"
             :model="perfs.model.name"
             @click="updateDialogModel(null)"
-            :selected="!dialog.model_override"
+            :selected="!dialog.modelOverride"
             clickable
             v-close-popup
           />
@@ -81,7 +81,7 @@
             name: m,
             inputTypes: InputTypes.default,
           })"
-          :selected="dialog.model_override?.name === m"
+          :selected="dialog.modelOverride?.name === m"
           v-close-popup
         />
       </q-list>
@@ -112,7 +112,7 @@ const dialogsStore = useDialogsStore()
 function updateDialogModel(modelOverride: any) {
   dialogsStore.updateDialog({
     id: props.dialog.id,
-    model_override: modelOverride,
+    modelOverride,
   })
 }
 </script>

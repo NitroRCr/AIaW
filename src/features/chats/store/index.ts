@@ -1,13 +1,13 @@
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { readonly } from "vue"
+import { readonly, ref, watch } from "vue"
 
 import { useUserStore } from "@/shared/store"
 
 import { useChatsWithSubscription } from "@/features/chats/composables/useChatsWithSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
-import { ChatMapped } from "@/services/data/supabase/types"
+import { Chat, DbChatInsert, mapChatToDb, mapDbToChat } from "@/services/data/types/chat"
 
 /**
  * Store for managing user-to-user chats in the application
@@ -33,6 +33,12 @@ import { ChatMapped } from "@/services/data/supabase/types"
 export const useChatsStore = defineStore("chats", () => {
   const { chats, isLoaded } = useChatsWithSubscription()
   const userStore = useUserStore()
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(chats, () => {
+    hasChanges.value = true
+  }, { deep: true })
 
   /**
    * Creates a new chat in the database
@@ -53,25 +59,32 @@ export const useChatsStore = defineStore("chats", () => {
    * // Create a basic chat
    * const newChat = await add({
    *   name: "New Discussion",
-   *   workspace_id: "workspace-123",
+   *   workspaceId: "workspace-123",
    *   type: "group"
    * });
    */
   const add = async (
-    chat: Omit<ChatMapped, "id" | "created_at" | "updated_at" | "owner_id">
-  ): Promise<ChatMapped | undefined> => {
+    chat: Chat<DbChatInsert>
+  ): Promise<Chat> => {
+    isSaving.value = true
     console.log("addChat", chat)
     const { data, error } = await supabase
       .from("chats")
-      .insert(chat)
+      .insert(mapChatToDb(chat))
       .select()
       .single()
 
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
+
     if (error) {
       console.error("error", error)
+      throw error
     }
 
-    return data as ChatMapped
+    return mapDbToChat(data)
   }
 
   /**
@@ -95,19 +108,26 @@ export const useChatsStore = defineStore("chats", () => {
    *   last_message_at: new Date().toISOString()
    * });
    */
-  const update = async (id: string, chat: Partial<ChatMapped>): Promise<ChatMapped | undefined> => {
+  const update = async (id: string, chat: Partial<Chat>): Promise<Chat | undefined> => {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("chats")
-      .update(chat)
+      .update(mapChatToDb(chat))
       .eq("id", id)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("error", error)
     }
 
-    return data as ChatMapped
+    return mapDbToChat(data)
   }
 
   /**
@@ -165,14 +185,14 @@ export const useChatsStore = defineStore("chats", () => {
         chat_id,
         content,
         chat:chats (
-          workspace_id,
+          workspaceId,
           name
         )
       `)
 
     // Add workspace filter if provided
     if (workspaceId) {
-      queryBuilder.eq("chats.workspace_id", workspaceId)
+      queryBuilder.eq("chats.workspaceId", workspaceId)
     }
 
     // Execute the full-text search
@@ -204,9 +224,9 @@ export const useChatsStore = defineStore("chats", () => {
    * putItem({ id: "chat-123", name: "Updated Name" });
    *
    * // Create a new chat
-   * putItem({ name: "New Chat", workspace_id: "workspace-123", type: "group" });
+   * putItem({ name: "New Chat", workspaceId: "workspace-123", type: "group" });
    */
-  const putItem = async (chat: Partial<ChatMapped>): Promise<void> => {
+  const putItem = async (chat: Partial<Chat>): Promise<void> => {
     if (chat.id) {
       // If chat has an ID, update it with throttling
       throttleUpdate(chat.id, chat)
@@ -214,7 +234,7 @@ export const useChatsStore = defineStore("chats", () => {
       // If chat doesn't have an ID, create a new one
       await add(
         chat as Omit<
-          ChatMapped,
+          Chat,
           "id" | "created_at" | "updated_at" | "owner_id"
         >
       )
@@ -270,5 +290,7 @@ export const useChatsStore = defineStore("chats", () => {
     search,
     putItem,
     startPrivateChatWith,
+    isSaving,
+    hasChanges,
   }
 })

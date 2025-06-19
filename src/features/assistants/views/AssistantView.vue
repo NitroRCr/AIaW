@@ -73,7 +73,7 @@
           <q-item-section>
             <a-input
               filled
-              v-model="assistant.prompt_template"
+              v-model="assistant.promptTemplate"
               autogrow
               clearable
             />
@@ -86,7 +86,7 @@
           <q-item-section>
             <prompt-var-editor
               ml-2
-              v-model="assistant.prompt_vars"
+              v-model="assistant.promptVars"
             />
           </q-item-section>
         </q-item>
@@ -169,7 +169,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.maxRetries"
+              v-model.number="assistant.modelSettings.maxRetries"
               type="number"
             />
           </q-item-section>
@@ -186,7 +186,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.maxSteps"
+              v-model.number="assistant.modelSettings.maxSteps"
               type="number"
             />
           </q-item-section>
@@ -203,7 +203,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.context_num"
+              v-model.number="assistant.contextNum"
               type="number"
               clearable
             />
@@ -218,7 +218,7 @@
               class="w-100px"
               filled
               dense
-              v-model="assistant.prompt_role"
+              v-model="assistant.promptRole"
               :options="['system', 'user', 'assistant']"
             />
           </q-item-section>
@@ -244,7 +244,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.temperature"
+              v-model.number="assistant.modelSettings.temperature"
               type="number"
               step="0.1"
             />
@@ -264,7 +264,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.topP"
+              v-model.number="assistant.modelSettings.topP"
               type="number"
               step="0.1"
             />
@@ -285,7 +285,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.presencePenalty"
+              v-model.number="assistant.modelSettings.presencePenalty"
               type="number"
               step="0.1"
             />
@@ -306,7 +306,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.frequencyPenalty"
+              v-model.number="assistant.modelSettings.frequencyPenalty"
               type="number"
               step="0.1"
             />
@@ -326,7 +326,7 @@
               class="w-150px"
               filled
               dense
-              v-model="assistant.model_settings.stopSequences"
+              v-model="assistant.modelSettings.stopSequences"
               use-input
               use-chips
               multiple
@@ -350,7 +350,7 @@
               class="w-150px"
               filled
               dense
-              v-model.number="assistant.model_settings.maxTokens"
+              v-model.number="assistant.modelSettings.maxTokens"
               type="number"
               clearable
             />
@@ -370,7 +370,7 @@
               class="w-100px"
               filled
               dense
-              v-model.number="assistant.model_settings.seed"
+              v-model.number="assistant.modelSettings.seed"
               type="number"
               clearable
             />
@@ -474,6 +474,13 @@
           </q-item-section>
         </q-item>
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <sticky-save-button
+        @click="saveAssistant"
+        :loading="store.isSaving"
+        :disabled="!store.hasChanges"
+      />
     </q-page>
   </q-page-container>
   <error-not-found v-else />
@@ -489,7 +496,6 @@ import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import { useLocateId } from "@/shared/composables/locateId"
 import { useSetTitle } from "@/shared/composables/setTitle"
 import { getAvatarUrl } from "@/shared/composables/storage/utils"
-import { syncRef } from "@/shared/composables/syncRef"
 import { pageFhStyle } from "@/shared/utils/functions"
 import { exportFile } from "@/shared/utils/platformApi"
 
@@ -498,8 +504,6 @@ import EnablePluginsItems from "@/features/plugins/components/EnablePluginsItems
 import PromptVarEditor from "@/features/prompt/components/PromptVarEditor.vue"
 import ModelInputItems from "@/features/providers/components/ModelInputItems.vue"
 import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
-
-import { AssistantMapped } from "@/services/data/supabase/types"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -511,17 +515,32 @@ const props = defineProps<{
 defineEmits(["toggle-drawer"])
 
 const store = useAssistantsStore()
-const assistant = syncRef<AssistantMapped>(
-  () => store.assistants.find((a) => a.id === props.id),
-  (val) => {
-    store.put(toRaw(val))
-  },
-  { valueDeep: true }
-)
-
 const $q = useQuasar()
 
+const assistant = computed(() =>
+  store.assistants.find((a) => a.id === props.id)
+)
+
+async function saveAssistant() {
+  if (!assistant.value) return
+
+  try {
+    await store.put(toRaw(assistant.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Assistant saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving assistant'
+    })
+  }
+}
+
 function pickAvatar () {
+  if (!assistant.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {
@@ -530,7 +549,7 @@ function pickAvatar () {
     },
   }).onOk((avatar) => {
     console.log("---pickAvatar avatar", avatar)
-    assistant.value.avatar = avatar
+    assistant.value!.avatar = avatar
   })
 }
 
@@ -549,10 +568,10 @@ async function exportAssistant (target: "file" | "clipboard") {
   const {
     name,
     prompt,
-    prompt_vars,
-    prompt_template,
+    promptVars,
+    promptTemplate,
     model,
-    model_settings,
+    modelSettings,
     author,
     homepage,
     description,
@@ -561,10 +580,10 @@ async function exportAssistant (target: "file" | "clipboard") {
     name,
     avatar,
     prompt,
-    prompt_vars,
-    prompt_template,
+    promptVars,
+    promptTemplate,
     model,
-    model_settings,
+    modelSettings,
     author,
     homepage,
     description,

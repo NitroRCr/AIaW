@@ -8,20 +8,30 @@
       v-for="dialog in lastDialogsWithWorkspace"
       :key="dialog.id"
       clickable
-      @click="goToDialog(dialog.workspace_id, dialog.id)"
+      @click="goToDialog(dialog.workspaceId, dialog.id)"
       dense
       class="q-pa-xs q-mb-xs"
     >
       <q-item-section
         side
         class="q-mr-xs q-pa-none"
+        v-if="dialog.workspace?.avatar"
       >
         <AAvatar
-          :avatar="dialog.workspace?.avatar"
+          :avatar="dialog.workspace.avatar"
           :label="dialog.workspace?.name"
           :flat="true"
           size="xs"
         />
+      </q-item-section>
+      <q-item-section
+        side
+        class="q-mr-xs q-pa-none"
+        v-else
+      >
+        <q-avatar size="xs">
+          {{ dialog.workspace?.name?.charAt(0) || 'D' }}
+        </q-avatar>
       </q-item-section>
       <q-item-section class="q-pa-none q-pt-xs q-pl-xs">
         <div class="text-body2 ellipsis">
@@ -42,28 +52,36 @@ import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import { useDialogsStore } from "@/features/dialogs/store/dialogs"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { DialogMapped } from "@/services/data/supabase/types"
+import { Dialog } from "@/services/data/types/dialogs"
 
 const MAX_LAST_DIALOGS = 3
 const router = useRouter()
 const workspacesStore = useWorkspacesStore()
 const { dialogs } = storeToRefs(useDialogsStore())
-const dialogsMapped = computed(() => Object.values<DialogMapped>(dialogs.value))
+const dialogsMapped = computed(() => Object.values<Dialog>(dialogs.value))
 
+// FIXME: Heavy array operations in computed property
+// This computed creates new array copy, sorts with Date parsing, and slices on every change.
+// For large dialog lists, this could impact performance. Consider memoizing or moving to store.
+// Alternative: cache sorted results or use a computed store getter with memoization.
 const lastDialogs = computed(() => {
   return [...dialogsMapped.value]
     .sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     .slice(0, MAX_LAST_DIALOGS)
 })
 
+// FIXME: Nested array operations in computed property
+// This computed maps over dialogs and finds workspace for each one, creating new objects.
+// The find() operation in map() creates O(n²) complexity. Consider pre-indexing workspaces by ID.
+// Alternative: create workspace lookup map in store or cache the result.
 const lastDialogsWithWorkspace = computed(() =>
   workspacesStore.workspaces.length > 0
     ? lastDialogs.value.map((d) => {
       const workspace = workspacesStore.workspaces?.find(
-        (w) => w.id === d.workspace_id
+        (w) => w.id === d.workspaceId
       )
 
       return {

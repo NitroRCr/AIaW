@@ -25,7 +25,7 @@
       bg-pri-c
       text-on-pri-c
       ml-2
-      v-if="!assistant.workspace_id"
+      v-if="!assistant.workspaceId"
     >
       {{ $t("assistantItem.global") }}
     </q-badge>
@@ -38,7 +38,7 @@
         <menu-item
           icon="sym_o_add_comment"
           :label="$t('assistantsExpansion.createDialog')"
-          @click="createDialog({ assistant_id: assistant.id })"
+          @click="createDialog({ assistantId: assistant.id })"
         />
         <menu-item
           icon="sym_o_move_item"
@@ -83,7 +83,7 @@ import { useAssistantsStore } from "@/features/assistants/store"
 import { useCreateDialog } from "@/features/dialogs/composables"
 import SelectWorkspaceDialog from "@/features/workspaces/components/SelectWorkspaceDialog.vue"
 
-import { AssistantMapped } from "@/services/data/supabase/types"
+import { Assistant } from "@/services/data/types/assistant"
 
 const props = defineProps({
   assistant: { type: Object, required: true },
@@ -97,13 +97,12 @@ const assistantsStore = useAssistantsStore()
 const { data: userData } = storeToRefs(useUserDataStore())
 const { createDialog } = useCreateDialog(props.workspaceId)
 
-const assistant = computed(() => props.assistant as AssistantMapped)
+const assistant = computed(() => props.assistant as Assistant)
 const $q = useQuasar()
 // const defaultAssistantId = computed(() => workspaceId.value ? userData.value.defaultAssistantIds[workspaceId.value] : null)
 
 function setDefaultAssistant (id) {
   userData.value.defaultAssistantIds[props.workspaceId] = id
-  console.log("------userData", props.workspaceId, id, userData.value)
 }
 
 function move (id, workspaceId) {

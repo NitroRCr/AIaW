@@ -31,7 +31,6 @@ until(() => userPerfsStore.ready)
 
       const bak = userPerfsStore.data.provider
       userPerfsStore.data.provider = provider
-      console.log("----perfs1 form", userPerfsStore.data)
       $q.notify({
         message: t("setProviderPage.providerSet", {
           baseURL: provider.settings.baseURL,

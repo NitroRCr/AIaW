@@ -119,8 +119,8 @@ body.body--light {
 
 :not(pre) > code {
   --at-apply: "bg-sur-c text-on-sur-var rd px-1 mx-1";
-  font-family:
-    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
 }
 
 [role="dialog"] .q-transition--scale-enter-from,
@@ -301,4 +301,14 @@ body .md-editor-preview-wrapper {
 .md-editor-dark .md-editor-preview {
   --md-theme-color: var(--a-on-sur-var) !important;
   --md-theme-heading-color: var(--a-on-sur-var) !important;
+}
+
+/* Utility class for sticky save buttons */
+.sticky-save-btn {
+  position: sticky;
+  bottom: 16px;
+  right: 16px;
+  float: right;
+  margin-top: auto;
+  z-index: 100;
 }

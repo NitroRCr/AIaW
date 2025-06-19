@@ -129,16 +129,7 @@ async function search () {
   results.value = (
     await dialogsStore.searchDialogs(q.value, props.workspaceId)
   ).map((d) => ({
-    workspaceId: d.dialog_message.dialog.workspace_id,
-    dialogId: d.dialog_message.dialog_id,
-    title: d.dialog_message.dialog.name,
-    route: [],
-    // TODO: fix relative dialog messages
-    // create search in useDialogMessages
-    // route: getRoute(
-    //   d.dialog_message.dialog.msg_tree as Record<string, string[]>,
-    //   d.message_id
-    // ),
+    ...d,
     preview: d.text.match(
       new RegExp(`^.*${escapeRegex(q.value)}.*$`, "im")
     )?.[0],

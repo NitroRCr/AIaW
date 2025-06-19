@@ -10,8 +10,8 @@ import { useWorkspacesStore } from "@/features/workspaces/store"
 /**
  * Returns the active workspace and assistant, if no workspace is selected, the default workspace is used
  * @returns {Object} - The active workspace and assistant
- * @returns {WorkspaceMapped} workspace - The active workspace
- * @returns {AssistantMapped} assistant - The active assistant
+ * @returns {Workspace} workspace - The active workspace
+ * @returns {Assistant} assistant - The active assistant
  */
 export function useActiveWorkspace () {
   const route = useRoute()
@@ -37,7 +37,7 @@ export function useActiveWorkspace () {
     () => userData.value.defaultAssistantIds[workspaceId.value]
   )
   const defaultAssistant = computed(() =>
-    assistants.value.find((assistant) => !assistant.workspace_id)
+    assistants.value.find((assistant) => !assistant.workspaceId)
   )
   const assistant = computed(
     () =>

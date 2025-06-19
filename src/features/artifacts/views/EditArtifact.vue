@@ -34,10 +34,10 @@
   >
     <div>
       <div text-out>
-        {{ artifact.versions[artifact.curr_index].date.toLocaleString() }}
+        {{ artifact.versions[artifact.currIndex].date.toLocaleString() }}
       </div>
       <q-pagination
-        :model-value="artifact.curr_index + 1"
+        :model-value="artifact.currIndex + 1"
         @update:model-value="setIndex($event - 1)"
         :max="artifact.versions.length"
         input
@@ -107,25 +107,25 @@ import { artifactUnsaved, saveArtifactChanges } from "@/shared/utils/functions"
 
 import { useArtifactsStore } from "@/features/artifacts/store"
 
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
 
 const props = defineProps<{
-  artifact: ArtifactMapped
+  artifact: Artifact
 }>()
 
 const artifactsStore = useArtifactsStore()
 
-function update (changes: Partial<ArtifactMapped>) {
+function update (changes: Partial<Artifact>) {
   artifactsStore.update({
     ...changes,
     id: props.artifact.id,
-    workspace_id: props.artifact.workspace_id,
+    workspaceId: props.artifact.workspaceId,
   })
 }
 
 function setIndex (index: number) {
   update({
-    curr_index: index,
+    currIndex: index,
     tmp: props.artifact.versions[index].text,
   })
 }

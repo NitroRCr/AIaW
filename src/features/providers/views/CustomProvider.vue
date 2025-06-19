@@ -8,7 +8,10 @@
     </q-toolbar-title>
   </view-common-header>
   <q-page-container v-if="provider">
-    <q-page :style-fn="pageFhStyle">
+    <q-page
+      :style-fn="pageFhStyle"
+      class="relative-position"
+    >
       <q-list
         py-2
         max-w="1000px"
@@ -38,7 +41,7 @@
           </q-item-section>
         </q-item>
         <provider-input-items
-          v-model="provider.fallback_provider"
+          v-model="provider.fallbackProvider"
           :label="$t('customProvider.fallbackProvider')"
           :caption="$t('customProvider.fallbackProviderCaption')"
         />
@@ -81,6 +84,13 @@
           </q-item-section>
         </q-item>
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <sticky-save-button
+        @click="saveProvider"
+        :loading="store.isSaving"
+        :disabled="!store.hasChanges"
+      />
     </q-page>
   </q-page-container>
   <error-not-found v-else />
@@ -94,17 +104,13 @@ import { useI18n } from "vue-i18n"
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import { useSetTitle } from "@/shared/composables/setTitle"
-import { syncRef } from "@/shared/composables/syncRef"
 import { pageFhStyle } from "@/shared/utils/functions"
 
 import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
 import SubproviderInput from "@/features/providers/components/SubproviderInput.vue"
 import { useProvidersStore } from "@/features/providers/store"
 
-import {
-  CustomProviderMapped,
-  SubproviderMapped,
-} from "@/services/data/supabase/types"
+import { Subprovider } from "@/services/data/types/provider"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -116,34 +122,51 @@ const props = defineProps<{
 defineEmits(["toggle-drawer"])
 
 const store = useProvidersStore()
+const $q = useQuasar()
 
-const provider = syncRef<CustomProviderMapped>(
-  () => store.providers.find((a) => a.id === props.id),
-  (val) => {
-    store.put(toRaw(val))
-  },
-  { valueDeep: true }
-)
+const providerId = computed(() => props.id)
+const provider = computed(() => store.providers.find(p => p.id === providerId.value))
+
+async function saveProvider() {
+  if (!provider.value) return
+
+  try {
+    await store.put(toRaw(provider.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Provider saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving provider'
+    })
+  }
+}
 
 function addSubprovider () {
-  store.update(provider.value.id, {
-    subproviders: [
-      {
-        custom_provider_id: provider.value.id,
-        provider: null,
-        model_map: {},
-      },
-    ],
+  if (!provider.value) return
+
+  provider.value.subproviders.push({
+    customProviderId: provider.value.id,
+    provider: null,
+    modelMap: {},
   })
 }
 
-function removeSubprovider (subprovider: SubproviderMapped) {
-  store.deleteSubprovider(provider.value.id, subprovider.id)
+function removeSubprovider (subprovider: Subprovider) {
+  if (!provider.value) return
+
+  const index = provider.value.subproviders.findIndex(s => s.id === subprovider.id)
+
+  if (index > -1) {
+    provider.value.subproviders.splice(index, 1)
+  }
 }
 
-const $q = useQuasar()
-
 function pickAvatar () {
+  if (!provider.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {
@@ -151,9 +174,12 @@ function pickAvatar () {
       defaultTab: "icon",
     },
   }).onOk((avatar) => {
-    provider.value.avatar = avatar
+    // Create a new object to trigger reactivity
+    const updatedProvider = { ...provider.value!, avatar }
+    Object.assign(provider.value!, updatedProvider)
   })
 }
+
 const { t } = useI18n()
 useSetTitle(
   computed(

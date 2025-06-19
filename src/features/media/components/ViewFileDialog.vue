@@ -17,7 +17,7 @@
         p-0
         bg-sur-c-low
       >
-        <div v-if="file.content_text">
+        <div v-if="file.contentText">
           <md-preview
             :model-value="markdown"
             v-bind="mdPreviewProps"
@@ -25,7 +25,7 @@
             max-h="70vh"
           />
         </div>
-        <div v-if="file.file_url">
+        <div v-if="file.fileUrl">
           <q-list>
             <q-item>
               <q-item-section>
@@ -40,7 +40,7 @@
                 {{ $t("viewFileDialog.fileType") }}
               </q-item-section>
               <q-item-section side>
-                {{ file.mime_type }}
+                {{ file.mimeType }}
               </q-item-section>
             </q-item>
           </q-list>
@@ -48,14 +48,14 @@
       </q-card-section>
       <q-card-actions bg-sur-c-low>
         <copy-btn
-          v-if="file.content_text"
+          v-if="file.contentText"
           flat
           :label="$t('viewFileDialog.copy')"
           color="primary"
-          :value="file.content_text"
+          :value="file.contentText"
         />
         <q-btn
-          v-if="file.file_url"
+          v-if="file.fileUrl"
           flat
           :label="$t('viewFileDialog.download')"
           color="primary"
@@ -86,7 +86,7 @@ import { useStorage } from "@/shared/composables/storage/useStorage"
 import { wrapCode, wrapQuote } from "@/shared/utils/functions"
 import { codeExtensions } from "@/shared/utils/values"
 
-import { StoredItem } from "@/services/data/supabase/types"
+import { StoredItem } from "@/services/data/types/storedItem"
 
 const props = defineProps<{
   file: StoredItem
@@ -101,10 +101,10 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 const fileSize = ref<number | null>(null)
 
 watchEffect(async () => {
-  if (!props.file.file_url) {
+  if (!props.file.fileUrl) {
     fileSize.value = null
   } else {
-    fileSize.value = await storage.getFileSizeByUrl(props.file.file_url)
+    fileSize.value = await storage.getFileSizeByUrl(props.file.fileUrl)
   }
 })
 
@@ -115,25 +115,29 @@ function sizeStr (bytes: number) {
   else return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
+// FIXME: Text processing operations in computed property
+// While less heavy than template rendering, this computed processes file content on every change.
+// For large files, string operations like split() and wrapCode() could impact performance.
+// Consider memoizing the result or moving processing to when file is loaded.
 const markdown = computed(() => {
   const { file } = props
 
-  if (file.type === "quote") return wrapQuote(file.content_text)
+  if (file.type === "quote") return wrapQuote(file.contentText)
 
   const splits = file.name.split(".")
 
-  if (splits.length < 2) return file.content_text
+  if (splits.length < 2) return file.contentText
 
   const ext = splits.at(-1)
 
   return codeExtensions.includes(ext)
-    ? wrapCode(file.content_text, ext)
-    : file.content_text
+    ? wrapCode(file.contentText, ext)
+    : file.contentText
 })
 
 function download () {
   // trigger download of props.file.file_url
-  const url = props.file.file_url
+  const url = props.file.fileUrl
   const a = document.createElement("a")
   a.href = url
   a.download = props.file.name

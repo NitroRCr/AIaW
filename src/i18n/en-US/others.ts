@@ -37,7 +37,7 @@ Click "**Create Dialog**" in the right sidebar to start a conversation.
 
 For more information, see <a href="https://docs.aiaw.app/usage/" target="_blank">Usage Guide</a>
 
-GitHub: <a href="https://github.com/NitroRCr/aiaw" target="_blank">NitroRCr/AIaW</a>
+GitHub: <a href="https://github.com/dasein108/AIaW" target="_blank">dasein108/AIaW</a>
 `,
   },
   mcpClient: {

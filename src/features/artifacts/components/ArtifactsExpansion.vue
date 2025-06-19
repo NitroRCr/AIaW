@@ -111,12 +111,13 @@ import { useCloseArtifact } from "@/features/artifacts/composables/useCloseArtif
 import { useCreateArtifact } from "@/features/artifacts/composables/useCreateArtifact"
 import SelectFileBtn from "@/features/files/components/SelectFileBtn.vue"
 
-import { ArtifactMapped, Workspace } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
+import { Workspace } from "@/services/data/types/workspace"
 
 import ArtifactItemIcon from "./ArtifactItemIcon.vue"
 import ArtifactItemMenu from "./ArtifactItemMenu.vue"
 
-const artifacts: Ref<ArtifactMapped[]> = inject("artifacts")
+const artifacts: Ref<Artifact[]> = inject("artifacts")
 
 const filter = ref(null)
 const filteredArtifacts = computed(() => {
@@ -170,7 +171,7 @@ async function artifactFromFiles (files: File[]) {
       name: file.name,
       language: getFileExt(file.name),
       versions: [{ date: new Date(file.lastModified).toISOString(), text }],
-      curr_index: 0,
+      currIndex: 0,
       tmp: text,
     })
   }

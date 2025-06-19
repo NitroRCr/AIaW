@@ -4,17 +4,17 @@ import { ref } from "vue"
 import { useChatMessagesSubscription } from "@/features/chats/composables/useChatMessagesSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
-import { ChatMessage, ChatMessageWithProfile } from "@/services/data/supabase/types"
+import { ChatMessage, DbChatMessageInsert, mapChatMessageToDb, mapDbToChatMessage } from "@/services/data/types/chat"
 
 export const useChatMessagesStore = defineStore("chat-messages", () => {
-  const messagesByChat = ref<Record<string, ChatMessageWithProfile[]>>({})
+  const messagesByChat = ref<Record<string, ChatMessage[]>>({})
 
-  const onNewMessage = (message: ChatMessageWithProfile) => {
-    if (!messagesByChat.value[message.chat_id]) {
-      messagesByChat.value[message.chat_id] = []
+  const onNewMessage = (message: ChatMessage) => {
+    if (!messagesByChat.value[message.chatId]) {
+      messagesByChat.value[message.chatId] = []
     }
 
-    messagesByChat.value[message.chat_id].push(message)
+    messagesByChat.value[message.chatId].push(message)
   }
 
   useChatMessagesSubscription(onNewMessage)
@@ -37,10 +37,10 @@ export const useChatMessagesStore = defineStore("chat-messages", () => {
 
     // TODO: temporary solution for lazy loading
     if (offset === 0) {
-      messagesByChat.value[chatId] = data as ChatMessageWithProfile[]
+      messagesByChat.value[chatId] = data.map(mapDbToChatMessage)
     } else {
       messagesByChat.value[chatId].unshift(
-        ...(data as ChatMessageWithProfile[])
+        ...(data.map(mapDbToChatMessage))
       )
     }
 
@@ -48,13 +48,9 @@ export const useChatMessagesStore = defineStore("chat-messages", () => {
   }
 
   const add = async (
-    message: Omit<ChatMessage, "id" | "created_at" | "updated_at">
+    message: ChatMessage<DbChatMessageInsert>
   ) => {
-    const { data, error } = await supabase.from("messages").insert({
-      chat_id: message.chat_id,
-      sender_id: message.sender_id,
-      content: message.content,
-    })
+    const { data, error } = await supabase.from("messages").insert(mapChatMessageToDb(message) as DbChatMessageInsert)
 
     if (error) {
       console.error("❌ Failed to add message:", error.message)

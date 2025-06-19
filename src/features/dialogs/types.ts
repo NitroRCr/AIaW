@@ -1,9 +1,10 @@
-import { StoredItemMapped } from "@/services/data/supabase/types"
+import { StoredItem, StoredItemResult } from "@/services/data/types/storedItem"
 
 type UserMessageContent = {
+  id: string
   type: "user-message"
   text: string
-  stored_items: StoredItemMapped[]
+  storedItems: StoredItem[]
 }
 
 type AssistantMessageContent = {
@@ -14,10 +15,10 @@ type AssistantMessageContent = {
 
 type AssistantToolContent = {
   type: "assistant-tool"
-  plugin_id: string
+  pluginId: string
   name: string
   args: any
-  result?: any[]
+  result?: StoredItemResult[]
   status: "calling" | "failed" | "completed"
   error?: string
 }

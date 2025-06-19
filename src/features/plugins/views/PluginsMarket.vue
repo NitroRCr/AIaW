@@ -94,6 +94,10 @@ defineEmits(["toggle-drawer"])
 const query = ref("")
 const list = reactive([])
 
+// FIXME: Multiple array filtering operations in computed property
+// This computed filters the list twice with caselessIncludes string matching on every query change.
+// For large plugin lists, this could be slow. Consider debouncing the query input.
+// Alternative: use a more efficient search algorithm or pre-index searchable text.
 const filterList = computed(() => {
   let res = list
 

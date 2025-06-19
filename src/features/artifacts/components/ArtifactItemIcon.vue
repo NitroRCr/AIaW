@@ -7,10 +7,10 @@ import { computed } from "vue"
 
 import { codeExtensions } from "@/shared/utils/values"
 
-import { ArtifactMapped } from "@/services/data/supabase/types"
+import { Artifact } from "@/services/data/types/artifact"
 
 const props = defineProps<{
-  artifact: ArtifactMapped
+  artifact: Artifact
 }>()
 
 const icon = computed(() =>

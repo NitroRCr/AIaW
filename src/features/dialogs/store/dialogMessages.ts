@@ -1,18 +1,20 @@
-import merge from "lodash/merge"
 import { defineStore } from "pinia"
-import { reactive } from "vue"
 
 import { supabase } from "@/services/data/supabase/client"
-import {
-  DialogMessageMapped,
-  MessageContentMapped,
-  StoredItemMapped,
-  DialogMessageInput,
+import { DbDialogMessageUpdate, mapDbToDialogMessageNested, mapDialogMessageToDb, DialogMessageNested, DialogMessage, DialogMessageNestedUpdate } from "@/services/data/types/dialogMessage"
+import { DbMessageContentInsert, DbMessageContentUpdate, mapDbToMessageContentNested, mapMessageContentToDb, MessageContentNested, MessageContentNestedUpdate } from "@/services/data/types/messageContents"
+import { DbStoredItemInsert, DbStoredItemUpdate, mapDbToStoredItem, mapStoredItemToDb, StoredItem } from "@/services/data/types/storedItem"
 
-} from "@/services/data/supabase/types"
+import { useDialogMessageCache } from "./composables/useDialogMessageCache"
 
-const SELECT_DIALOG_MESSAGES = "*, message_contents(*, stored_items(*))"
-
+type UpdateSingleEntityParams = {
+  dialogId: string
+  messageId: string
+  message?: DialogMessageNestedUpdate
+  messageContent?: MessageContentNestedUpdate
+  storedItem?: StoredItem
+  cacheOnly?: boolean
+}
 /**
  * Store for managing dialog messages in AI conversations
  *
@@ -39,248 +41,157 @@ const SELECT_DIALOG_MESSAGES = "*, message_contents(*, stored_items(*))"
  * - Used by {@link useLlmDialog} for managing conversation flow
  */
 export const useDialogMessagesStore = defineStore("dialogMessages", () => {
-  const dialogMessages = reactive<Record<string, DialogMessageMapped[]>>({})
+  const { dialogMessages, cache } = useDialogMessageCache()
 
   async function fetchDialogMessages(dialogId: string) {
     const { data, error } = await supabase
       .from("dialog_messages")
-      .select(SELECT_DIALOG_MESSAGES)
+      .select("*, message_contents(*, stored_items(*))")
       .eq("dialog_id", dialogId)
 
     if (error) {
       console.error(error)
     }
 
-    if (data) {
-      dialogMessages[dialogId] = data as DialogMessageMapped[]
-    } else {
-      dialogMessages[dialogId] = []
-    }
+    cache.init(dialogId, (data || []).map(mapDbToDialogMessageNested))
 
     return dialogMessages[dialogId]
   }
 
-  async function addDialogMessage(
-    dialogId: string,
-    parentId: string | null,
-    message: Omit<DialogMessageInput, "dialog_id" | "parent_id">,
-  ) {
-    const { message_contents, ...messageInput } = message
+  // Insert or update message content with stored items
+  async function upsertMessageContent<T extends MessageContentNested<DbMessageContentUpdate, DbStoredItemUpdate>>(dialogId: string, messageId: string, messageContent: T) {
+    const { storedItems: _, ...messageContentRaw } = messageContent
+    const dbItem = mapMessageContentToDb({ ...messageContentRaw, messageId })
 
-    // 1. create dialog message
-    const { data: dialogMessage, error } = await supabase
-      .from("dialog_messages")
-      .insert({ ...messageInput, dialog_id: dialogId, parent_id: parentId })
-      .select(SELECT_DIALOG_MESSAGES)
-      .single<DialogMessageMapped>()
-    console.log("-- addDialogMessage", dialogMessage)
+    const { data, error } = await supabase.from("message_contents")
+      .upsert(dbItem as DbMessageContentInsert)
+      .select("*, stored_items(*)")
+      .single()
 
     if (error) {
       console.error(error)
       throw error
     }
 
-    // 2. create message contents
-    for (const content of message_contents) {
-      const { stored_items = [], id, ...contentInput } = content
-      const { data: contentData, error: contentError } = await supabase
-        .from("message_contents")
-        .insert({ ...contentInput, message_id: dialogMessage.id })
-        .select("*, stored_items(*)")
-        .single()
+    const result = mapDbToMessageContentNested(data)
+    cache.updateMessageContent(dialogId, messageId, result)
 
-      if (contentError) {
-        console.error(contentError)
-        throw contentError
-      }
+    // stored items was already upserted with addStoredItem
+    // for (const item of storedItems) {
+    //   await upsertStoredItem(dialogId, messageId, { type: item.type, ...item, messageContentId: result.id })
+    // }
 
-      const messageContent = contentData as MessageContentMapped
-      // 3. create stored items
-      for (const item of stored_items) {
-        const { data: itemData, error: itemError } = await supabase
-          .from("stored_items")
-          .insert({
-            ...item,
-            message_content_id: contentData.id,
-            dialog_id: dialogId,
-          })
-          .select()
-          .single()
+    return cache.getDialogMessageContent(dialogId, messageId, result.id)
+  }
 
-        if (itemError) {
-          console.error(itemError)
-          throw itemError
-        }
+  // Insert or update stored item related to message content
+  async function upsertStoredItem<T extends StoredItem<DbStoredItemInsert>>(dialogId: string, messageId: string, storedItem: T) {
+    const { data, error } = await supabase.from("stored_items")
+      .upsert(mapStoredItemToDb(storedItem) as DbStoredItemInsert)
+      .select()
+      .single()
 
-        messageContent.stored_items.push(itemData as StoredItemMapped)
-      }
-      dialogMessage.message_contents.push(messageContent)
+    if (error) {
+      console.error(error)
+      throw error
     }
 
-    if (!dialogMessages[dialogId]) {
-      dialogMessages[dialogId] = []
-    }
+    const result = mapDbToStoredItem(data)
 
-    dialogMessages[dialogId].push(dialogMessage)
+    cache.updateStoredItem(dialogId, messageId, result.messageContentId, result)
+
+    return result
+  }
+
+  async function addDialogMessage(
+    dialogId: string,
+    parentId: string | null,
+    message: DialogMessageNested<DbDialogMessageUpdate, DbMessageContentUpdate, DbStoredItemUpdate>,
+  ) {
+    const dialogMessage = await upsertDialogMessageNested(dialogId, { ...message, parentId })
 
     return dialogMessage
   }
 
+  async function upsertDialogMessage(
+    dialogId: string,
+    message: DialogMessageNestedUpdate,
+  ) {
+    const { data, error } = await supabase.from("dialog_messages")
+      .upsert(mapDialogMessageToDb({ ...message, dialogId }))
+      .select("*, message_contents(*, stored_items(*))")
+      .single()
+
+    if (error) {
+      console.error(error)
+      throw error
+    }
+
+    const result = mapDbToDialogMessageNested(data)
+    cache.updateDialogMessage(dialogId, result)
+
+    return result
+  }
+
+  async function upsertDialogMessageNested<T extends DialogMessageNested<DbDialogMessageUpdate, DbMessageContentUpdate, DbStoredItemUpdate>>(
+    dialogId: string,
+    message: T,
+  ) {
+    const { messageContents, ...messageRaw } = message
+
+    const result = await upsertDialogMessage(dialogId, messageRaw as DialogMessage)
+
+    if (messageContents) {
+      for (const content of messageContents) {
+        await upsertMessageContent(dialogId, result.id, content)
+      }
+    }
+
+    return cache.getDialogMessage(dialogId, result.id)
+  }
+
   async function switchActiveDialogMessage(dialogId: string, activeMessageId: string, siblingMessageIds: string[]) {
-    const { error: activeMessageError } = await supabase
+    const { data: activeMessage, error: activeMessageError } = await supabase
       .from("dialog_messages")
-      .select("*")
+      .update({ is_active: true })
       .eq("id", activeMessageId)
       .eq("dialog_id", dialogId)
+      .select("*, message_contents(*, stored_items(*))")
       .single()
+
+    cache.updateDialogMessage(dialogId, mapDbToDialogMessageNested(activeMessage))
 
     if (activeMessageError) {
       console.error(activeMessageError)
       throw activeMessageError
     }
 
-    const { error: restMessagesError } = await supabase
+    const { data: restMessages, error: restMessagesError } = await supabase
       .from("dialog_messages")
       .update({ is_active: false })
       .in("id", siblingMessageIds.filter((id) => id !== activeMessageId))
       .eq("dialog_id", dialogId)
+      .select("*")
 
     if (restMessagesError) {
       console.error(restMessagesError)
       throw restMessagesError
     }
 
-    dialogMessages[dialogId] = dialogMessages[dialogId].map((m) =>
-      siblingMessageIds.includes(m.id) ? { ...m, is_active: m.id === activeMessageId } : m
-    )
+    restMessages.map((m) => cache.updateDialogMessage(dialogId, mapDbToDialogMessageNested(m)))
   }
 
-  async function updateDialogMessage(
+  async function updateDialogMessageNested(
     dialogId: string,
     messageId: string,
-    message: Partial<DialogMessageInput>
+    message: DialogMessageNestedUpdate,
+    cacheOnly = false
   ) {
-    let dialogMessage = merge(
-      dialogMessages[dialogId].find((m) => m.id === messageId) || {},
-      message
-    ) as DialogMessageMapped
-    const shouldSave =
-      dialogMessage.status &&
-      !["streaming", "inputing", "pending"].includes(dialogMessage.status)
+    const dialogMessage = cache.mergeDialogMessage(dialogId, { id: messageId, ...message })
 
-    if (!shouldSave) {
-      dialogMessages[dialogId] = dialogMessages[dialogId].map((m) =>
-        m.id === messageId ? dialogMessage : m
-      )
-
-      return
+    if (!cacheOnly) {
+      await upsertDialogMessageNested(dialogId, dialogMessage)
     }
-
-    const { message_contents, ...messageInput } = dialogMessage
-    console.log("-----updateDialogMessage: 1. message_contents", message_contents)
-
-    if (Object.keys(messageInput).length > 0) {
-      const { data, error } = await supabase
-        .from("dialog_messages")
-        .update(messageInput)
-        .eq("id", messageId)
-        .eq("dialog_id", dialogId)
-        .select(SELECT_DIALOG_MESSAGES)
-        .single()
-
-      if (error) {
-        console.error(error)
-        throw error
-      }
-
-      dialogMessage = merge(data as DialogMessageMapped, dialogMessage)
-    }
-
-    console.log("-----updateDialogMessage: 2. message_contents", dialogMessage.message_contents)
-
-    for (const content of dialogMessage.message_contents) {
-      const { stored_items = [], ...contentInput } = content
-      let messageContent = content as MessageContentMapped
-
-      if (content.id) {
-        const { data: contentData, error: contentError } = await supabase
-          .from("message_contents")
-          .update({ ...contentInput, message_id: dialogMessage.id })
-          .eq("id", content.id)
-          .select("*, stored_items(*)")
-          .single()
-
-        if (contentError) {
-          console.error(contentError)
-          throw contentError
-        }
-
-        messageContent = contentData as MessageContentMapped
-      } else {
-        const { data: contentData, error: contentError } = await supabase
-          .from("message_contents")
-          .insert({ ...contentInput, message_id: dialogMessage.id })
-          .select("*, stored_items(*)")
-          .single()
-
-        if (contentError) {
-          console.error(contentError)
-          throw contentError
-        }
-
-        messageContent = contentData as MessageContentMapped
-      }
-
-      for (const item of stored_items) {
-        if (item.id) {
-          const { data: itemData, error: itemError } = await supabase
-            .from("stored_items")
-            .update({
-              ...item,
-              message_content_id: messageContent.id,
-              dialog_id: dialogId,
-            })
-            .eq("id", item.id)
-            .select()
-            .single()
-
-          if (itemError) {
-            console.error(itemError)
-            throw itemError
-          }
-
-          console.log("-----updateDialogMessage: update stored item", itemData)
-          messageContent.stored_items.map((i) =>
-            i.id === item.id ? (itemData as StoredItemMapped) : i
-          )
-        } else {
-          const { data: itemData, error: itemError } = await supabase
-            .from("stored_items")
-            .insert({
-              ...item,
-              message_content_id: messageContent.id,
-              dialog_id: dialogId,
-            })
-            .select()
-            .single()
-
-          if (itemError) {
-            console.error(itemError)
-            throw itemError
-          }
-
-          console.log("-----updateDialogMessage: add stored item", itemData)
-          messageContent.stored_items.push(itemData as StoredItemMapped)
-        }
-      }
-
-      dialogMessage.message_contents = dialogMessage.message_contents.map(
-        (c) => (c.id === messageContent.id ? messageContent : c)
-      )
-    }
-    dialogMessages[dialogId] = dialogMessages[dialogId].map((m) =>
-      m.id === messageId ? dialogMessage : m
-    )
   }
 
   /**
@@ -302,50 +213,84 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     await fetchDialogMessages(dialogId)
   }
 
-  /**
-   * Deletes a stored item from the database
-   * Uses the delete operation to permanently remove the stored item
-   */
-  async function deleteStoredItem(stored_item: StoredItemMapped) {
-    // TODO: remove stored item from dialog messages, with message_content_id or without
-    const { error } = await supabase
-      .from("stored_items")
-      .delete()
-      .eq("id", stored_item.id)
+  async function addStoredItem(dialogId: string, messageId: string, storedItem: StoredItem<DbStoredItemInsert>) {
+    const { data, error } = await supabase.from("stored_items")
+      .insert(mapStoredItemToDb(storedItem))
+      .select()
+      .single()
 
     if (error) {
       console.error(error)
       throw error
     }
 
-    dialogMessages[stored_item.dialog_id] = dialogMessages[
-      stored_item.dialog_id
-    ].map((m) =>
-      m.id === stored_item.message_content_id
-        ? {
-            ...m,
-            message_contents: m.message_contents.map((c) =>
-              c.id === stored_item.message_content_id
-                ? {
-                    ...c,
-                    stored_items: c.stored_items.filter(
-                      (i) => i.id !== stored_item.id
-                    ),
-                  }
-                : c
-            ),
-          }
-        : m
-    )
+    const result = mapDbToStoredItem(data)
+
+    cache.updateStoredItem(dialogId, messageId, result.messageContentId, result)
+
+    return result
+  }
+
+  /**
+   * Deletes a stored item from the database
+   * Uses the delete operation to permanently remove the stored item
+   */
+  async function deleteStoredItem(dialogId: string, messageId: string, storedItem: StoredItem) {
+    // TODO: remove stored item from dialog messages, with message_content_id or without
+    const { error } = await supabase
+      .from("stored_items")
+      .delete()
+      .eq("id", storedItem.id)
+
+    if (error) {
+      console.error(error)
+      throw error
+    }
+
+    cache.removeStoredItem(dialogId, messageId, storedItem.messageContentId, storedItem.id)
+  }
+
+  // to update single entity WITHOUT nested entities
+  const upsertSingleEntity = async (entity: UpdateSingleEntityParams) => {
+    const result: Partial<UpdateSingleEntityParams> = {}
+    const { dialogId, messageId, message, messageContent, storedItem, cacheOnly } = entity
+
+    if (message) {
+      const plainMessage = cache.mergeDialogMessage(dialogId, message, ["messageContents"])
+
+      if (!cacheOnly) {
+        await upsertDialogMessage(dialogId, plainMessage)
+      }
+
+      result.message = cache.getDialogMessage(dialogId, messageId)
+    }
+
+    if (messageContent) {
+      // TODO: can we omit storedItems here? possible bug
+
+      if (!cacheOnly) {
+        result.messageContent = await upsertMessageContent(dialogId, messageId, messageContent)
+      } else {
+        result.messageContent = cache.mergeMessageContent(dialogId, messageId, messageContent)
+      }
+    }
+
+    if (entity.storedItem) {
+      result.storedItem = await upsertStoredItem(dialogId, messageId, storedItem)
+    }
+
+    return result
   }
 
   return {
     dialogMessages,
     fetchDialogMessages,
     addDialogMessage,
-    updateDialogMessage,
+    updateDialogMessageNested,
     deleteDialogMessage,
     deleteStoredItem,
     switchActiveDialogMessage,
+    upsertSingleEntity,
+    addStoredItem,
   }
 })

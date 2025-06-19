@@ -4,10 +4,7 @@ import { reactive, ref } from "vue"
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import {
-  DialogInsert,
-  DialogMapped,
-} from "@/services/data/supabase/types"
+import { DbDialogInsert, Dialog, mapDbToDialog, mapDialogToDb } from "@/services/data/types/dialogs"
 
 /**
  * Store for managing dialogs in the application
@@ -23,7 +20,7 @@ import {
  * - {@link supabase} - For database operations
  *
  * @database
- * - Table: "dialogs" - Stores dialog metadata (id, name, workspace_id, assistant_id, etc.)
+ * - Table: "dialogs" - Stores dialog metadata (id, name, workspaceId, assistant_id, etc.)
  * - Related to: "dialog_messages" table (managed by dialogMessagesStore)
  * - Related to: "message_contents" table (used for search functionality)
  *
@@ -33,7 +30,7 @@ import {
  *
  * // Add a new dialog
  * const dialog = await dialogsStore.addDialog({
- *   workspace_id: 'workspace-123',
+ *   workspaceId: 'workspace-123',
  *   name: 'My Dialog',
  *   assistant_id: 'assistant-456'
  * })
@@ -44,7 +41,7 @@ import {
  */
 export const useDialogsStore = defineStore("dialogs", () => {
   /** Reactive collection of dialogs indexed by dialog ID */
-  const dialogs = reactive<Record<string, DialogMapped>>({})
+  const dialogs = reactive<Record<string, Dialog>>({})
   /** Flag indicating whether the initial data load has completed */
   const isLoaded = ref(false)
 
@@ -57,7 +54,7 @@ export const useDialogsStore = defineStore("dialogs", () => {
    * @throws {Error} If database query fails
    * @returns {Promise<void>}
    */
-  async function fetchDialogs () {
+  async function fetchDialogs (): Promise<void> {
     const { data, error } = await supabase
       .from("dialogs")
       .select("*")
@@ -72,7 +69,7 @@ export const useDialogsStore = defineStore("dialogs", () => {
     Object.assign(
       dialogs,
       data.reduce((acc, dialog) => {
-        acc[dialog.id] = dialog
+        acc[dialog.id] = mapDbToDialog(dialog)
 
         return acc
       }, {})
@@ -107,14 +104,14 @@ export const useDialogsStore = defineStore("dialogs", () => {
    *
    * @param {DialogInsert} dialog - The dialog data to insert
    * @throws {Error} If database insertion fails
-   * @returns {Promise<DialogMapped>} The created dialog with generated ID
+   * @returns {Promise<Dialog>} The created dialog with generated ID
    */
   async function addDialog (
-    dialog: DialogInsert,
+    dialog: Dialog<DbDialogInsert>,
   ) {
     const { data, error } = await supabase
       .from("dialogs")
-      .insert(dialog)
+      .insert(mapDialogToDb(dialog))
       .select()
       .single()
 
@@ -123,7 +120,7 @@ export const useDialogsStore = defineStore("dialogs", () => {
       throw error
     }
 
-    dialogs[data.id] = data as DialogMapped
+    dialogs[data.id] = mapDbToDialog(data)
 
     return data
   }
@@ -131,11 +128,11 @@ export const useDialogsStore = defineStore("dialogs", () => {
   /**
    * Updates an existing dialog in the database and local store
    *
-   * @param {Partial<DialogMapped>} dialog - The dialog data to update (must include id)
+   * @param {Partial<Dialog>} dialog - The dialog data to update (must include id)
    * @throws {Error} If database update fails or dialog ID is missing
    * @returns {Promise<void>}
    */
-  async function updateDialog (dialog: Partial<DialogMapped>) {
+  async function updateDialog (dialog: Partial<Dialog>) {
     const { data, error } = await supabase
       .from("dialogs")
       .update(dialog)
@@ -148,7 +145,7 @@ export const useDialogsStore = defineStore("dialogs", () => {
       throw error
     }
 
-    dialogs[dialog.id] = data as DialogMapped
+    dialogs[dialog.id] = mapDbToDialog(data)
   }
 
   /**
@@ -204,13 +201,19 @@ export const useDialogsStore = defineStore("dialogs", () => {
     `)
 
     if (workspaceId) {
-      queryBuilder.eq("dialog_message.dialogs.workspace_id", workspaceId)
+      queryBuilder.eq("dialog_message.dialogs.workspaceId", workspaceId)
     }
 
     const { data, error } = await queryBuilder.textSearch("text", query)
     console.log("-- searchDialogs error", error)
 
-    return data
+    return data.map(d => ({
+      workspaceId: d.dialog_message.dialog.workspace_id,
+      dialogId: d.dialog_message.dialog_id,
+      title: d.dialog_message.dialog.name,
+      route: [],
+      text: d.text,
+    }))
   }
 
   return {

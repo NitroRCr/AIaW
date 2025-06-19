@@ -42,7 +42,7 @@ const assistantsStore = useAssistantsStore()
 const { data: perfs } = storeToRefs(useUserPerfsStore())
 const assistants = computed(() =>
   assistantsStore.assistants.filter(
-    (a) => a.workspace_id === workspaceId || a.workspace_id == null
+    (a) => a.workspaceId === workspaceId || a.workspaceId == null
   )
 )
 const router = useRouter()
@@ -56,7 +56,7 @@ function getLink (id) {
 async function addItem () {
   const assistant = await assistantsStore.add({
     name: "New Assistant",
-    workspace_id: workspaceId,
+    workspaceId,
     avatar: defaultAvatar("AI"),
     provider: perfs.value.provider,
     model: perfs.value.model,

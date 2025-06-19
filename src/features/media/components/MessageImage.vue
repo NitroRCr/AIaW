@@ -47,16 +47,16 @@ import { getFileUrl } from "@/shared/composables/storage/utils"
 
 import ViewImageDialog from "@/features/media/components/ViewImageDialog.vue"
 
-import { StoredItemMapped } from "@/services/data/supabase/types"
+import { StoredItemResult } from "@/services/data/types/storedItem"
 
 const props = defineProps<{
-  image: StoredItemMapped
+  image: StoredItemResult
   removable?: boolean
 }>()
 
 defineEmits(["remove"])
 
-const url = getFileUrl(props.image.file_url)
+const url = getFileUrl(props.image.fileUrl)
 
 const $q = useQuasar()
 

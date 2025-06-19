@@ -8,3 +8,4 @@
 .eslintrc.cjs
 /quasar.config.*.temporary.compiled*
 database.types.ts
+src-backend/venv

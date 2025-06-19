@@ -9,13 +9,11 @@ import { useMdPreviewProps } from "./mdPreviewProps"
 import { useOrder } from "./order"
 import { useSetTheme } from "./setTheme"
 import { useSetTitle } from "./setTitle"
-import { syncRef } from "./syncRef"
 
 export {
   useLocateId,
   useBack,
   useSetTitle,
-  syncRef,
   useMdPreviewProps,
   keyComposition,
   useSetTheme,

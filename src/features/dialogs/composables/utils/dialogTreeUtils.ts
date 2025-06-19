@@ -1,7 +1,7 @@
 type MessageLike = {
   id: string;
-  parent_id: string | null;
-  is_active: boolean;
+  parentId: string | null;
+  isActive: boolean;
 }
 
  type TreeListItem<T extends MessageLike> = {
@@ -15,11 +15,11 @@ export const getBranchList = <T extends MessageLike>(messageMap: Record<string, 
   const branchListMap: Map<string | null, string[]> = new Map()
 
   for (const message of Object.values(messageMap)) {
-    if (!branchListMap.has(message.parent_id)) {
-      branchListMap.set(message.parent_id, [])
+    if (!branchListMap.has(message.parentId)) {
+      branchListMap.set(message.parentId, [])
     }
 
-    branchListMap.get(message.parent_id)!.push(message.id)
+    branchListMap.get(message.parentId)!.push(message.id)
   }
 
   return branchListMap
@@ -38,7 +38,7 @@ export const getDialogItemList = <T extends MessageLike>(
   }
 
   const siblings = siblingIds.map(id => messageMap[id])
-  const activeSiblingIndex = siblings.findIndex(sibling => sibling.is_active)
+  const activeSiblingIndex = siblings.findIndex(sibling => sibling.isActive)
   const selectedIndex = activeSiblingIndex === -1 ? 0 : activeSiblingIndex
 
   const siblingMessageMap = siblings.reduce((acc, sibling) => {

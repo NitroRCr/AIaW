@@ -5,7 +5,10 @@
     </q-toolbar-title>
   </view-common-header>
   <q-page-container bg-sur-c-low>
-    <q-page bg-sur>
+    <q-page
+      bg-sur
+      class="relative-position"
+    >
       <md-preview
         bg-sur
         rd-lg
@@ -20,36 +23,36 @@
 
 <script setup lang="ts">
 import { MdPreview } from "md-editor-v3"
-import { computed, Ref, inject, toRaw } from "vue"
+import { computed } from "vue"
 
 import { useMdPreviewProps } from "@/shared/composables/mdPreviewProps"
 import { useSetTitle } from "@/shared/composables/setTitle"
-import { syncRef } from "@/shared/composables/syncRef"
 
 import { DefaultWsIndexContent } from "@/features/dialogs/utils/dialogTemplateDefinitions"
 import { engine } from "@/features/dialogs/utils/templateEngine"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-import { WorkspaceMapped } from "@/services/data/supabase/types"
-
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 defineEmits(["toggle-drawer"])
 
+const props = defineProps<{
+  id: string
+}>()
+
 const store = useWorkspacesStore()
 
-const workspace = syncRef(
-  inject("workspace") as Ref<WorkspaceMapped>,
-  (val) => {
-    store.putItem(toRaw(val))
-  },
-  { valueDeep: true }
-)
+const workspaceId = computed(() => props.id)
+const workspace = computed(() => store.workspaces.find(w => w.id === workspaceId.value))
 
+// FIXME: Heavy rendering operation in computed property
+// This computed calls engine.parseAndRenderSync synchronously on every workspace change,
+// which can block the UI thread. Consider using watch with debounce or cache the result.
+// Alternative: pre-process workspace.indexContent in store or use async rendering.
 const contentMd = computed(() =>
-  engine.parseAndRenderSync(workspace.value.index_content, {
+  workspace.value ? engine.parseAndRenderSync(workspace.value.indexContent, {
     workspace: workspace.value || DefaultWsIndexContent,
-  })
+  }) : ''
 )
 
 useSetTitle(computed(() => workspace.value?.name))
