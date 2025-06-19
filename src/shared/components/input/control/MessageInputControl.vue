@@ -224,9 +224,8 @@
 import { ref } from 'vue'
 
 import AbortableBtn from '@/shared/components/AbortableBtn.vue'
-import CommandSuggestionsOverlay from '@/shared/components/input/CommandSuggestionsOverlay.vue'
-import { useDialogFileHandling } from '@/shared/composables/dialogFileHandling'
-import { useInputCommands } from '@/shared/composables/useInputCommands'
+import { useDialogFileHandling } from '@/shared/components/input/control/dialogFileHandling'
+import { useInputCommands } from '@/shared/components/input/control/useInputCommands'
 import { mimeTypeMatch } from '@/shared/utils/functions'
 
 import AddInfoBtn from '@/features/dialogs/components/AddPlugin/AddInfoBtn.vue'

@@ -167,7 +167,7 @@ import { computed, inject, nextTick, onUnmounted, ref, toRef, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute, useRouter } from "vue-router"
 
-import MessageInputControl from "@/shared/components/input/MessageInputControl.vue"
+import MessageInputControl from "@/shared/components/input/control/MessageInputControl.vue"
 import { useListenKey } from "@/shared/composables"
 import { useSetTitle } from "@/shared/composables/setTitle"
 import { useUiStateStore, useUserDataStore, useUserPerfsStore } from "@/shared/store"
