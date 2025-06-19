@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 
 import { useUserStore } from "@/shared/store"
 
@@ -15,6 +15,12 @@ export const useProfileStore = defineStore("profile", () => {
   const user = useUserStore()
   const myProfile = computed(() => profiles.value[user.currentUserId])
   const isInitialized = ref(false)
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(profiles, () => {
+    hasChanges.value = true
+  }, { deep: true })
 
   const fetchProfiles = async () => {
     const { data, error } = await supabase
@@ -62,17 +68,25 @@ export const useProfileStore = defineStore("profile", () => {
     profiles.value = {}
     await fetchProfiles()
     isInitialized.value = true
+    hasChanges.value = false
   }
 
   useUserLoginCallback(init)
 
   async function update (id: string, changes) {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("profiles")
       .update(changes)
       .eq("id", id)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("Error updating profile:", error)
@@ -103,5 +117,7 @@ export const useProfileStore = defineStore("profile", () => {
     fetchProfiles,
     myProfile,
     isInitialized,
+    isSaving,
+    hasChanges,
   }
 })

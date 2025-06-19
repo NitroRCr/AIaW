@@ -115,6 +115,10 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits])
 
 const pluginsStore = usePluginsStore()
+// FIXME: Complex nested iterations in computed property
+// This computed filters plugins, then loops through each plugin's fileparsers, building new objects.
+// Multiple nested iterations with object creation happen on every plugins store change.
+// Consider moving this logic to the plugins store as a cached getter or memoized method.
 const fileparsers = computed(() => {
   const val = []
   pluginsStore.plugins
@@ -138,6 +142,10 @@ const fileparsers = computed(() => {
 
   return val
 })
+// FIXME: Nested array operations with complex filtering in computed property
+// This computed maps over files, then filters fileparsers with mimeTypeMatch, then maps again.
+// Creates new objects for each file-parser combination on every fileparsers or props.files change.
+// Consider pre-computing the fileparser options or caching results by mime type.
 const allOptions = computed(() =>
   props.files.map((file) => {
     return fileparsers.value

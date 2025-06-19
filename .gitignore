@@ -55,3 +55,4 @@ dexie-cloud.key
 *storybook.log
 
 **/.claude/settings.local.json
+src-backend/__pycache__

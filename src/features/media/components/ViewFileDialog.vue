@@ -115,6 +115,10 @@ function sizeStr (bytes: number) {
   else return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
+// FIXME: Text processing operations in computed property
+// While less heavy than template rendering, this computed processes file content on every change.
+// For large files, string operations like split() and wrapCode() could impact performance.
+// Consider memoizing the result or moving processing to when file is loaded.
 const markdown = computed(() => {
   const { file } = props
 

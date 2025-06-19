@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
 import { defaultAvatar } from "@/shared/utils/functions"
@@ -38,7 +38,15 @@ import { Assistant, DbAssistantUpdate, mapAssistantToDb, mapDbToAssistant } from
 export const useAssistantsStore = defineStore("assistants", () => {
   const assistants = ref<Assistant[]>([])
   const isLoaded = ref(false)
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(assistants, () => {
+    hasChanges.value = true
+  }, { deep: true })
   const fetchAssistants = async () => {
+    isLoaded.value = false
+
     const { data, error } = await supabase.from("user_assistants").select("*")
 
     if (error) {
@@ -46,7 +54,11 @@ export const useAssistantsStore = defineStore("assistants", () => {
     }
 
     assistants.value = data.map(mapDbToAssistant)
-    isLoaded.value = true
+
+    setTimeout(() => {
+      isLoaded.value = true
+      hasChanges.value = false
+    })
   }
 
   const init = async () => {
@@ -60,6 +72,8 @@ export const useAssistantsStore = defineStore("assistants", () => {
   const { t } = useI18n()
 
   async function add (props: Partial<Assistant> = {}) {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("user_assistants")
       .insert(mapAssistantToDb({
@@ -80,6 +94,11 @@ export const useAssistantsStore = defineStore("assistants", () => {
       .select()
       .single()
 
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
+
     if (error) {
       console.error("Error adding assistant:", error)
     }
@@ -90,12 +109,19 @@ export const useAssistantsStore = defineStore("assistants", () => {
   }
 
   async function update (id: string, changes: Assistant<DbAssistantUpdate>) {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("user_assistants")
       .update(mapAssistantToDb(changes))
       .eq("id", id)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("Error updating assistant:", error)
@@ -124,12 +150,16 @@ export const useAssistantsStore = defineStore("assistants", () => {
   }
 
   async function delete_ (id: string) {
+    isSaving.value = true
+
     const { error } = await supabase
       .from("user_assistants")
       .delete()
       .eq("id", id)
       .select()
       .single()
+
+    isSaving.value = false
 
     if (error) {
       console.error("Error deleting assistant:", error)
@@ -148,5 +178,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
     put,
     delete: delete_,
     isLoaded,
+    isSaving,
+    hasChanges,
   }
 })

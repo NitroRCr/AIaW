@@ -1,6 +1,6 @@
 import { Object as TObject } from "@sinclair/typebox"
 import { defineStore } from "pinia"
-import { computed, reactive } from "vue"
+import { computed, reactive, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
 import { Provider, ProviderType } from "@/shared/types"
@@ -43,6 +43,12 @@ const extractCustomProviderId = (provider: Provider) => {
 export const useProvidersStore = defineStore("providers", () => {
   const providersMap = reactive<Record<string, CustomProvider>>({})
   const providers = computed(() => Object.values(providersMap))
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(providersMap, () => {
+    hasChanges.value = true
+  }, { deep: true })
 
   const fetchCustomProviders = async () => {
     // Fetch all custom providers with their subproviders in one query
@@ -70,6 +76,7 @@ export const useProvidersStore = defineStore("providers", () => {
         {} as Record<string, CustomProvider>
       )
     )
+    hasChanges.value = false
   }
 
   function createProvider (provider: Provider, options, stack) {
@@ -197,6 +204,8 @@ export const useProvidersStore = defineStore("providers", () => {
   }
 
   async function add (props: Partial<CustomProvider> = {}) {
+    isSaving.value = true
+
     // Convert subproviders to the local DB shape if present
     const { subproviders = [], ...providerItem } = props
     const { data, error } = await supabase
@@ -212,6 +221,11 @@ export const useProvidersStore = defineStore("providers", () => {
       })
       .select("*, subproviders(*)")
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error(error)
@@ -230,6 +244,8 @@ export const useProvidersStore = defineStore("providers", () => {
   }
 
   async function update (id: string, changes) {
+    isSaving.value = true
+
     const { subproviders = [], ...providerItem } = changes
     let providerResult: CustomProvider = providersMap[id]
 
@@ -255,6 +271,11 @@ export const useProvidersStore = defineStore("providers", () => {
       subproviders
     )) as Subprovider[]
     providersMap[id] = providerResult
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     return providerResult
   }
@@ -317,5 +338,7 @@ export const useProvidersStore = defineStore("providers", () => {
     put,
     delete: delete_,
     deleteSubprovider,
+    isSaving,
+    hasChanges,
   }
 })

@@ -474,6 +474,13 @@
           </q-item-section>
         </q-item>
       </q-list>
+
+      <!-- Sticky Save Button -->
+      <sticky-save-button
+        @click="saveAssistant"
+        :loading="store.isSaving"
+        :disabled="!store.hasChanges"
+      />
     </q-page>
   </q-page-container>
   <error-not-found v-else />
@@ -489,7 +496,6 @@ import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import { useLocateId } from "@/shared/composables/locateId"
 import { useSetTitle } from "@/shared/composables/setTitle"
 import { getAvatarUrl } from "@/shared/composables/storage/utils"
-import { syncRef } from "@/shared/composables/syncRef"
 import { pageFhStyle } from "@/shared/utils/functions"
 import { exportFile } from "@/shared/utils/platformApi"
 
@@ -498,8 +504,6 @@ import EnablePluginsItems from "@/features/plugins/components/EnablePluginsItems
 import PromptVarEditor from "@/features/prompt/components/PromptVarEditor.vue"
 import ModelInputItems from "@/features/providers/components/ModelInputItems.vue"
 import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
-
-import { Assistant } from "@/services/data/types/assistant"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -511,17 +515,32 @@ const props = defineProps<{
 defineEmits(["toggle-drawer"])
 
 const store = useAssistantsStore()
-const assistant = syncRef<Assistant>(
-  () => store.assistants.find((a) => a.id === props.id),
-  (val) => {
-    store.put(toRaw(val))
-  },
-  { valueDeep: true }
-)
-
 const $q = useQuasar()
 
+const assistant = computed(() =>
+  store.assistants.find((a) => a.id === props.id)
+)
+
+async function saveAssistant() {
+  if (!assistant.value) return
+
+  try {
+    await store.put(toRaw(assistant.value))
+    $q.notify({
+      type: 'positive',
+      message: 'Assistant saved'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving assistant'
+    })
+  }
+}
+
 function pickAvatar () {
+  if (!assistant.value) return
+
   $q.dialog({
     component: PickAvatarDialog,
     componentProps: {
@@ -529,7 +548,8 @@ function pickAvatar () {
       defaultTab: "ai",
     },
   }).onOk((avatar) => {
-    assistant.value.avatar = avatar
+    console.log("---pickAvatar avatar", avatar)
+    assistant.value!.avatar = avatar
   })
 }
 
