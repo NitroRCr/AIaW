@@ -134,6 +134,10 @@ const contentTemplate = `### ${t("toolContent.callParams")}
 {{ content.error }}
 {%- endif %}
 `
+// FIXME: Heavy rendering operation in computed property
+// This computed calls engine.parseAndRenderSync synchronously on every dependency change,
+// which can block the UI thread. Consider using watch with debounce or cache the result.
+// Alternative: move template parsing to store or use async rendering with loading state.
 const contentMd = computed(() => {
   const { content } = props
 

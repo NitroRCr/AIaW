@@ -1,6 +1,6 @@
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { readonly } from "vue"
+import { readonly, ref, watch } from "vue"
 
 import { useUserStore } from "@/shared/store"
 
@@ -33,6 +33,12 @@ import { Chat, DbChatInsert, mapChatToDb, mapDbToChat } from "@/services/data/ty
 export const useChatsStore = defineStore("chats", () => {
   const { chats, isLoaded } = useChatsWithSubscription()
   const userStore = useUserStore()
+  const isSaving = ref(false)
+  const hasChanges = ref(false)
+
+  watch(chats, () => {
+    hasChanges.value = true
+  }, { deep: true })
 
   /**
    * Creates a new chat in the database
@@ -60,12 +66,18 @@ export const useChatsStore = defineStore("chats", () => {
   const add = async (
     chat: Chat<DbChatInsert>
   ): Promise<Chat> => {
+    isSaving.value = true
     console.log("addChat", chat)
     const { data, error } = await supabase
       .from("chats")
       .insert(mapChatToDb(chat))
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("error", error)
@@ -97,12 +109,19 @@ export const useChatsStore = defineStore("chats", () => {
    * });
    */
   const update = async (id: string, chat: Partial<Chat>): Promise<Chat | undefined> => {
+    isSaving.value = true
+
     const { data, error } = await supabase
       .from("chats")
       .update(mapChatToDb(chat))
       .eq("id", id)
       .select()
       .single()
+
+    setTimeout(() => {
+      isSaving.value = false
+      hasChanges.value = false
+    })
 
     if (error) {
       console.error("error", error)
@@ -271,5 +290,7 @@ export const useChatsStore = defineStore("chats", () => {
     search,
     putItem,
     startPrivateChatWith,
+    isSaving,
+    hasChanges,
   }
 })

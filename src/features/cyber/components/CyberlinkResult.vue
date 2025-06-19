@@ -41,6 +41,10 @@ const props = defineProps<{
 }>()
 const keplrWallet = inject<KeplerWallet>("kepler")
 const cosmosWallet = inject<CosmosWallet>("cosmos")
+// FIXME: Potential parsing error and performance issue in computed property
+// JSON.parse can throw errors if contentText is invalid JSON, which would break reactivity.
+// Also, parsing happens on every props change. Consider adding error handling and caching.
+// Alternative: use try/catch block and store parsed result, or validate data beforehand.
 const transactionBody = computed(() => JSON.parse(props.result[0].contentText))
 const { updateMessage } = useDialogMessages(toRef(props.message, "dialogId") as Ref<string>)
 const handleAccept = async () => {
