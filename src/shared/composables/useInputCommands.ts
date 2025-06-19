@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import type { Command } from '@/shared/components/input/control/CommandSuggestions.vue'
+import type { Command } from '@/shared/components/input/CommandSuggestionsOverlay.vue'
 import { useUserDataStore } from '@/shared/store'
 
 import { useAssistantsStore } from '@/features/assistants/store'
