@@ -62,21 +62,21 @@ export const useAssistantsStore = defineStore("assistants", () => {
   async function add (props: Partial<Assistant> = {}) {
     const { data, error } = await supabase
       .from("user_assistants")
-      .insert({
+      .insert(mapAssistantToDb({
         name: t("stores.assistants.newAssistant"),
         avatar: defaultAvatar("AI"),
         workspaceId: null,
         prompt: "",
-        prompt_template: AssistantDefaultPrompt,
-        prompt_vars: [],
+        promptTemplate: AssistantDefaultPrompt,
+        promptVars: [],
         provider: null,
         model: null,
-        model_settings: { ...defaultModelSettings },
+        modelSettings: { ...defaultModelSettings },
         plugins: {},
-        prompt_role: "system",
+        promptRole: "system",
         stream: true,
         ...props,
-      })
+      }))
       .select()
       .single()
 
