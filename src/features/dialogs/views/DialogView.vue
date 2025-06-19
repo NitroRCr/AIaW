@@ -131,170 +131,27 @@
             @click="scroll('bottom')"
           />
         </div>
-        <div
-          flex
-          flex-wrap
-          justify-end
-          text-sec
-          items-center
-        >
-          <q-btn
-            v-if="model && mimeTypeMatch('image/webp', model.inputTypes.user)"
-            flat
-            icon="sym_o_image"
-            :title="$t('dialogView.addImage')"
-            round
-            min-w="2.7em"
-            min-h="2.7em"
-            @click="imageInput.click()"
-          >
-            <input
-              ref="imageInput"
-              type="file"
-              multiple
-              accept="image/*"
-              @change="onInputFiles"
-              un-hidden
-            >
-          </q-btn>
-          <q-btn
-            flat
-            icon="sym_o_folder"
-            :title="$t('dialogView.addFile')"
-            round
-            min-w="2.7em"
-            min-h="2.7em"
-            @click="fileInput.click()"
-          >
-            <input
-              ref="fileInput"
-              type="file"
-              multiple
-              accept="*"
-              @change="onInputFiles"
-              un-hidden
-            >
-          </q-btn>
-          <q-btn
-            v-if="assistant?.promptVars?.length"
-            flat
-            icon="sym_o_tune"
-            :title="
-              showVars ? $t('dialogView.hideVars') : $t('dialogView.showVars')
-            "
-            round
-            min-w="2.7em"
-            min-h="2.7em"
-            @click="showVars = !showVars"
-            :class="{ 'text-ter': showVars }"
-          />
-          <model-options-btn
-            v-if="sdkModel"
-            :provider-name="sdkModel.provider"
-            :model-id="sdkModel.modelId"
-            v-model="modelOptions"
-            flat
-            round
-            min-w="2.7em"
-            min-h="2.7em"
-          />
-          <add-info-btn
-            :plugins="activePlugins"
-            :assistant-plugins="assistant?.plugins || {}"
-            :dialog-id="dialogId"
-            :workspace-id="workspaceId"
-            @add="addInputItems"
-            flat
-            round
-            min-w="2.7em"
-            min-h="2.7em"
-          />
-          <q-btn
-            v-if="assistant"
-            flat
-            :round="!activePlugins.length"
-            :class="{ 'px-2': activePlugins.length }"
-            min-w="2.7em"
-            min-h="2.7em"
-            icon="sym_o_extension"
-            :title="$t('dialogView.plugins')"
-          >
-            <code
-              v-if="activePlugins.length"
-              bg-sur-c-high
-              px="6px"
-            >{{
-              activePlugins.length
-            }}</code>
-            <enable-plugins-menu :assistant-id="assistant.id" />
-          </q-btn>
-          <q-space />
-          <div
-            v-if="usage"
-            my-2
-            ml-2
-          >
-            <q-icon
-              name="sym_o_generating_tokens"
-              size="24px"
-            />
-            <code
-              bg-sur-c-high
-              px-2
-              py-1
-            >{{ usage.promptTokens }}+{{ usage.completionTokens }}</code>
-            <q-tooltip>
-              {{ $t("dialogView.messageTokens") }}<br>
-              {{ $t("dialogView.tokenPrompt") }}：{{ usage.promptTokens }}，{{
-                $t("dialogView.tokenCompletion")
-              }}：{{ usage.completionTokens }}
-            </q-tooltip>
-          </div>
-          <abortable-btn
-            icon="sym_o_send"
-            :label="$t('dialogView.send')"
-            @click="sendUserMessageAndGenerateResponse"
-            @abort="abortController?.abort()"
-            :loading="
-              isStreaming || !!dialogItems.at(-2)?.message?.generatingSession
-            "
-            ml-4
-            min-h="40px"
-            :disabled="inputEmpty"
-          />
-        </div>
-        <div
-          flex
-          v-if="assistant"
-          v-show="showVars"
-        >
-          <prompt-var-input
-            class="mt-2 mr-2"
-            v-for="promptVar of assistant.promptVars"
-            :key="promptVar.id"
-            :prompt-var="promptVar"
-            v-model="dialog.inputVars[promptVar.name]"
-            :input-props="{
-              dense: true,
-              outlined: true,
-            }"
-            component="input"
-          />
-        </div>
-        <a-input
-          ref="messageInput"
-          class="mt-2"
-          max-h-50vh
-          of-y-auto
-          :model-value="inputMessageContent?.text"
-          @update:model-value="inputMessageContent && updateInputText($event)"
-          outlined
-          autogrow
-          clearable
-          :debounce="30"
-          :placeholder="$t('dialogView.chatPlaceholder')"
-          @keydown.enter="handleInputEnterKeyPress"
-          @paste="handleCodePasteFormatting"
+        <MessageInputControl
+          ref="messageInputControl"
+          :model="model"
+          :assistant="assistant"
+          :sdk-model="sdkModel"
+          :model-options="modelOptions"
+          @update:model-options="modelOptions = $event"
+          :active-plugins="activePlugins"
+          :usage="usage"
+          :loading="isStreaming || !!dialogItems.at(-2)?.message?.generatingSession"
+          :input-empty="inputEmpty"
+          :input-text="inputMessageContent?.text"
+          :input-vars="dialog?.inputVars || {}"
+          @add-input-items="addInputItems"
+          @send="sendUserMessageAndGenerateResponse"
+          @abort="abortController?.abort()"
+          @update-input-vars="(name, value) => dialog && (dialog.inputVars[name] = value)"
+          @update-input-text="inputMessageContent && updateInputText($event)"
+          @keydown-enter="handleInputEnterKeyPress"
+          @paste="onPaste"
+          @process-files="onProcessFiles"
         />
       </div>
     </q-page>
@@ -310,7 +167,7 @@ import { computed, inject, nextTick, onUnmounted, ref, toRef, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute, useRouter } from "vue-router"
 
-import AbortableBtn from "@/shared/components/AbortableBtn.vue"
+import MessageInputControl from "@/shared/components/input/control/MessageInputControl.vue"
 import { useListenKey } from "@/shared/composables"
 import { useSetTitle } from "@/shared/composables/setTitle"
 import { useUiStateStore, useUserDataStore, useUserPerfsStore } from "@/shared/store"
@@ -328,7 +185,6 @@ import {
   wrapQuote
 } from "@/shared/utils/functions"
 
-import AddInfoBtn from "@/features/dialogs/components/AddPlugin/AddInfoBtn.vue"
 import MessageItem from "@/features/dialogs/components/MessageItem.vue"
 import { useDialogInput } from "@/features/dialogs/composables/useDialogInput"
 import { useDialogMessages } from "@/features/dialogs/composables/useDialogMessages"
@@ -340,10 +196,7 @@ import { engine } from "@/features/dialogs/utils/templateEngine"
 import MessageFile from "@/features/media/components/MessageFile.vue"
 import MessageImage from "@/features/media/components/MessageImage.vue"
 import { scaleBlob } from "@/features/media/utils/imageProcess"
-import EnablePluginsMenu from "@/features/plugins/components/EnablePluginsMenu.vue"
 import { usePluginsStore } from "@/features/plugins/store"
-import PromptVarInput from "@/features/prompt/components/PromptVarInput.vue"
-import ModelOptionsBtn from "@/features/providers/components/ModelOptionsBtn.vue"
 import ModelOverrideMenu from "@/features/providers/components/ModelOverrideMenu.vue"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
@@ -404,9 +257,7 @@ const lockingBottom = computed(
 
 // stream abort controller
 const abortController = ref<AbortController | null>(null)
-const imageInput = ref()
-const fileInput = ref()
-const messageInput = ref()
+const messageInputControl = ref()
 const showVars = ref(true)
 
 watch(
@@ -422,7 +273,7 @@ const startStream = async (target: string, insert = false) => {
 }
 
 function focusInput () {
-  isPlatformEnabled(perfs.autoFocusDialogInput) && messageInput.value?.focus()
+  isPlatformEnabled(perfs.autoFocusDialogInput) && messageInputControl.value?.focus()
 }
 
 async function edit (message: DialogMessageNested) {
@@ -456,7 +307,7 @@ function ensureAssistantAndModel () {
 async function regenerate(parentId: string) {
   if (!ensureAssistantAndModel()) return
 
-  await startStream(parentId)
+  await startStream(parentId, false)
 }
 
 /**
@@ -490,10 +341,8 @@ function handleCodePasteFormatting (ev: ClipboardEvent) {
   }
 }
 
-function onInputFiles ({ target }) {
-  const files = target.files
-  parseFiles(Array.from(files))
-  target.value = ""
+function onProcessFiles (files: File[]) {
+  parseFiles(files)
 }
 
 function onPaste (ev: ClipboardEvent) {
