@@ -202,6 +202,7 @@
       flex
       v-if="props.assistant"
       v-show="showVars"
+      pb-2
     >
       <prompt-var-input
         class="mt-2 mr-2"

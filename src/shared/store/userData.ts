@@ -1,34 +1,27 @@
 import { createKeyValueDbStore } from "./utils/createKeyValueDbStore"
 
-export type ListOpen = {
-  assistants: boolean
-  artifacts: boolean
-  dialogs: boolean
-  chats: boolean
-}
-
 interface UserData {
   lastWorkspaceId: string
-  noobAlertDismissed: boolean
   lastDialogIds: Record<string, string>
   defaultAssistantIds: Record<string, string>
   openedArtifacts: string[]
-  listOpen: Record<string, ListOpen>
   tipDismissed: Record<string, boolean>
   prodExpiredNotifiedTimestamp: number
-  evalExpiredNotified: boolean
+  evalExpiredNotified: boolean,
+  leftSidebarOpen: boolean
+  rightSidebarOpen: boolean
 }
 
 const defaultUserData: UserData = {
   lastWorkspaceId: null,
-  noobAlertDismissed: false,
   tipDismissed: {},
   lastDialogIds: {},
   defaultAssistantIds: {},
   prodExpiredNotifiedTimestamp: null,
   evalExpiredNotified: false,
-  listOpen: {},
   openedArtifacts: [],
+  leftSidebarOpen: false,
+  rightSidebarOpen: false,
 }
 
 export const useUserDataStore = () => {

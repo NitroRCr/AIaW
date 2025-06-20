@@ -116,8 +116,7 @@
         <template v-if="isPlatformEnabled(perfs.artifactsEnabled)">
           <q-separator />
           <artifacts-expansion
-            :model-value="listOpen.artifacts"
-            @update:model-value="setListOpen('artifacts', $event)"
+            :model-value="true"
             of-y-auto
           />
         </template>
@@ -152,7 +151,7 @@ import { useRoute, useRouter } from "vue-router"
 
 import DragableSeparator from "@/shared/components/DragableSeparator.vue"
 import { useUserPerfsStore } from "@/shared/store"
-import { ListOpen, useUserDataStore } from "@/shared/store/userData"
+import { useUserDataStore } from "@/shared/store/userData"
 import { artifactUnsaved, isPlatformEnabled } from "@/shared/utils/functions"
 
 import ArtifactItemIcon from "@/features/artifacts/components/ArtifactItemIcon.vue"
@@ -176,16 +175,6 @@ const workspacesStore = useWorkspacesStore()
 const userStore = useUserDataStore()
 
 const artifactsStore = useArtifactsStore()
-const listOpen = computed(
-  () =>
-    userStore.data.listOpen[props.id] || {
-      assistants: true,
-      artifacts: false,
-      dialogs: true,
-      chats: true,
-    }
-
-)
 
 const workspace = computed<Workspace | undefined>(
   () =>
@@ -263,43 +252,18 @@ watch(
   { immediate: true }
 )
 
-const drawerOpen = ref(false)
-// console.log("drawerOpen", drawerOpen.value, userStore.ready)
-// watch(drawerOpen, (val) => {
-//   if (userStore.ready) {
-//     console.log("drawerOpen", val, userStore.data, workspace.value.id)
-
-//     if (userStore.data.listOpen[workspace.value.id]) {
-//       userStore.data.listOpen[workspace.value.id] = {
-//         ...userStore.data.listOpen[workspace.value.id],
-//         artifacts: val,
-//       }
-//     } else {
-//       userStore.data.listOpen[workspace.value.id] = {
-//         assistants: true,
-//         dialogs: true,
-//         chats: true,
-//         artifacts: val,
-//       }
-//     }
-//   }
-// })
+const drawerOpen = computed({
+  get() {
+    return !userStore.ready ? false : userStore.data.rightSidebarOpen ?? false
+  },
+  set(val) {
+    userStore.data.rightSidebarOpen = val
+  }
+})
 
 const rightDrawerAbove = computed(() => $q.screen.width > drawerBreakpoint)
 provide("rightDrawerAbove", rightDrawerAbove)
 
 const { data: perfs } = useUserPerfsStore()
 
-function setListOpen (key: keyof ListOpen, value: boolean) {
-  if (!userStore.data.listOpen[workspace.value.id]) {
-    userStore.data.listOpen[workspace.value.id] = {
-      assistants: true,
-      artifacts: false,
-      dialogs: true,
-      chats: true,
-    }
-  }
-
-  userStore.data.listOpen[workspace.value.id][key] = value
-}
 </script>
