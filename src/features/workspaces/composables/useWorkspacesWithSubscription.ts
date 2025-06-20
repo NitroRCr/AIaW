@@ -16,6 +16,9 @@ async function fetchWorkspaces () {
   const { data, error } = await supabase
     .from("workspaces")
     .select("*")
+    // -- TMP: disabled 'folders' feature for now
+    .eq("type", "workspace")
+    // --
     .order("created_at", { ascending: false })
 
   if (error) {

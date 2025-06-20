@@ -7,8 +7,10 @@
     />
     <div
       mt-2
+      pt-2
       class="bg-sur-c"
       style="position: sticky; bottom: 0; z-index: 1"
+      align="middle"
     >
       <q-btn
         ml-2
@@ -16,10 +18,11 @@
         :label="$t('workspaceNav.workspace')"
         icon="sym_o_add"
         flat
-        no-caps
+        :content-inset-level="0.5"
+        class="full-width"
         @click="addWorkspace()"
       />
-      <q-btn
+      <!-- <q-btn
         ml-1
         color="secondary"
         :label="$t('workspaceNav.folder')"
@@ -27,7 +30,7 @@
         flat
         no-caps
         @click="addFolder()"
-      />
+      /> -->
     </div>
   </div>
 </template>
@@ -44,7 +47,7 @@ import { Workspace } from "@/services/data/types/workspace"
 
 import WorkspaceListSelect from "./WorkspaceListSelect.vue"
 
-const { addWorkspace, addFolder } = useWorkspaceActions()
+const { addWorkspace } = useWorkspaceActions()
 const userDataStore = useUserDataStore()
 
 const workspaceStore = useWorkspacesStore()

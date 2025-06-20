@@ -95,11 +95,12 @@
       context-menu
     >
       <q-list style="min-width: 100px">
-        <menu-item
+        <!-- TMP: disabled 'move' feature for now -->
+        <!-- <menu-item
           icon="sym_o_move_item"
           :label="$t('workspaceListItem.moveTo')"
           @click="moveItem(item)"
-        />
+        /> -->
         <menu-item
           icon="sym_o_delete"
           :label="$t('workspaceListItem.delete')"
