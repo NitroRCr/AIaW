@@ -122,7 +122,7 @@ export const useDialogsStore = defineStore("dialogs", () => {
 
     dialogs[data.id] = mapDbToDialog(data)
 
-    return data
+    return dialogs[data.id]
   }
 
   /**

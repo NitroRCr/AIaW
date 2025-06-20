@@ -39,7 +39,33 @@
         </div>
       </div>
     </div>
-
+    <!-- Command suggestions overlay wrapping the input -->
+    <command-suggestions-overlay
+      ref="commandOverlay"
+      :input-text="props.inputText"
+      :commands="availableCommands"
+      suggestion-position="top"
+      @update-input-text="$emit('update-input-text', $event)"
+      @command-executed="onCommandExecuted"
+    >
+      <template #default="{ onInput }">
+        <a-input
+          ref="messageInput"
+          class="mb-2"
+          max-h-50vh
+          of-y-auto
+          :model-value="props.inputText"
+          @update:model-value="onInput"
+          outlined
+          autogrow
+          clearable
+          :debounce="30"
+          :placeholder="$t('dialogView.chatPlaceholder')"
+          @keydown.enter="handleEnterKey"
+          @paste="$emit('paste', $event)"
+        />
+      </template>
+    </command-suggestions-overlay>
     <div
       flex
       flex-wrap
@@ -191,34 +217,6 @@
         component="input"
       />
     </div>
-
-    <!-- Command suggestions overlay wrapping the input -->
-    <command-suggestions-overlay
-      ref="commandOverlay"
-      :input-text="props.inputText"
-      :commands="availableCommands"
-      suggestion-position="top"
-      @update-input-text="$emit('update-input-text', $event)"
-      @command-executed="onCommandExecuted"
-    >
-      <template #default="{ onInput }">
-        <a-input
-          ref="messageInput"
-          class="mt-2"
-          max-h-50vh
-          of-y-auto
-          :model-value="props.inputText"
-          @update:model-value="onInput"
-          outlined
-          autogrow
-          clearable
-          :debounce="30"
-          :placeholder="$t('dialogView.chatPlaceholder')"
-          @keydown.enter="handleEnterKey"
-          @paste="$emit('paste', $event)"
-        />
-      </template>
-    </command-suggestions-overlay>
   </div>
 </template>
 
@@ -249,6 +247,7 @@ interface Props {
   inputVars?: Record<string, any>
   dialogId?: string
   workspaceId?: string
+  initDialog?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -263,7 +262,7 @@ const props = withDefaults(defineProps<Props>(), {
   inputText: '',
   inputVars: () => ({}),
   dialogId: undefined,
-  workspaceId: undefined
+  workspaceId: undefined,
 })
 
 const emit = defineEmits<{
@@ -367,5 +366,9 @@ defineExpose({
   right: 5px;
   transform: translateY(-50%);
   z-index: 1;
+}
+
+.round-borders {
+  border-radius: 10px;
 }
 </style>

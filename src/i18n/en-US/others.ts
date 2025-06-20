@@ -23,22 +23,7 @@ export default {
     required: "Required",
   },
   templates: {
-    defaultWsIndexContent: `## {'{{ workspace.name }}'}
-
-### Usage Guide
-
-Click "**Create Dialog**" in the right sidebar to start a conversation.
-
-- You can change the shortcut keys for sending messages in the settings on the left sidebar. The default is Ctrl+Enter.
-- This application is cross-platform and can be used on different devices such as computers and mobile phones.
-- Click on the assistant in the right sidebar to enter the assistant settings, where you can set prompts and enable various plugins.
-- In the left sidebar, you can create multiple workspaces to separate conversations with different themes.
-- Click the settings icon in the upper right corner to enter the workspace settings, where you can switch the default assistant and change the content displayed here.
-
-For more information, see <a href="https://docs.aiaw.app/usage/" target="_blank">Usage Guide</a>
-
-GitHub: <a href="https://github.com/dasein108/AIaW" target="_blank">dasein108/AIaW</a>
-`,
+    defaultWsIndexContent: `> You can change the full--md-description of {{ workspace.name }} in the workspace settings.`,
   },
   mcpClient: {
     connectingMcpServer: "Connecting to MCP server...",

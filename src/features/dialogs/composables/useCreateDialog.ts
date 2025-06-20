@@ -5,6 +5,7 @@ import { useUserDataStore } from "@/shared/store"
 
 import { useDialogMessagesStore, useDialogsStore } from "@/features/dialogs/store"
 
+import { DbDialogMessageUpdate, DialogMessage } from "@/services/data/types/dialogMessage"
 import { Dialog } from "@/services/data/types/dialogs"
 
 export function useCreateDialog (workspaceId: string) {
@@ -12,11 +13,12 @@ export function useCreateDialog (workspaceId: string) {
   const dialogsStore = useDialogsStore()
   const { t } = useI18n()
 
-  async function createDialog (props: Partial<Dialog> = {}) {
+  async function createDialog (props: Partial<Dialog> = {}, message?: DialogMessage<DbDialogMessageUpdate>) {
     const userStore = useUserDataStore()
     const dialogMessagesStore = useDialogMessagesStore()
+    debugger
 
-    await dialogsStore.addDialog(
+    return await dialogsStore.addDialog(
       {
         workspaceId,
         name: t("createDialog.newDialog"),
@@ -24,11 +26,11 @@ export function useCreateDialog (workspaceId: string) {
         inputVars: {},
         ...props,
       }
-    ).then(async ({ id }) => {
+    ).then(async (dialog) => {
       await dialogMessagesStore.addDialogMessage(
-        id,
+        dialog.id,
         null as string,
-        {
+        message || {
           type: "user",
           messageContents: [
             {
@@ -40,9 +42,11 @@ export function useCreateDialog (workspaceId: string) {
         }
       )
 
-      return id
-    }).then((id) => {
-      router.push(`/workspaces/${workspaceId}/dialogs/${id}`)
+      return dialog
+    }).then(async (dialog) => {
+      router.push(`/workspaces/${workspaceId}/dialogs/${dialog.id}`)
+
+      return dialog
     })
   }
 

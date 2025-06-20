@@ -8,15 +8,15 @@ import { Assistant } from "@/services/data/types/assistant"
 import { Dialog } from "@/services/data/types/dialogs"
 
 export const useDialogModel = (
-  dialog: Ref<Dialog>,
+  dialog: Ref<Dialog> | null,
   assistant: Ref<Assistant>
 ) => {
   const { getModel, getSdkModel } = useGetModel()
   const modelOptions = ref({})
   const { data: perfs } = useUserPerfsStore()
-
+  console.log("useDialogModel", dialog && dialog.value, assistant.value)
   const model = computed(() =>
-    getModel(dialog.value?.modelOverride || assistant.value?.model)
+    getModel((dialog && dialog.value?.modelOverride) || assistant.value?.model)
   )
 
   const sdkModel = computed(() =>

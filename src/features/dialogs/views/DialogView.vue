@@ -172,13 +172,11 @@ import { useListenKey } from "@/shared/composables"
 import { useSetTitle } from "@/shared/composables/setTitle"
 import { useUiStateStore, useUserDataStore, useUserPerfsStore } from "@/shared/store"
 import type { ApiResultItem, Plugin } from "@/shared/types"
-import { MaxMessageFileSizeMB } from "@/shared/utils/config"
+import { parseFilesToApiResultItems } from "@/shared/utils/files"
 import {
   almostEqual,
   displayLength,
   isPlatformEnabled,
-  isTextFile,
-  mimeTypeMatch,
   pageFhStyle,
   textBeginning,
   wrapQuote
@@ -194,7 +192,6 @@ import { DialogContent } from "@/features/dialogs/utils/dialogTemplateDefinition
 import { engine } from "@/features/dialogs/utils/templateEngine"
 import MessageFile from "@/features/media/components/MessageFile.vue"
 import MessageImage from "@/features/media/components/MessageImage.vue"
-import { scaleBlob } from "@/features/media/utils/imageProcess"
 import { usePluginsStore } from "@/features/plugins/store"
 import ModelOverrideMenu from "@/features/providers/components/ModelOverrideMenu.vue"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
@@ -205,6 +202,7 @@ import ParseFilesDialog from "../components/ParseFilesDialog.vue"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
+
 const { t } = useI18n()
 
 const props = defineProps<{
@@ -375,48 +373,18 @@ onUnmounted(() => removeEventListener("paste", onPaste))
 async function parseFiles (files: File[]) {
   if (!files.length) return
 
-  const textFiles = []
-  const supportedFiles = []
-  const otherFiles = []
-  for (const file of files) {
-    if (await isTextFile(file)) textFiles.push(file)
-    else if (mimeTypeMatch(file.type, model.value.inputTypes.user)) {
-      supportedFiles.push(file)
-    } else otherFiles.push(file)
-  }
-
-  const parsedFiles: ApiResultItem[] = []
-  for (const file of textFiles) {
-    parsedFiles.push({
-      type: "text",
-      name: file.name,
-      contentText: await file.text(),
-    })
-  }
-  for (const file of supportedFiles) {
-    if (file.size > MaxMessageFileSizeMB * 1024 * 1024) {
+  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, model.value.inputTypes.user,
+    (maxFileSize, file) => {
       $q.notify({
         message: t("dialogView.fileTooLarge", {
-          maxSize: MaxMessageFileSizeMB,
+          maxSize: maxFileSize
         }),
-        color: "negative",
+        color: "negative"
       })
-      continue
     }
+  )
 
-    const f =
-      file.type.startsWith("image/") && file.size > 512 * 1024
-        ? await scaleBlob(file, 2048 * 2048)
-        : file
-    parsedFiles.push({
-      type: "file",
-      name: file.name,
-      mimeType: file.type,
-      contentBuffer: await f.arrayBuffer(), // TODO: fix this
-    })
-  }
-
-  await addInputItems(parsedFiles)
+  await addInputItems(parsedItems)
 
   otherFiles.length &&
     $q
@@ -577,10 +545,10 @@ watch(
  * Supports different send key combinations (Enter, Ctrl+Enter, Shift+Enter).
  */
 function handleInputEnterKeyPress (ev) {
-  if (perfs.sendKey === "ctrl+enter") {
-    ev.ctrlKey && sendUserMessageAndGenerateResponse()
-  } else if (perfs.sendKey === "shift+enter") {
-    ev.shiftKey && sendUserMessageAndGenerateResponse()
+  if ((perfs.sendKey === "ctrl+enter" && ev.ctrlKey) ||
+    (perfs.sendKey === "shift+enter" && ev.shiftKey)
+  ) {
+    sendUserMessageAndGenerateResponse()
   } else {
     if (ev.ctrlKey) document.execCommand("insertText", false, "\n")
     else if (!ev.shiftKey) sendUserMessageAndGenerateResponse()

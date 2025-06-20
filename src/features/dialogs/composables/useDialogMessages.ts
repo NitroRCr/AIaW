@@ -122,6 +122,7 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
 
   const addApiResultStoredItem = async (messageId: string, messageContentId: string, item: ApiResultItem) => {
     let storedItem: StoredItem<DbStoredItemInsert> | null = null
+    console.log("addApiResultStoredItem", item, messageId, messageContentId)
 
     if (item.type === "file") {
       const fileItem = await uploadApiResultItem(item)

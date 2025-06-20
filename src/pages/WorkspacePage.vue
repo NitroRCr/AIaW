@@ -174,6 +174,7 @@ const props = defineProps<{
 
 const workspacesStore = useWorkspacesStore()
 const userStore = useUserDataStore()
+
 const artifactsStore = useArtifactsStore()
 const listOpen = computed(
   () =>
@@ -183,6 +184,7 @@ const listOpen = computed(
       dialogs: true,
       chats: true,
     }
+
 )
 
 const workspace = computed<Workspace | undefined>(
@@ -237,23 +239,7 @@ watch(
   },
   { immediate: true }
 )
-watch(
-  () => route.query.openArtifact,
-  (val) => {
-    if (!val) return
 
-    const artifact = artifacts.value.find((a) => a.id === val)
-
-    if (artifact) {
-      if (!userDataStore.data.openedArtifacts.includes(artifact.id)) {
-        userDataStore.data.openedArtifacts.push(artifact.id)
-        router.replace({ query: { artifactId: artifact.id } })
-      }
-    } else {
-      router.replace({ query: { artifactId: focusedArtifact.value?.id } })
-    }
-  }
-)
 const { closeArtifact } = useCloseArtifact()
 
 function closeAllArtifacts () {
@@ -278,6 +264,26 @@ watch(
 )
 
 const drawerOpen = ref(false)
+// console.log("drawerOpen", drawerOpen.value, userStore.ready)
+// watch(drawerOpen, (val) => {
+//   if (userStore.ready) {
+//     console.log("drawerOpen", val, userStore.data, workspace.value.id)
+
+//     if (userStore.data.listOpen[workspace.value.id]) {
+//       userStore.data.listOpen[workspace.value.id] = {
+//         ...userStore.data.listOpen[workspace.value.id],
+//         artifacts: val,
+//       }
+//     } else {
+//       userStore.data.listOpen[workspace.value.id] = {
+//         assistants: true,
+//         dialogs: true,
+//         chats: true,
+//         artifacts: val,
+//       }
+//     }
+//   }
+// })
 
 const rightDrawerAbove = computed(() => $q.screen.width > drawerBreakpoint)
 provide("rightDrawerAbove", rightDrawerAbove)

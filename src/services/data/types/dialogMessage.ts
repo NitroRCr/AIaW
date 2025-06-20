@@ -61,6 +61,6 @@ const mapDbToDialogMessageNested = (item: DbDialogMessage) => {
 export { mapDbToDialogMessage, mapDialogMessageToDb, mapDbToDialogMessageNested }
 
 export type {
-  DialogMessage, DialogMessageNested,
+  DialogMessage, DialogMessageNested, DialogMessageStatus,
   DbDialogMessageInsert, DbDialogMessageRow, DbDialogMessageUpdate, DialogMessageNestedUpdate
 }
