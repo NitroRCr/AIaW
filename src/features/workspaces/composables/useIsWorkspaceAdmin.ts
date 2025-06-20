@@ -13,6 +13,8 @@ export const useIsWorkspaceAdmin = (workspaceId: Ref<string | null>) => {
   watch(
     [() => workspaceId.value, () => currentUserId],
     async ([id, userId]) => {
+      await store.getWorkspaceMembers(id)
+
       if (!id || !userId) {
         isAdmin.value = null
 

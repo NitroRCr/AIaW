@@ -33,7 +33,8 @@ import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspa
  */
 export const useWorkspacesStore = defineStore("workspaces", () => {
   const { workspaces, isLoaded } = useWorkspacesWithSubscription()
-  const workspaceMembers = ref<WorkspaceMember[]>([])
+  const isLoadedMembers = ref(false)
+  const workspaceMembers = ref<Record<string, WorkspaceMember[]>>({})
   const { t } = useI18n()
   const isSaving = ref(false)
   const hasChanges = ref(false)
@@ -168,8 +169,8 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
 
     const member = mapDbToWorkspaceMember(data as DbWorkspaceMember)
-    workspaceMembers.value = [
-      ...workspaceMembers.value,
+    workspaceMembers.value[workspaceId] = [
+      ...workspaceMembers.value[workspaceId],
       member,
     ]
 
@@ -188,7 +189,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
-    workspaceMembers.value = workspaceMembers.value.filter(
+    workspaceMembers.value[workspaceId] = workspaceMembers.value[workspaceId].filter(
       (member) => member.userId !== userId
     )
   }
@@ -211,12 +212,13 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
-    workspaceMembers.value = workspaceMembers.value.map((member) =>
+    workspaceMembers.value[workspaceId] = workspaceMembers.value[workspaceId].map((member) =>
       member.userId === userId ? mapDbToWorkspaceMember(data as DbWorkspaceMember) : member
     )
   }
 
   async function getWorkspaceMembers (workspaceId: string) {
+    isLoadedMembers.value = false
     const { data, error } = await supabase
       .from("workspace_members")
       .select("*, profile:profiles(*)")
@@ -227,7 +229,9 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
-    workspaceMembers.value = data.map(mapDbToWorkspaceMember)
+    workspaceMembers.value[workspaceId] = data.map(mapDbToWorkspaceMember)
+
+    isLoadedMembers.value = true
 
     return workspaceMembers.value
   }
@@ -242,10 +246,10 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     // if (isOwner) {
     //   return "owner" as WorkspaceRole
     // }
-
-    const member = workspaceMembers.value.find(
+    const member = workspaceMembers.value[workspaceId]?.find(
       (member) => member.userId === userId
     )
+    console.log("isUserWorkspaceAdmin", workspaceId, userId, member)
 
     if (member) {
       return member.role as WorkspaceMemberRole
@@ -268,5 +272,6 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     isUserWorkspaceAdmin,
     isSaving,
     hasChanges,
+    workspaceMembers
   }
 })

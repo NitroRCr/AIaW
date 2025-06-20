@@ -47,8 +47,9 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia"
 import { useQuasar } from "quasar"
-import { onMounted, ref } from "vue"
+import { computed } from "vue"
 
 import { useUserStore } from "@/shared/store"
 
@@ -62,7 +63,8 @@ const props = defineProps<{
 }>()
 
 const workspacesStore = useWorkspacesStore()
-const members = ref<WorkspaceMember[]>([])
+const { workspaceMembers } = storeToRefs(workspacesStore)
+const members = computed(() => (workspaceMembers.value[props.workspaceId] || []).filter(m => m.userId !== userStore.currentUser.id))
 const userStore = useUserStore()
 const $q = useQuasar()
 const showUserSelectDialog = () => {
@@ -85,21 +87,14 @@ const onUpdateMemberRole = async (member: WorkspaceMember) => {
 
 const onRemoveMember = async (member: WorkspaceMember) => {
   await workspacesStore.removeWorkspaceMember(props.workspaceId, member.userId)
-  members.value = members.value.filter((m) => m.userId !== member.userId)
 }
 
 const onAddMember = async (userId: string) => {
-  const member = await workspacesStore.addWorkspaceMember(
+  await workspacesStore.addWorkspaceMember(
     props.workspaceId,
     userId,
     "member"
   )
-  members.value = [...members.value, member]
 }
 
-onMounted(async () => {
-  members.value = (
-    await workspacesStore.getWorkspaceMembers(props.workspaceId)
-  ).filter((member) => member.userId !== userStore.currentUser.id)
-})
 </script>
