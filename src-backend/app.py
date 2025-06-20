@@ -7,6 +7,10 @@ from typing import Optional, Dict, Any
 from fastapi.staticfiles import StaticFiles
 from llama_parse import LlamaParse
 import os
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из .env файла
+load_dotenv()
 
 http_client = None
 
