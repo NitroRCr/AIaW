@@ -23,7 +23,7 @@ export default {
     required: "Required",
   },
   templates: {
-    defaultWsIndexContent: `> You can change the full--md-description of {{ workspace.name }} in the workspace settings.`,
+    defaultWsIndexContent: `> You can change the full--md-description of {'{{ workspace.name }}'} in the workspace settings.`,
   },
   mcpClient: {
     connectingMcpServer: "Connecting to MCP server...",
