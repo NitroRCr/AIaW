@@ -212,8 +212,8 @@ async def searxng(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-if IS_PRODUCTION:
-    app.mount('/', StaticFiles(directory='static', html=True), name='static')
+# if IS_PRODUCTION:
+app.mount('/', StaticFiles(directory='static', html=True), name='static')
 
 @app.exception_handler(404)
 async def return_index(request: Request, exc: HTTPException):
