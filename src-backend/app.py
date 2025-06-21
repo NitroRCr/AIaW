@@ -7,11 +7,12 @@ from typing import Optional, Dict, Any, AsyncIterator
 from fastapi.staticfiles import StaticFiles
 from llama_parse import LlamaParse
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
+load_dotenv(find_dotenv('.env.local'), override=True)
 
 http_client = None
 
