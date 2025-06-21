@@ -87,11 +87,11 @@ import { computed, ref } from "vue"
 import { useI18n } from "vue-i18n"
 
 import { useOrder } from "@/shared/composables/order"
-import { StripeFee } from "@/shared/utils/config"
 
 import PayMethodItem from "./PayMethodItem.vue"
 
 const { locale } = useI18n()
+const StripeFee = 0.029
 
 const payMethod = ref<"wxpay" | "stripe">(
   locale.value === "zh-CN" ? "wxpay" : "stripe"

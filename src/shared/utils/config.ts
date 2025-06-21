@@ -3,6 +3,5 @@ export const MaxMessageFileSizeMB = parseFloat(
 )
 export const DocParseBaseURL = process.env.DOC_PARSE_BASE_URL
 export const CorsFetchBaseURL = process.env.CORS_FETCH_BASE_URL
-export const StripeFee =
-  process.env.STRIPE_FEE && parseFloat(process.env.STRIPE_FEE)
+export const CyberLiteLLMBaseURL = process.env.CYBER_LITELLM_BASE_URL
 export const SearxngBaseURL = process.env.SEARXNG_BASE_URL

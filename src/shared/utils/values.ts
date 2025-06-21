@@ -11,7 +11,8 @@ import { createTogetherAI } from "@ai-sdk/togetherai"
 import { createXai } from "@ai-sdk/xai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { Object, String } from "@sinclair/typebox"
-import { createOllama } from "ollama-ai-provider"
+
+import { createLiteLLMClient } from "@/services/ai/llm/litellm"
 
 import { Model, ProviderType } from "../types"
 
@@ -219,17 +220,12 @@ const ProviderTypes: ProviderType[] = [
     constructor: createGroq,
   },
   {
-    name: "ollama",
-    label: "Ollama",
-    avatar: { type: "svg", name: "ollama" },
-    settings: Object({
-      baseURL: String({
-        title: t("values.apiAddress"),
-        default: OfficialBaseURLs.ollama,
-      }),
-    }),
+    name: "litellm",
+    label: "Cyber[AI] LiteLLM",
+    avatar: { type: "text", text: "🟣" },
+    settings: Object(commonSettings),
     initialSettings: {},
-    constructor: createOllama,
+    constructor: createLiteLLMClient,
   },
 ]
 

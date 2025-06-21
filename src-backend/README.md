@@ -5,6 +5,10 @@ Backend service for the AIaW application, built on FastAPI.
 ## Installation and Setup
 
 1. Install Python 3.8 or higher.
+  ```bash
+  python -m venv venv
+  source venv/bin/activate
+  ```
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
