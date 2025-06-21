@@ -6,7 +6,8 @@ import { Database } from "../supabase/database.types"
 
 type DbCustomProviderRow = Database["public"]["Tables"]["custom_providers"]["Row"]
 type DbCustomProviderInsert = Database["public"]["Tables"]["custom_providers"]["Insert"]
-type DbCustomProvider = DbCustomProviderRow | DbCustomProviderInsert
+type DbCustomProviderUpdate = Database["public"]["Tables"]["custom_providers"]["Update"]
+type DbCustomProvider = DbCustomProviderRow | DbCustomProviderInsert | DbCustomProviderUpdate
 
 type DbSubproviderInsert = Database["public"]["Tables"]["subproviders"]["Insert"]
 type DbSubproviderRow = Database["public"]["Tables"]["subproviders"]["Row"]
@@ -24,7 +25,9 @@ type Subprovider<T extends DbSubprovider = DbSubprovider> = OverrideProps<DtoToE
 type CustomProvider<T extends DbCustomProvider = DbCustomProvider> = OverrideProps<DtoToEntity<T>, {
   avatar: Avatar
   fallbackProvider: Provider
-}> & {
+}>
+
+type CustomProviderWithSubproviders = CustomProvider<DbCustomProviderWithSubproviders> & {
   subproviders: Subprovider[]
 }
 
@@ -42,10 +45,10 @@ const mapSubproviderToDb = (providerId: string, subprovider: Subprovider) => {
   }
 }
 
-const mapDbToCustomProvider = (item: DbCustomProviderWithSubproviders) => {
+const mapDbToCustomProvider = (item: DbCustomProviderWithSubproviders | DbCustomProvider) => {
   const entity = dtoToEntity(item)
 
-  return {
+  const result = {
     ...entity,
     avatar: entity.avatar ? entity.avatar : {
       type: "icon",
@@ -53,17 +56,22 @@ const mapDbToCustomProvider = (item: DbCustomProviderWithSubproviders) => {
       hue: Math.floor(Math.random() * 360),
     },
     fallbackProvider: entity.fallbackProvider ? entity.fallbackProvider : null,
-    subproviders: item.subproviders.map(mapDbToSubprovider),
   } as CustomProvider
+
+  if ("subproviders" in item) {
+    (result as CustomProviderWithSubproviders).subproviders = item.subproviders.map(mapDbToSubprovider)
+  }
+
+  return result
 }
 
 const mapCustomProviderToDb = (customProvider: CustomProvider) => {
   return {
     ...entityToDto(customProvider),
-    subproviders: customProvider.subproviders.map((sp) => mapSubproviderToDb(customProvider.id, sp)),
+    // subproviders: customProvider.subproviders.map((sp) => mapSubproviderToDb(customProvider.id, sp)),
   }
 }
 
 export { mapDbToCustomProvider, mapCustomProviderToDb, mapDbToSubprovider, mapSubproviderToDb }
 
-export type { CustomProvider, Subprovider }
+export type { CustomProvider, Subprovider, DbCustomProviderInsert, CustomProviderWithSubproviders }
