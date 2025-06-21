@@ -21,7 +21,9 @@ jobs:
 
       - name: Create .env.docker
         run: |
-          echo "DEXIE_DB_URL=${{ secrets.DEXIE_DB_URL }}" >> .env.docker
+          echo "IS_PRODUCTION=true" >> .env.docker
+          echo "LITELLM_URL=${{ secrets.LITELLM_URL }}" >> .env.docker
+          echo "LITELLM_API_KEY=${{ secrets.LITELLM_API_KEY }}" >> .env.docker
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.docker
           echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> .env.docker
 

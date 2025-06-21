@@ -8,7 +8,8 @@ import { Assistant } from "./assistant"
 
 type DbDialogRow = Database["public"]["Tables"]["dialogs"]["Row"]
 type DbDialogInsert = Database["public"]["Tables"]["dialogs"]["Insert"]
-type DbDialog = DbDialogRow | DbDialogInsert
+type DbDialogUpdate = Database["public"]["Tables"]["dialogs"]["Update"]
+type DbDialog = DbDialogRow | DbDialogInsert | DbDialogUpdate
 
 type DialogMap = {
   modelOverride: Model
@@ -25,4 +26,4 @@ const mapDialogToDb = <T extends DbDialog = DbDialogRow>(dialog: Dialog<T>): T =
   entityToDto(dialog) as T
 
 export { mapDbToDialog, mapDialogToDb }
-export type { DbDialogInsert, Dialog }
+export type { DbDialogInsert, DbDialogUpdate, Dialog }

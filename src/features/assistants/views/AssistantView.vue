@@ -104,13 +104,6 @@
         </q-item-label>
         <q-separator spaced />
         <q-item-label
-          header
-          id="model"
-        >
-          {{ $t("assistantView.model") }}
-        </q-item-label>
-        <model-input-items v-model="assistant.model" />
-        <q-item-label
           caption
           p="x-4 y-2"
           text-on-sur-var
@@ -132,6 +125,10 @@
         >
           {{ $t("assistantView.providerEmptyTip") }}
         </q-item-label>
+        <model-input-items
+          v-model="assistant.model"
+          :provider-models="providerModels"
+        />
         <q-separator spaced />
         <q-item id="plugins">
           <q-item-section text-sec>
@@ -488,7 +485,7 @@
 
 <script setup lang="ts">
 import { copyToClipboard, useQuasar } from "quasar"
-import { computed, inject, toRaw } from "vue"
+import { computed, inject, ref, toRaw, watch } from "vue"
 
 import ATip from "@/shared/components/ATip.vue"
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
@@ -504,6 +501,7 @@ import EnablePluginsItems from "@/features/plugins/components/EnablePluginsItems
 import PromptVarEditor from "@/features/prompt/components/PromptVarEditor.vue"
 import ModelInputItems from "@/features/providers/components/ModelInputItems.vue"
 import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
+import { useProvidersStore } from "@/features/providers/store"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -515,11 +513,19 @@ const props = defineProps<{
 defineEmits(["toggle-drawer"])
 
 const store = useAssistantsStore()
+const providersStore = useProvidersStore()
 const $q = useQuasar()
 
 const assistant = computed(() =>
   store.assistants.find((a) => a.id === props.id)
 )
+
+const providerModels = ref([])
+watch(() => assistant.value?.provider, (provider) => {
+  providersStore.getModelList(provider).then((models) => {
+    providerModels.value = models
+  })
+}, { immediate: true })
 
 async function saveAssistant() {
   if (!assistant.value) return

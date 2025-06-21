@@ -45,7 +45,7 @@ export const useProvidersStore = defineStore("providers", () => {
   const providers = computed(() => Object.values(providersMap))
   const isSaving = ref(false)
   const hasChanges = ref(false)
-
+  const providerModelCache = ref<Record<string, string[]>>({})
   watch(providersMap, () => {
     hasChanges.value = true
   }, { deep: true })
@@ -127,6 +127,10 @@ export const useProvidersStore = defineStore("providers", () => {
     provider: Provider,
     stack = []
   ): Promise<string[]> {
+    if ((providerModelCache[provider.type]?.length || 0) > 0) {
+      return providerModelCache[provider.type]
+    }
+
     if (provider.type && provider.type.startsWith("custom:")) {
       const p = providersMap[extractCustomProviderId(provider)]
 
@@ -134,7 +138,10 @@ export const useProvidersStore = defineStore("providers", () => {
     } else {
       const pt = ProviderTypes.find((pt) => pt.name === provider.type)
 
-      return pt?.getModelList ? await pt.getModelList(provider.settings) : []
+      const modelList = pt?.getModelList ? await pt.getModelList(provider.settings) : []
+      providerModelCache[provider.type] = modelList
+
+      return modelList
     }
   }
 
@@ -340,5 +347,6 @@ export const useProvidersStore = defineStore("providers", () => {
     deleteSubprovider,
     isSaving,
     hasChanges,
+    getModelList
   }
 })

@@ -21,7 +21,7 @@ interface Prefs {
   systemProvider: Provider
   systemModel: Model
   userAvatar: Avatar
-  commonModelOptions: string[]
+  // commonModelOptions: string[]
   autoGenTitle: boolean
   sendKey: "ctrl+enter" | "shift+enter" | "enter"
   messageSelectionBtn: boolean
@@ -70,17 +70,17 @@ const defaultPrefs: Prefs = {
     text: "U",
     hue: 300,
   },
-  commonModelOptions: [
-    "gpt-4.1",
-    "gpt-4.1-mini",
-    "o4-mini",
-    "claude-3-7-sonnet-20250219",
-    "claude-3-5-sonnet-20241022",
-    "gemini-1.5-pro",
-    "gemini-2.0-flash",
-    "deepseek-chat",
-    "deepseek-reasoner",
-  ],
+  // commonModelOptions: [
+  //   "gpt-4.1",
+  //   "gpt-4.1-mini",
+  //   "o4-mini",
+  //   "claude-3-7-sonnet-20250219",
+  //   "claude-3-5-sonnet-20241022",
+  //   "gemini-1.5-pro",
+  //   "gemini-2.0-flash",
+  //   "deepseek-chat",
+  //   "deepseek-reasoner",
+  // ],
   autoGenTitle: true,
   sendKey: "enter",
   messageSelectionBtn: true,

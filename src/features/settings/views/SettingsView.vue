@@ -127,18 +127,21 @@
         >
           {{ $t("settingsView.defaultModelHeader") }}
         </q-item-label>
-        <model-input-items v-model="perfs.model" />
+        <model-input-items
+          v-model="perfs.model"
+          :provider-models="providerModels"
+        />
         <q-item>
           <q-item-section>
-            <q-item-label>
+            <!-- <q-item-label>
               {{ $t("settingsView.commonModels") }}
             </q-item-label>
             <q-item-label caption>
               {{ $t("settingsView.commonModelsCaption") }}<br>
               <get-model-list
                 :provider
-                v-model="perfs.commonModelOptions"
-              /> -
+                v-model="providerModels"
+              />
               <a
                 href="javascript:void(0)"
                 @click="sortModels"
@@ -146,12 +149,12 @@
               >
                 {{ $t("settingsView.sort") }}
               </a>
-            </q-item-label>
+            </q-item-label> -->
           </q-item-section>
           <q-item-section side>
             <models-input
               class="xs:w-250px md:w-400px"
-              v-model="perfs.commonModelOptions"
+              v-model="providerModels"
               filled
               dense
             />
@@ -165,7 +168,10 @@
           {{ $t("settingsView.systemAssistantHeader") }}
         </q-item-label>
         <provider-input-items v-model="perfs.systemProvider" />
-        <model-input-items v-model="perfs.systemModel" />
+        <model-input-items
+          v-model="perfs.systemModel"
+          :provider-models="providerModels"
+        />
         <q-item-label
           caption
           p="x-4 y-2"
@@ -544,8 +550,9 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia"
 import { useQuasar } from "quasar"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
@@ -558,19 +565,18 @@ import { useUserPrefsStore } from "@/shared/store/userPrefs"
 import { pageFhStyle } from "@/shared/utils/functions"
 import { localData } from "@/shared/utils/localData"
 import { IsTauri } from "@/shared/utils/platformApi"
-import { dialogOptions, mdCodeThemes, mdPreviewThemes } from "@/shared/utils/values"
+import { dialogOptions, mdCodeThemes, mdPreviewThemes, models } from "@/shared/utils/values"
 
 import AuthzGrantModal from "@/features/auth/components/AuthzGrantModal.vue"
 import CosmosWallet from "@/features/auth/components/CosmosWallet.vue"
 import KeplerWallet from "@/features/auth/components/KeplerWallet.vue"
 import { useAuthStore } from "@/features/auth/store/auth"
-import GetModelList from "@/features/providers/components/GetModelList.vue"
-import ModelDragSortDialog from "@/features/providers/components/ModelDragSortDialog.vue"
+// import ModelDragSortDialog from "@/features/providers/components/ModelDragSortDialog.vue"
 import ModelInputItems from "@/features/providers/components/ModelInputItems.vue"
 import ModelsInput from "@/features/providers/components/ModelsInput.vue"
 import PlatformEnabledInput from "@/features/providers/components/PlatformEnabledInput.vue"
 import ProviderInputItems from "@/features/providers/components/ProviderInputItems.vue"
-import { useGetModel } from "@/features/providers/composables/useGetModel"
+import { useProvidersStore } from "@/features/providers/store"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
@@ -580,30 +586,47 @@ const { t } = useI18n()
 
 const isTauri = computed(() => IsTauri)
 
-const { data: perfs, restore } = useUserPrefsStore()
+const { restore } = useUserPrefsStore()
+const { data: perfs } = storeToRefs(useUserPrefsStore())
+const providersStore = useProvidersStore()
+
 const darkModeOptions = [
   { label: t("settingsView.followSystem"), value: "auto" },
   { label: t("settingsView.light"), value: false },
   { label: t("settingsView.dark"), value: true },
 ]
+const providerModels = ref([])
+watch(() => perfs.value.provider, (provider) => {
+  if (provider) {
+    providersStore.getModelList(provider).then((modelsAvailable) => {
+      providerModels.value = modelsAvailable.length > 0 ? modelsAvailable : models.map((m) => m.name)
+    }).catch((err) => {
+      $q.notify({
+        message: err.message,
+        color: "negative",
+      })
+      providerModels.value = []
+    })
+  }
+}, { immediate: true })
 
 const $q = useQuasar()
 
 function pickThemeHue () {
   $q.dialog({
     component: HueSliderDialog,
-    componentProps: { value: perfs.themeHue },
+    componentProps: { value: perfs.value.themeHue },
   }).onOk((hue) => {
-    perfs.themeHue = hue
+    perfs.value.themeHue = hue
   })
 }
 
 function pickUserAvatar () {
   $q.dialog({
     component: PickAvatarDialog,
-    componentProps: { model: perfs.userAvatar, defaultTab: "text" },
+    componentProps: { model: perfs.value.userAvatar, defaultTab: "text" },
   }).onOk((avatar) => {
-    perfs.userAvatar = avatar
+    perfs.value.userAvatar = avatar
   })
 }
 
@@ -618,30 +641,30 @@ function restoreSettings () {
   })
 }
 const providerLink = computed(() => {
-  if (!perfs.provider) return ""
+  if (!perfs.value.provider) return ""
 
-  return `${window.location.origin}/#/provider/${perfs.provider.settings.id}`
+  return `${window.location.origin}/#/provider/${perfs.value.provider.settings.id}`
 })
 
-const { getProvider } = useGetModel()
-const provider = computed(() => getProvider())
+// const { getProvider } = useGetModel()
+// const provider = computed(() => getProvider())
 
 const langOptions = [
   { label: t("settingsView.auto"), value: null },
   { label: "English", value: "en-US" },
 ]
 
-function sortModels () {
-  const models = perfs.commonModelOptions
-  $q.dialog({
-    component: ModelDragSortDialog,
-    componentProps: { models },
-    persistent: true,
-    ...dialogOptions,
-  }).onOk((sortedModels) => {
-    perfs.commonModelOptions = sortedModels
-  })
-}
+// function sortModels () {
+//   const models = perfs.value.commonModelOptions
+//   $q.dialog({
+//     component: ModelDragSortDialog,
+//     componentProps: { models },
+//     persistent: true,
+//     ...dialogOptions,
+//   }).onOk((sortedModels) => {
+//     perfs.value.commonModelOptions = sortedModels
+//   })
+// }
 
 useLocateId(ref(true))
 

@@ -6,7 +6,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createGroq } from "@ai-sdk/groq"
 import { createMistral } from "@ai-sdk/mistral"
 import { createOpenAI } from "@ai-sdk/openai"
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
+import { createOpenAICompatible, OpenAICompatibleProviderSettings } from "@ai-sdk/openai-compatible"
 import { createTogetherAI } from "@ai-sdk/togetherai"
 import { createXai } from "@ai-sdk/xai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
@@ -16,6 +16,7 @@ import { createLiteLLMClient } from "@/services/ai/llm/litellm"
 
 import { Model, ProviderType } from "../types"
 
+import { CyberLiteLLMBaseURL } from "./config"
 import { fetch } from "./platformApi"
 
 import { i18n } from "@/boot/i18n"
@@ -36,6 +37,19 @@ const commonSettings = {
   }),
   apiKey: String({ title: "API Key", format: "password" }),
 }
+
+const getOpenAICompatibleModelList = async (settings: OpenAICompatibleProviderSettings, defaultURL?: string) => {
+  const baseURL = settings.baseURL || defaultURL
+  const resp = await fetch(`${baseURL}/models`, settings.apiKey ? {
+    headers: {
+      Authorization: `Bearer ${settings.apiKey}`,
+    },
+  } : {})
+  const { data } = await resp.json()
+
+  return data.map((m) => m.id)
+}
+
 const ProviderTypes: ProviderType[] = [
   {
     name: "openai",
@@ -59,17 +73,8 @@ const ProviderTypes: ProviderType[] = [
     }),
     initialSettings: { compatibility: "strict" },
     constructor: createOpenAI,
-    getModelList: async (settings) => {
-      const baseURL = settings.baseURL || OfficialBaseURLs.openai
-      const resp = await fetch(`${baseURL}/models`, {
-        headers: {
-          Authorization: `Bearer ${settings.apiKey}`,
-        },
-      })
-      const { data } = await resp.json()
-
-      return data.map((m) => m.id)
-    },
+    getModelList: (settings) => getOpenAICompatibleModelList(settings,
+      OfficialBaseURLs.openai),
   },
   {
     name: "azure",
@@ -159,17 +164,8 @@ const ProviderTypes: ProviderType[] = [
     settings: Object(commonSettings),
     initialSettings: {},
     constructor: createOpenRouter,
-    getModelList: async (settings) => {
-      const baseURL = settings.baseURL || OfficialBaseURLs.openrouter
-      const resp = await fetch(`${baseURL}/models`, {
-        headers: {
-          Authorization: `Bearer ${settings.apiKey}`,
-        },
-      })
-      const { data } = await resp.json()
-
-      return data.map((m) => m.id)
-    },
+    getModelList: (settings) => getOpenAICompatibleModelList(settings,
+      OfficialBaseURLs.openrouter),
   },
   {
     name: "deepseek",
@@ -223,9 +219,10 @@ const ProviderTypes: ProviderType[] = [
     name: "litellm",
     label: "Cyber[AI] LiteLLM",
     avatar: { type: "text", text: "🟣" },
-    settings: Object(commonSettings),
+    settings: Object({}),
     initialSettings: {},
     constructor: createLiteLLMClient,
+    getModelList: (settings) => getOpenAICompatibleModelList(settings, CyberLiteLLMBaseURL),
   },
 ]
 

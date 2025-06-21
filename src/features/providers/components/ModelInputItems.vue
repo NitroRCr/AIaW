@@ -6,7 +6,7 @@
         class="w-250px"
         :model-value="model?.name"
         @update:model-value="setModel"
-        :options="providersStore.modelOptions"
+        :options="props.providerModels"
         filled
         dense
       >
@@ -76,11 +76,13 @@ import ListInput from "@/shared/components/input/ListInput.vue"
 import { Model } from "@/shared/types"
 import { InputTypes, models } from "@/shared/utils/values"
 
-import { useProvidersStore } from "@/features/providers/store"
-
 import ModelItem from "./ModelItem.vue"
 
 const model = defineModel<Model>()
+
+const props = defineProps<{
+  providerModels?: string[]
+}>()
 
 function setModel (name: string) {
   model.value = name
@@ -91,5 +93,5 @@ function setModel (name: string) {
     : null
 }
 
-const providersStore = useProvidersStore()
+// const providersStore = useProvidersStore()
 </script>

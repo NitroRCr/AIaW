@@ -4,7 +4,7 @@ import { reactive, ref } from "vue"
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import { DbDialogInsert, Dialog, mapDbToDialog, mapDialogToDb } from "@/services/data/types/dialogs"
+import { DbDialogInsert, DbDialogUpdate, Dialog, mapDbToDialog, mapDialogToDb } from "@/services/data/types/dialogs"
 
 /**
  * Store for managing dialogs in the application
@@ -132,10 +132,10 @@ export const useDialogsStore = defineStore("dialogs", () => {
    * @throws {Error} If database update fails or dialog ID is missing
    * @returns {Promise<void>}
    */
-  async function updateDialog (dialog: Partial<Dialog>) {
+  async function updateDialog (dialog: Dialog<DbDialogUpdate>) {
     const { data, error } = await supabase
       .from("dialogs")
-      .update(dialog)
+      .update(mapDialogToDb(dialog))
       .eq("id", dialog.id)
       .select()
       .single()

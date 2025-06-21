@@ -73,7 +73,7 @@
           {{ $t("dialogView.modelsConfigGuide2") }}
         </a-tip>
         <model-item
-          v-for="m of perfs.commonModelOptions"
+          v-for="m of providerModels"
           :key="m"
           clickable
           :model="m"
@@ -90,24 +90,39 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from "vue"
+
 import ATip from "@/shared/components/ATip.vue"
 import { useUserPerfsStore } from "@/shared/store"
+import { Model } from "@/shared/types"
 import { InputTypes, models } from "@/shared/utils/values"
 
 import { useDialogsStore } from "@/features/dialogs/store"
 
+import { Assistant } from "@/services/data/types/assistant"
+import { Dialog } from "@/services/data/types/dialogs"
+
+import { useProvidersStore } from "../store"
+
 import ModelItem from "./ModelItem.vue"
 
 interface Props {
-  model: any
-  assistant: any
-  dialog: any
+  model: Model
+  assistant: Assistant
+  dialog: Dialog
 }
 
 const props = defineProps<Props>()
 
 const { data: perfs } = useUserPerfsStore()
 const dialogsStore = useDialogsStore()
+const providersStore = useProvidersStore()
+const providerModels = ref([])
+watch(() => props.assistant.provider, (provider) => {
+  providersStore.getModelList(provider).then((models) => {
+    providerModels.value = models
+  })
+}, { immediate: true })
 
 function updateDialogModel(modelOverride: any) {
   dialogsStore.updateDialog({

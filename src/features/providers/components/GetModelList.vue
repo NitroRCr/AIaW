@@ -1,6 +1,5 @@
 <template>
   <a
-    v-if="providerType?.getModelList"
     pri-link
     href="javascript:void(0)"
     @click="getModelList"
@@ -11,7 +10,6 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import { computed } from "vue"
 import { useI18n } from "vue-i18n"
 
 import { Provider } from "@/shared/types"
@@ -28,13 +26,14 @@ const $q = useQuasar()
 const { t } = useI18n()
 
 const providersStore = useProvidersStore()
-const providerType = computed(() =>
-  providersStore.providerTypes.find((p) => p.name === props.provider?.type)
-)
+// const providerType = computed(() =>
+//   providersStore.providerTypes.find((p) => p.name === props.provider?.type)
+// )
 
 async function getModelList () {
   try {
-    const list = await providerType.value.getModelList?.(props.provider.settings)
+    console.log("---!!getModelList", props.provider)
+    const list = await providersStore.getModelList(props.provider)
     models.value = list
   } catch (error) {
     $q.notify({
