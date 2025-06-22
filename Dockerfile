@@ -10,6 +10,8 @@ RUN pnpm install && pnpm build -m pwa
 FROM python:3.12.7-slim
 WORKDIR /app
 
+COPY .env.docker .env.local
+
 COPY src-backend/ .
 COPY --from=builder /app/dist/pwa ./static
 RUN pip install --no-cache-dir -r requirements.txt
