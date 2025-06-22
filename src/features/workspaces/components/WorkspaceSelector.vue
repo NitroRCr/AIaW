@@ -14,8 +14,9 @@
       <q-icon name="sym_o_chevron_right" />
     </q-item-section>
     <q-menu
-      anchor="top right"
-      self="top left"
+      :anchor="$q.screen.lt.sm ? 'bottom start' : 'top right'"
+      :self="$q.screen.lt.sm ? 'top start' : 'top left'"
+      :style="$q.screen.lt.sm ? { width: `${DRAWER_WIDTH}px` } : {}"
       square
       class="no-shadow p-0"
     >
@@ -24,17 +25,20 @@
   </q-item>
 </template>
 <script setup lang="ts">
+import { useQuasar } from "quasar"
 import { computed } from "vue"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
+import { DRAWER_WIDTH } from "@/shared/components/consts"
 import { IconAvatar } from "@/shared/types"
 import { avatarKey } from "@/shared/utils/functions"
 
 import WorkspaceNav from "@/features/workspaces/components/WorkspaceNav.vue"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
+const $q = useQuasar()
 const { workspace } = useActiveWorkspace()
-
+console.log("---sm", $q.screen.lt.sm)
 const avatar = computed(
   () =>
     workspace.value?.avatar ||

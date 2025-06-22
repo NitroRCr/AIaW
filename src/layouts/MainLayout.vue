@@ -3,7 +3,7 @@
     <q-drawer
       v-model="uiStore.mainDrawerOpen"
       show-if-above
-      :width="locale.startsWith('zh') ? 250 : 270"
+      :width="DRAWER_WIDTH"
       :breakpoint="1200"
       bg-sur-c
       flex
@@ -120,6 +120,7 @@ import { computed } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute } from "vue-router"
 
+import { DRAWER_WIDTH } from "@/shared/components/consts"
 import AssistantSelector from "@/shared/components/layout/AssistantSelector.vue"
 import LastDialogs from "@/shared/components/layout/LastDialogs.vue"
 import PinnedChats from "@/shared/components/layout/PinnedChats.vue"
@@ -145,7 +146,7 @@ const { workspace } = useActiveWorkspace()
 const { openLastWorkspace } = useOpenLastWorkspace()
 route.path === "/" && openLastWorkspace()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const $q = useQuasar()
 
 const pluginsStore = usePluginsStore()

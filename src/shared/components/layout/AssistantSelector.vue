@@ -18,8 +18,9 @@
       <q-icon name="sym_o_chevron_right" />
     </q-item-section>
     <q-menu
-      anchor="top right"
-      self="top left"
+      :anchor="$q.screen.lt.sm ? 'bottom start' : 'top right'"
+      :self="$q.screen.lt.sm ? 'top start' : 'top left'"
+      :style="$q.screen.lt.sm ? { width: `${DRAWER_WIDTH}px` } : {}"
       square
       class="no-shadow p-0"
     >
@@ -36,6 +37,8 @@ import { avatarKey } from "@/shared/utils/functions"
 
 import AssistantList from "@/features/assistants/components/AssistantList.vue"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
+
+import { DRAWER_WIDTH } from "../consts"
 
 const { assistant, workspace } = useActiveWorkspace()
 
