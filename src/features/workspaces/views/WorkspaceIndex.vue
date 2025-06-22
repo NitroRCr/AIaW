@@ -2,10 +2,6 @@
   <view-common-header @toggle-drawer="$emit('toggle-drawer')">
     <q-toolbar-title>
       <div class="flex items-center">
-        <a-avatar
-          :avatar="workspace?.avatar"
-          size="42px"
-        />
         <span class="ml-2">{{ workspace.name }}</span>
       </div>
     </q-toolbar-title>
@@ -16,9 +12,14 @@
   >
     <q-page
       bg-sur
+      pb-10
       class="col flex flex-center"
     >
-      <div>
+      <div class="text-center">
+        <a-avatar
+          :avatar="workspace?.avatar"
+          size="102px"
+        />
         <md-preview
           bg-sur
           rd-lg
@@ -28,7 +29,6 @@
           m-a
         />
         <h5
-          class="text-center"
           mt-2
           mb-10
         >
