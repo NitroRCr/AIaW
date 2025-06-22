@@ -13,13 +13,12 @@
       :input-empty="inputEmpty"
       :input-text="inputText"
       :input-vars="inputVars"
-      @add-input-items="addInputItems"
+      :add-input-items="addInputItems"
       @send="initDialog"
       @update-input-vars="(name, value) => inputVars[name] = value"
       @update-input-text="inputText = $event"
       @keydown-enter="handleInputEnterKeyPress"
       @paste="onPaste"
-      @process-files="onProcessFiles"
       :init-dialog="true"
     />
   </div>
@@ -98,17 +97,21 @@ function initDialog (items: ApiResultItem[] = []) {
   })
 }
 
+async function addInputItems (items: ApiResultItem[]) {
+  initDialog(items)
+  // const newItems = items.map((item) => StoredItem.from(item))
+  // for (const item of newItems) {
+  //   item.id = nanoid()
+  // }
+  // inputItems.value.push(...newItems)
+}
+
 function focusInput () {
   isPlatformEnabled(perfs.autoFocusDialogInput) &&
     messageInputControl.value?.focus()
 }
 
 defineExpose({ focus: focusInput })
-
-function onProcessFiles (files: File[]) {
-  console.log("onProcessFiles", files)
-  parseFiles(files)
-}
 
 function onPaste (ev: ClipboardEvent) {
   const { clipboardData } = ev
@@ -137,16 +140,6 @@ function onPaste (ev: ClipboardEvent) {
 }
 addEventListener("paste", onPaste)
 onUnmounted(() => removeEventListener("paste", onPaste))
-
-async function addInputItems (items: ApiResultItem[]) {
-  console.log("addInputItems", items)
-  initDialog(items)
-  // const newItems = items.map((item) => StoredItem.from(item))
-  // for (const item of newItems) {
-  //   item.id = nanoid()
-  // }
-  // inputItems.value.push(...newItems)
-}
 
 async function parseFiles (files: File[]) {
   if (!files.length) return

@@ -144,14 +144,13 @@
           :input-empty="inputEmpty"
           :input-text="inputMessageContent?.text"
           :input-vars="dialog?.inputVars || {}"
-          @add-input-items="addInputItems"
+          :add-input-items="addInputItems"
           @send="sendUserMessageAndGenerateResponse"
           @abort="abortController?.abort()"
           @update-input-vars="(name, value) => dialog && (dialog.inputVars[name] = value)"
           @update-input-text="inputMessageContent && updateInputText($event)"
           @keydown-enter="handleInputEnterKeyPress"
           @paste="onPaste"
-          @process-files="onProcessFiles"
         />
       </div>
     </q-page>
@@ -337,10 +336,6 @@ async function regenerate(parentId: string) {
 //     ev.preventDefault()
 //   }
 // }
-
-function onProcessFiles (files: File[]) {
-  parseFiles(files)
-}
 
 function onPaste (ev: ClipboardEvent) {
   const { clipboardData } = ev

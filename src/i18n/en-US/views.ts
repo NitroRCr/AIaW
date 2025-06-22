@@ -160,6 +160,7 @@ export default {
     tokenPrompt: "Prompt",
     tokenCompletion: "Completion",
     send: "Send",
+    uploading: "Uploading...",
     chatPlaceholder: "Enter chat message...",
     recharge: "Recharge",
     addImage: "Add Image",
@@ -179,6 +180,10 @@ export default {
     pendingFiles: "Pending Files",
     clearAllFiles: "Clear All Files",
     removeFile: "Remove File",
+    previewError: "Preview failed",
+    imageLoadError: "Image failed to load",
+    tooLargeForPreview: "Too large for preview",
+    largeFile: "Large file",
   },
   settingsView: {
     title: "Settings",

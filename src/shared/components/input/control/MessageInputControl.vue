@@ -16,27 +16,63 @@
         class="clear-all-btn"
       />
       <div class="flex flex-wrap gap-1 pr-8">
-        <div
-          v-for="(file, index) in pendingFiles"
-          :key="index"
-          class="pending-file-item flex items-center gap-2 p-2 bg-sur-c-high rd-sm"
+        <!-- Image files with preview -->
+        <q-card
+          v-for="(file, index) in pendingFiles.filter(f => isImageFile(f) && f.previewUrl)"
+          :key="`img-${index}`"
+          flat
+          bordered
+          class="q-ma-xs"
+          style="width: 120px"
         >
-          <q-icon
-            :name="getFileIcon(file)"
-            size="20px"
-          />
-          <span class="text-sm truncate max-w-32">{{ file.name }}</span>
-          <span class="text-xs text-sec">({{ formatFileSize(file.size) }})</span>
-          <q-btn
-            flat
-            dense
-            round
-            icon="sym_o_close"
-            size="xs"
-            @click="removeFile(index)"
-            :title="$t('dialogView.removeFile')"
-          />
-        </div>
+          <q-img
+            :src="file.previewUrl"
+            :alt="file.name"
+            style="height: 80px"
+            fit="cover"
+          >
+            <q-btn
+              round
+              dense
+              size="xs"
+              color="primary"
+              icon="sym_o_close"
+              @click="removeFile(pendingFiles.findIndex(f => f === file))"
+              :title="$t('dialogView.removeFile')"
+              class="absolute-top-right q-ma-xs"
+              style="pointer-events: auto;"
+            />
+          </q-img>
+          <q-card-section class="q-pa-xs">
+            <div class="text-caption ellipsis">
+              {{ file.name }}
+            </div>
+            <div class="text-caption text-grey">
+              {{ formatFileSize(file.size) }}
+            </div>
+          </q-card-section>
+        </q-card>
+
+        <!-- Non-image files -->
+        <q-chip
+          v-for="(file, index) in pendingFiles.filter(f => !isImageFile(f))"
+          :key="`file-${index}`"
+          removable
+          color="grey-3"
+          text-color="dark"
+          @remove="removeFile(pendingFiles.findIndex(f => f === file))"
+          class="q-ma-xs"
+        >
+          <q-avatar>
+            <q-icon :name="getFileIcon(file)" />
+          </q-avatar>
+          <span
+            class="ellipsis"
+            style="max-width: 150px"
+          >
+            {{ file.name }} ({{ formatFileSize(file.size) }})
+          </span>
+        </q-chip>
       </div>
     </div>
     <!-- Command suggestions overlay wrapping the input -->
@@ -135,11 +171,11 @@
         min-h="2.7em"
       />
       <add-info-btn
+
         :plugins="props.activePlugins"
         :assistant-plugins="props.assistant?.plugins || {}"
         :dialog-id="props.dialogId"
         :workspace-id="props.workspaceId"
-        @add="$emit('add-input-items', $event)"
         flat
         round
         min-w="2.7em"
@@ -188,13 +224,13 @@
       </div>
       <abortable-btn
         icon="sym_o_send"
-        :label="$t('dialogView.send')"
+        :label="filesProcessing ? $t('dialogView.uploading') : $t('dialogView.send')"
         @click="handleSend"
         @abort="$emit('abort')"
         :loading="props.loading"
         ml-4
         min-h="40px"
-        :disabled="props.inputEmpty && pendingFiles.length === 0"
+        :disabled="(props.inputEmpty && pendingFiles.length === 0) || filesProcessing"
       />
     </div>
 
@@ -222,12 +258,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { until } from '@vueuse/core'
+import { ref, computed } from 'vue'
 
 import AbortableBtn from '@/shared/components/AbortableBtn.vue'
 import CommandSuggestionsOverlay from '@/shared/components/input/control/CommandSuggestions.vue'
 import { useDialogFileHandling } from '@/shared/components/input/control/dialogFileHandling'
 import { useInputCommands } from '@/shared/components/input/control/useInputCommands'
+import { parseFilesToApiResultItems } from '@/shared/utils/files'
 import { mimeTypeMatch } from '@/shared/utils/functions'
 
 import AddInfoBtn from '@/features/dialogs/components/AddPlugin/AddInfoBtn.vue'
@@ -249,6 +287,7 @@ interface Props {
   dialogId?: string
   workspaceId?: string
   initDialog?: boolean
+  addInputItems?: (items: any[]) => Promise<void>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -264,10 +303,10 @@ const props = withDefaults(defineProps<Props>(), {
   inputVars: () => ({}),
   dialogId: undefined,
   workspaceId: undefined,
+  addInputItems: undefined,
 })
 
 const emit = defineEmits<{
-  'add-input-items': [items: any]
   'send': []
   'abort': []
   'update:model-options': [value: any]
@@ -275,7 +314,6 @@ const emit = defineEmits<{
   'update-input-text': [text: string]
   'keydown-enter': [event: KeyboardEvent]
   'paste': [event: ClipboardEvent]
-  'process-files': [files: File[]]
   'assistant-change': [assistantId: string]
 }>()
 
@@ -291,7 +329,8 @@ const {
   removeFile,
   clearAllFiles,
   getFileIcon,
-  formatFileSize
+  formatFileSize,
+  isImageFile,
 } = useDialogFileHandling()
 
 const {
@@ -301,6 +340,19 @@ const {
   // Emit event to notify parent about assistant change
   emit('assistant-change', assistantId)
 })
+
+// Computed to check if any files are currently processing
+const isProcessingFiles = ref(false)
+const filesProcessing = computed(() => {
+  const processing = isProcessingFiles.value || pendingFiles.value.some(file => file.isProcessing)
+
+  return processing
+})
+
+// Computed to check if all files are done processing
+const allFilesReady = computed(() =>
+  pendingFiles.value.length === 0 || !filesProcessing.value
+)
 
 function handleEnterKey(event: KeyboardEvent) {
   // Check if the command overlay handled the event
@@ -320,10 +372,28 @@ async function handleSend() {
     return
   }
 
-  // If there are pending files, process them first
-  if (pendingFiles.value.length > 0) {
-    emit('process-files', [...pendingFiles.value])
-    pendingFiles.value = [] // Clear pending files after processing
+  // Wait for all files to finish processing if any are processing
+  if (filesProcessing.value) {
+    await until(allFilesReady).toBeTruthy()
+  }
+
+  // Convert and add files using addInputItems prop
+  if (pendingFiles.value.length > 0 && props.addInputItems) {
+    isProcessingFiles.value = true
+    try {
+      const { parsedItems } = await parseFilesToApiResultItems(
+        pendingFiles.value,
+        props.model?.inputTypes?.user || [],
+        (maxFileSize, file) => {
+          // Handle file too large - could emit a notification or similar
+          console.warn(`File ${file.name} is too large (max: ${maxFileSize}MB)`)
+        }
+      )
+      await props.addInputItems(parsedItems)
+      clearAllFiles()
+    } finally {
+      isProcessingFiles.value = false
+    }
   }
 
   // Emit the send event
@@ -337,7 +407,7 @@ defineExpose({
   focus: () => messageInput.value?.focus(),
   getPendingFiles: () => [...pendingFiles.value],
   clearPendingFiles: () => {
-    pendingFiles.value = []
+    clearAllFiles()
   }
 })
 </script>
@@ -345,20 +415,6 @@ defineExpose({
 <style scoped>
 .pending-files-container {
   border: 1px dashed var(--q-color-separator);
-  padding: 0px;
-}
-.pending-file-item {
-  min-width: 0; /* Allow flex items to shrink */
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.max-w-32 {
-  max-width: 8rem;
 }
 
 .clear-all-btn {
@@ -367,9 +423,5 @@ defineExpose({
   right: 5px;
   transform: translateY(-50%);
   z-index: 1;
-}
-
-.round-borders {
-  border-radius: 10px;
 }
 </style>
