@@ -40,11 +40,16 @@ const commonSettings = {
 
 const getOpenAICompatibleModelList = async (settings: OpenAICompatibleProviderSettings, defaultURL?: string) => {
   const baseURL = settings.baseURL || defaultURL
-  const resp = await fetch(`${baseURL}/models`, settings.apiKey ? {
-    headers: {
-      Authorization: `Bearer ${settings.apiKey}`,
-    },
-  } : {})
+
+  if (!baseURL) return []
+
+  const resp = await fetch(`${baseURL}/models`, settings.apiKey
+    ? {
+        headers: {
+          Authorization: `Bearer ${settings.apiKey}`,
+        },
+      }
+    : {})
   const { data } = await resp.json()
 
   return data.map((m) => m.id)
@@ -103,7 +108,12 @@ const ProviderTypes: ProviderType[] = [
     initialSettings: {},
     constructor: createAnthropic,
     getModelList: async (settings) => {
-      const baseURL = settings.baseURL || OfficialBaseURLs.anthropic
+      let baseURL = settings.baseURL || OfficialBaseURLs.anthropic
+
+      if (!baseURL.startsWith("http")) {
+        baseURL = new URL(baseURL, window.location.origin).href
+      }
+
       const resp = await fetch(`${baseURL}/models`, {
         headers: {
           "x-api-key": settings.apiKey,
@@ -144,7 +154,14 @@ const ProviderTypes: ProviderType[] = [
     initialSettings: {},
     constructor: createOpenAICompatible,
     getModelList: async (settings) => {
-      const baseURL = settings.baseURL
+      let baseURL = settings.baseURL
+
+      if (!baseURL) return []
+
+      if (!baseURL.startsWith("http")) {
+        baseURL = new URL(baseURL, window.location.origin).href
+      }
+
       const resp = await fetch(`${baseURL}/models`, {
         headers: settings.apiKey
           ? {
