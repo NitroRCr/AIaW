@@ -46,7 +46,6 @@ import { usePluginsStore } from "@/features/plugins/store"
 import { useActiveWorkspace } from "@/features/workspaces/composables"
 
 import { DbDialogMessageUpdate, DialogMessage } from "@/services/data/types/dialogMessage"
-import { StoredItem } from "@/services/data/types/storedItem"
 
 import { useCreateDialog, useDialogMessages, useDialogModel } from "../composables"
 
@@ -59,7 +58,7 @@ const { addApiResultStoredItem, lastMessage } = useDialogMessages(dialogId)
 
 const inputText = ref("")
 const inputVars = ref({})
-const inputItems = ref<StoredItem[]>([])
+const inputItems = ref<ApiResultItem[]>([])
 
 const inputEmpty = computed(() => !inputText.value && !inputItems.value.length)
 
@@ -73,7 +72,7 @@ const { t } = useI18n()
 
 const messageInputControl = ref()
 
-function initDialog (items: ApiResultItem[] = []) {
+function initDialog () {
   const message = {
     type: "user",
     messageContents: [
@@ -91,19 +90,13 @@ function initDialog (items: ApiResultItem[] = []) {
   }, message).then(async (dialog) => {
     dialogId.value = dialog.id
 
-    await Promise.all(items.map(item => addApiResultStoredItem(lastMessage.value.id,
+    await Promise.all(inputItems.value.map(item => addApiResultStoredItem(lastMessage.value.id,
       lastMessage.value.messageContents[0].id, item)))
-    console.log("initDialog")
   })
 }
 
 async function addInputItems (items: ApiResultItem[]) {
-  initDialog(items)
-  // const newItems = items.map((item) => StoredItem.from(item))
-  // for (const item of newItems) {
-  //   item.id = nanoid()
-  // }
-  // inputItems.value.push(...newItems)
+  inputItems.value = items
 }
 
 function focusInput () {
@@ -124,7 +117,7 @@ function onPaste (ev: ClipboardEvent) {
       )
     ) {
       const text = clipboardData.getData("text/plain")
-      initDialog([
+      addInputItems([
         {
           type: "text",
           name: t("dialogView.pastedText", { text: textBeginning(text, 12) }),
@@ -154,8 +147,7 @@ async function parseFiles (files: File[]) {
   })
 
   // addInputItems(parsedItems)
-  initDialog(parsedItems)
-  console.log(parsedItems, otherFiles)
+  addInputItems(parsedItems)
 
   if (otherFiles.length) {
     $q.dialog({
