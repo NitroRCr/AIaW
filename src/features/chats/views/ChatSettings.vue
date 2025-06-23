@@ -29,7 +29,15 @@
         v-else-if="!isAdmin"
         :title="$t('common.noAdmin')"
         :warning="true"
-      />
+      >
+        <div class="text-body2 text-white">
+          Only workspace administrators can modify chat settings. If you need to make changes, please contact:
+        </div>
+        <div class="q-mt-sm q-ml-md text-white">
+          <div>• Workspace owner</div>
+          <div>• Current administrators</div>
+        </div>
+      </notification-panel>
       <notification-panel
         v-if="chat && chat.type === 'private'"
         :title="$t('chatsPage.privateChat')"
@@ -79,6 +87,18 @@
           </q-item-section>
         </q-item>
         <q-separator spaced />
+
+        <!-- Participant Management -->
+        <participant-manager
+          v-if="chat.type === 'workspace'"
+          type="chat"
+          :id="chat.id"
+          :is-admin="isAdmin"
+        />
+        <q-separator
+          v-if="chat.type === 'workspace'"
+          spaced
+        />
       </q-list>
 
       <!-- Sticky Save Button -->
@@ -100,6 +120,8 @@ import { computed, toRaw } from "vue"
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import NotificationPanel from "@/shared/components/NotificationPanel.vue"
+import StickySaveButton from "@/shared/components/StickySaveButton.vue"
+import ParticipantManager from "@/shared/components/user/ParticipantManager.vue"
 import { pageFhStyle } from "@/shared/utils/functions"
 
 import { useIsChatAdmin } from "@/features/chats/composables/useIsChatAdmin"

@@ -119,6 +119,18 @@ export default {
     homeContent: "Home Content",
     variables: "Workspace Variables",
     inputPlaceholder: "Enter variable content...",
+    members: "Members",
+    addMember: "Add Member",
+    addMemberTooltip: "Add a new member to this workspace",
+    removeMember: "Remove Member",
+    noMembers: "No members found",
+  },
+  chatSettings: {
+    participants: "Participants",
+    addParticipant: "Add Participant",
+    addParticipantTooltip: "Add a new participant to this chat",
+    removeParticipant: "Remove Participant",
+    noParticipants: "No participants found",
   },
   pluginSettings: {
     title: "Plugin Settings",

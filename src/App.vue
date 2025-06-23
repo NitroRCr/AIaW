@@ -30,6 +30,7 @@ import { useChatsStore } from "@/features/chats/store"
 import { useChatMessagesStore } from "@/features/chats/store/chatMessages"
 import { useDialogsStore } from "@/features/dialogs/store/dialogs"
 import { usePluginsStore } from "@/features/plugins/store"
+import { useGlobalPresence } from "@/features/profile/composables/useGlobalPresence"
 
 import type { CosmosWallet } from "@/services/blockchain/cosmos/CosmosWallet"
 import { createCosmosSigner } from "@/services/blockchain/cosmos/CosmosWallet"
@@ -80,6 +81,9 @@ watch(
 
 // Subscribes to chat messages
 useChatMessagesStore()
+
+// Initialize global presence tracking
+useGlobalPresence()
 
 const router = useRouter()
 const { showPinModal, checkEncryptedMnemonic } = usePinModal()

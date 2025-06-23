@@ -204,7 +204,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       .update({ role })
       .eq("workspace_id", workspaceId)
       .eq("user_id", userId)
-      .select()
+      .select("*, profile:profiles(*)")
       .single()
 
     if (error) {

@@ -7,6 +7,30 @@ export default {
     account: "Account",
     modelPricing: "Model Pricing",
   },
+  common: {
+    search: "Search",
+    admin: "Admin",
+    member: "Member",
+    guest: "Guest",
+    owner: "Owner",
+    you: "You",
+    noAdmin: "Access Denied - Administrator Privileges Required",
+    addedSuccessfully: "Added successfully",
+    removedSuccessfully: "Removed successfully",
+    updatedSuccessfully: "Updated successfully",
+    errorFetching: "Error fetching data",
+    errorAdding: "Error adding item",
+    errorRemoving: "Error removing item",
+    errorUpdating: "Error updating item",
+    confirmRemove: "Confirm Remove",
+    confirmRemoveMessage: "Are you sure you want to remove {name}?",
+  },
+  participantManager: {
+    participants: "Participants",
+    addParticipant: "Add Participant",
+    removeParticipant: "Remove Participant",
+    noParticipants: "No participants found",
+  },
   values: {
     apiAddress: "API Address",
     defaultServiceAddress:
@@ -27,6 +51,12 @@ export default {
   },
   mcpClient: {
     connectingMcpServer: "Connecting to MCP server...",
+  },
+  presence: {
+    online: "Online",
+    away: "Away",
+    busy: "Busy",
+    offline: "Offline",
   },
   plugins: {
     time: {
