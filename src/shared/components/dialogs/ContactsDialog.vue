@@ -89,8 +89,16 @@
                   <q-item-label class="text-weight-medium">
                     {{ contact.name }}
                   </q-item-label>
-                  <q-item-label caption>
-                    {{ getContactSubtitle(contact) }}
+                  <q-item-label
+                    caption
+                    class="row items-center no-wrap"
+                  >
+                    <user-profile-status
+                      :status="getContactStatus(contact)"
+                      :show-text="true"
+                      size="small"
+                      class="q-mr-xs"
+                    />
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
@@ -149,6 +157,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AAvatar from '@/shared/components/AAvatar.vue'
+import UserProfileStatus from '@/shared/components/user/UserProfileStatus.vue'
 import { defaultTextAvatar } from '@/shared/utils/functions'
 
 import { useProfileStore } from '@/features/profile/store'
@@ -209,20 +218,11 @@ const getContactAvatar = (contact: Profile) => {
   return contact.avatar || defaultTextAvatar(contact.name)
 }
 
-const getContactSubtitle = (contact: Profile): string => {
+const getContactStatus = (contact: Profile): 'online' | 'away' | 'busy' | 'offline' => {
   const status = presenceStore.getUserStatus(contact.id)
 
-  switch (status) {
-    case 'online':
-      return t('presence.online')
-    case 'busy':
-      return t('presence.busy')
-    case 'away':
-      return t('presence.away')
-    case 'offline':
-    default:
-      return t('presence.offline')
-  }
+  // Fallback to 'offline' if status is undefined/null
+  return status || 'offline'
 }
 
 const handleContactClick = (contact: Profile) => {
