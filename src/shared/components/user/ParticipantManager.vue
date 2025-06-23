@@ -175,9 +175,9 @@ import { useQuasar } from 'quasar'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ContactsDialog from '@/shared/components/dialogs/ContactsDialog.vue'
 import { useUserStore } from '@/shared/store'
 
-import UserListDialog from '@/features/chats/components/UserListDialog.vue'
 // import { useChatsStore } from '@/features/chats/store' // For future chat member management
 import { usePresenceStore } from '@/features/profile/store/presence'
 import { useWorkspacesStore } from '@/features/workspaces/store'
@@ -305,10 +305,14 @@ const fetchParticipants = async () => {
 }
 
 const showAddParticipantDialog = () => {
+  // Get current participant user IDs to exclude from contacts list
+  const excludeUserIds = participants.value.map(p => p.userId)
+
   $q.dialog({
-    component: UserListDialog,
+    component: ContactsDialog,
     componentProps: {
       currentUserId: userStore.currentUserId,
+      excludeUserIds,
     },
   }).onOk((userId) => {
     addParticipant(userId)

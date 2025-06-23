@@ -9,6 +9,11 @@ export default {
   },
   common: {
     search: "Search",
+    add: "Add",
+    contacts: "Contacts",
+    addContact: "Add Contact",
+    noContacts: "No contacts found",
+    noSearchResults: "No results found",
     admin: "Admin",
     member: "Member",
     guest: "Guest",
