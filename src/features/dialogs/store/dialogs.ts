@@ -1,6 +1,8 @@
 import { defineStore } from "pinia"
 import { reactive, ref } from "vue"
 
+import { useUserDataStore } from "@/shared/store"
+
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
@@ -44,6 +46,7 @@ export const useDialogsStore = defineStore("dialogs", () => {
   const dialogs = reactive<Record<string, Dialog>>({})
   /** Flag indicating whether the initial data load has completed */
   const isLoaded = ref(false)
+  const userDataStore = useUserDataStore()
 
   /**
    * Fetches all dialogs from the database and populates the store
@@ -87,12 +90,17 @@ export const useDialogsStore = defineStore("dialogs", () => {
    * @throws {Error} If database deletion fails
    * @returns {Promise<void>}
    */
-  async function removeDialog (dialogId: string) {
+  async function removeDialog (workspaceId: string, dialogId: string) {
     const { error } = await supabase.from("dialogs").delete().eq("id", dialogId)
 
     if (error) {
       console.error(error)
       throw error
+    }
+
+    // TODO refact workflows with userDataStore
+    if (userDataStore.data.lastDialogIds[workspaceId] === dialogId) {
+      userDataStore.data.lastDialogIds[workspaceId] = null
     }
 
     delete dialogs[dialogId]

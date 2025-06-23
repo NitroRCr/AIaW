@@ -152,7 +152,8 @@ function deleteItem ({ id, name }) {
     },
     ...dialogOptions,
   }).onOk(() => {
-    dialogsStore.removeDialog(id)
+    dialogsStore.removeDialog(props.workspaceId, id)
+
     router.push(`/workspaces/${props.workspaceId}`)
   })
 }

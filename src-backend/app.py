@@ -116,7 +116,6 @@ async def litellm_proxy(request: Request, path: str):
     # Add LiteLLM API key if provided
     if LITELLM_API_KEY:
         headers['Authorization'] = f"Bearer {LITELLM_API_KEY}"
-    print(headers)
     # Get the request body if it exists
     body = await request.body()
 

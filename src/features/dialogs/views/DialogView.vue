@@ -155,7 +155,6 @@
       </div>
     </q-page>
   </q-page-container>
-  <error-not-found v-else />
 </template>
 
 <script setup lang="ts">
@@ -200,7 +199,6 @@ import { DialogMessageNested } from "@/services/data/types/dialogMessage"
 import ParseFilesDialog from "../components/ParseFilesDialog.vue"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
-import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 
 const { t } = useI18n()
 
@@ -212,7 +210,7 @@ const rightDrawerAbove = inject("rightDrawerAbove")
 
 const dialogId = computed(() => props.id)
 
-const { assistant } = useActiveWorkspace()
+const { assistant, workspaceId: activeWorkspaceId } = useActiveWorkspace()
 
 const {
   dialog, workspaceId, dialogItems, fetchMessages, switchBranch,
@@ -229,10 +227,11 @@ const {
   addInputItems,
   inputEmpty,
 } = useDialogInput(dialogId)
-
 const pluginsStore = usePluginsStore()
 const { data: perfs } = useUserPerfsStore()
-
+const route = useRoute()
+const router = useRouter()
+const userDataStore = useUserDataStore()
 const { model, sdkModel, modelOptions } = useDialogModel(dialog, assistant)
 
 const $q = useQuasar()
@@ -241,6 +240,16 @@ const { genTitle, extractArtifact, streamLlmResponse, isStreaming } = useLlmDial
   dialogId,
   assistant
 )
+
+watch(dialog, () => {
+  if (!dialog.value) {
+    router.push(`/workspaces/${activeWorkspaceId.value}`)
+    $q.notify({
+      message: t("dialogView.errors.dialogNotFound"),
+      color: "negative",
+    })
+  }
+}, { immediate: true })
 
 const preventLockingBottom = ref(false)
 
@@ -487,9 +496,7 @@ async function copyContent () {
     })
   )
 }
-const route = useRoute()
-const router = useRouter()
-const userDataStore = useUserDataStore()
+
 watch(
   route,
   (to) => {

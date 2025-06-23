@@ -154,7 +154,6 @@
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
 import { ref, computed, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 
 import AAvatar from '@/shared/components/AAvatar.vue'
 import UserProfileStatus from '@/shared/components/user/UserProfileStatus.vue'
@@ -184,7 +183,6 @@ const emit = defineEmits<{
 }>()
 
 // Composables
-const { t } = useI18n()
 const profileStore = useProfileStore()
 const presenceStore = usePresenceStore()
 

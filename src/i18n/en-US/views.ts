@@ -160,6 +160,7 @@ export default {
       cancelBtn: "I know this, no need to remind me",
     },
     errors: {
+      dialogNotFound: "Dialog not found",
       setAssistant: "Please set up an assistant",
       configModel: "Please configure a provider, model, or log in",
       loadPluginList: "Failed to load plugin list",
