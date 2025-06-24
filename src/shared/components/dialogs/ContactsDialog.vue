@@ -35,7 +35,7 @@
         </q-input>
       </q-card-section>
 
-      <!-- Contacts list -->
+      <!-- Contacts list with infinite scroll -->
       <q-card-section class="contacts-list">
         <div class="contacts-list__container">
           <!-- Loading state -->
@@ -65,57 +65,71 @@
             </q-item>
           </template>
 
-          <!-- Contacts list -->
+          <!-- Contacts list with infinite scroll -->
           <template
             v-else-if="filteredContacts.length > 0"
           >
-            <template
-              v-for="(contact, index) in filteredContacts"
-              :key="contact.id"
+            <q-infinite-scroll
+              @load="onLoad"
+              :offset="250"
             >
-              <q-item
-                clickable
-                @click="handleContactClick(contact)"
-                class="contacts-list__item"
-                v-ripple
+              <template
+                v-for="(contact, index) in visibleContacts"
+                :key="contact.id"
               >
-                <q-item-section avatar>
-                  <a-avatar
-                    :avatar="getContactAvatar(contact)"
-                    size="md"
-                  />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-weight-medium">
-                    {{ contact.name }}
-                  </q-item-label>
-                  <q-item-label
-                    caption
-                    class="row items-center no-wrap"
-                  >
-                    <user-profile-status
-                      :status="getContactStatus(contact)"
-                      :show-text="true"
-                      size="small"
-                      class="q-mr-xs"
+                <q-item
+                  clickable
+                  @click="handleContactClick(contact)"
+                  class="contacts-list__item"
+                  v-ripple
+                >
+                  <q-item-section avatar>
+                    <a-avatar
+                      :avatar="getContactAvatar(contact)"
+                      size="md"
                     />
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-btn
-                    flat
-                    round
-                    dense
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-weight-medium">
+                      {{ contact.name }}
+                    </q-item-label>
+                    <q-item-label
+                      caption
+                      class="row items-center no-wrap"
+                    >
+                      <user-profile-status
+                        :status="getContactStatus(contact)"
+                        :show-text="true"
+                        size="small"
+                        class="q-mr-xs"
+                      />
+                    </q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      color="primary"
+                      icon="sym_o_person_add"
+                      @click.stop="handleSelectContact(contact)"
+                    >
+                      <q-tooltip>{{ $t('common.add') }}</q-tooltip>
+                    </q-btn>
+                  </q-item-section>
+                </q-item>
+                <q-separator v-if="index < visibleContacts.length - 1" />
+              </template>
+
+              <template #loading>
+                <div class="row justify-center q-my-md">
+                  <q-spinner-dots
                     color="primary"
-                    icon="sym_o_person_add"
-                    @click.stop="handleSelectContact(contact)"
-                  >
-                    <q-tooltip>{{ $t('common.add') }}</q-tooltip>
-                  </q-btn>
-                </q-item-section>
-              </q-item>
-              <q-separator v-if="index < filteredContacts.length - 1" />
-            </template>
+                    size="40px"
+                  />
+                </div>
+              </template>
+            </q-infinite-scroll>
           </template>
 
           <!-- Empty state -->
@@ -135,25 +149,13 @@
           </template>
         </div>
       </q-card-section>
-
-      <!-- Footer with Add Contact button -->
-      <q-card-section class="contacts-footer">
-        <q-btn
-          outline
-          color="primary"
-          :label="$t('common.addContact')"
-          icon="sym_o_person_add"
-          @click="handleAddContact"
-          class="contacts-footer__add-btn"
-        />
-      </q-card-section>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
 import { useDialogPluginComponent } from 'quasar'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 import AAvatar from '@/shared/components/AAvatar.vue'
 import UserProfileStatus from '@/shared/components/user/UserProfileStatus.vue'
@@ -177,11 +179,6 @@ const props = withDefaults(defineProps<Props>(), {
   excludeUserIds: () => []
 })
 
-// Emits
-const emit = defineEmits<{
-  'add-contact': []
-}>()
-
 // Composables
 const profileStore = useProfileStore()
 const presenceStore = usePresenceStore()
@@ -189,6 +186,9 @@ const presenceStore = usePresenceStore()
 // Reactive data
 const searchQuery = ref('')
 const loading = ref(false)
+const visibleContacts = ref<Profile[]>([])
+const itemsPerPage = 15
+const currentPage = ref(0)
 
 // Computed properties
 const filteredContacts = computed(() => {
@@ -232,12 +232,44 @@ const handleSelectContact = (contact: Profile) => {
   onDialogOK(contact.id)
 }
 
-const handleAddContact = () => {
-  emit('add-contact')
-  // For now, just close the dialog
-  // In the future, this could open another dialog to add new contacts
-  onDialogCancel()
+const loadInitialContacts = () => {
+  currentPage.value = 0
+  const startIndex = 0
+  const endIndex = Math.min(itemsPerPage, filteredContacts.value.length)
+  visibleContacts.value = filteredContacts.value.slice(startIndex, endIndex)
+  currentPage.value = 1
 }
+
+const onLoad = (index: number, done: (stop?: boolean) => void) => {
+  const startIndex = currentPage.value * itemsPerPage
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredContacts.value.length)
+
+  // Simulate loading delay
+  setTimeout(() => {
+    if (startIndex < filteredContacts.value.length) {
+      const nextBatch = filteredContacts.value.slice(startIndex, endIndex)
+      visibleContacts.value.push(...nextBatch)
+      currentPage.value++
+
+      // Check if we've loaded all contacts
+      const hasMore = endIndex < filteredContacts.value.length
+      done(!hasMore)
+    } else {
+      // No more contacts to load
+      done(true)
+    }
+  }, 300)
+}
+
+// Watch for search query changes to reset the visible contacts
+watch(searchQuery, () => {
+  loadInitialContacts()
+})
+
+// Watch for filtered contacts changes (e.g., when profiles are loaded)
+watch(filteredContacts, () => {
+  loadInitialContacts()
+}, { immediate: true })
 
 // Lifecycle
 onMounted(async () => {
@@ -250,6 +282,9 @@ onMounted(async () => {
       // This depends on how the profile store is implemented
       console.log('No profiles found in store')
     }
+
+    // Load initial contacts
+    loadInitialContacts()
   } catch (error) {
     console.error('Failed to load contacts:', error)
   } finally {

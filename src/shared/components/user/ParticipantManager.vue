@@ -271,16 +271,48 @@ const emptyText = computed(() => {
   return t('chatSettings.noParticipants')
 })
 
-const filteredParticipants = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return participants.value
-  }
+// Helper functions
+const filterParticipantsBySearch = (participants: Participant[], searchQuery: string): Participant[] => {
+  if (!searchQuery.trim()) return participants
 
-  const query = searchQuery.value.toLowerCase()
+  const query = searchQuery.toLowerCase()
 
-  return participants.value.filter(participant =>
+  return participants.filter(participant =>
     participant.profile.name.toLowerCase().includes(query)
   )
+}
+
+const getParticipantRolePriority = (participant: Participant): number => {
+  if (isWorkspaceOwner(participant)) return 0
+
+  if (props.type === 'workspace' && 'role' in participant) {
+    switch (participant.role) {
+      case 'admin': return 1
+      case 'member': return 2
+      case 'guest': return 3
+    }
+  }
+
+  return 4 // Chat participants or unknown roles
+}
+
+const sortParticipantsByRole = (participants: Participant[]): Participant[] => {
+  return [...participants].sort((a, b) => {
+    const priorityA = getParticipantRolePriority(a)
+    const priorityB = getParticipantRolePriority(b)
+
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB
+    }
+
+    return a.profile.name.localeCompare(b.profile.name)
+  })
+}
+
+const filteredParticipants = computed(() => {
+  const filtered = filterParticipantsBySearch(participants.value, searchQuery.value)
+
+  return sortParticipantsByRole(filtered)
 })
 
 // Methods
