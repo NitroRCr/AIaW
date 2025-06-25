@@ -406,22 +406,6 @@
             />
           </q-item-section>
         </q-item>
-        <q-item
-          clickable
-          v-ripple
-          @click="pickUserAvatar"
-        >
-          <q-item-section avatar>
-            <q-icon name="sym_o_account_circle" />
-          </q-item-section>
-          <q-item-section>{{ $t("settingsView.userAvatar") }}</q-item-section>
-          <q-item-section
-            side
-            text-on-sur
-          >
-            <a-avatar :avatar="perfs.userAvatar" />
-          </q-item-section>
-        </q-item>
         <q-item>
           <q-item-section avatar>
             <q-icon name="sym_o_report" />
@@ -555,8 +539,6 @@ import { useQuasar } from "quasar"
 import { computed, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
-import AAvatar from "@/shared/components/avatar/AAvatar.vue"
-import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import CopyBtn from "@/shared/components/CopyBtn.vue"
 import HueSliderDialog from "@/shared/components/dialogs/HueSliderDialog.vue"
 import HctPreviewCircle from "@/shared/components/HctPreviewCircle.vue"
@@ -618,15 +600,6 @@ function pickThemeHue () {
     componentProps: { value: perfs.value.themeHue },
   }).onOk((hue) => {
     perfs.value.themeHue = hue
-  })
-}
-
-function pickUserAvatar () {
-  $q.dialog({
-    component: PickAvatarDialog,
-    componentProps: { model: perfs.value.userAvatar, defaultTab: "text" },
-  }).onOk((avatar) => {
-    perfs.value.userAvatar = avatar
   })
 }
 

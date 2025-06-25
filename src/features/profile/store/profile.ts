@@ -8,7 +8,7 @@ import { useUserStore } from "@/shared/store"
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 
 import { supabase } from "@/services/data/supabase/client"
-import { mapDbToProfile, Profile } from "@/services/data/types/profile"
+import { mapDbToProfile, Profile, DbProfileUpdate, mapProfileToDb } from "@/services/data/types/profile"
 
 export const useProfileStore = defineStore("profile", () => {
   const profiles = ref<Record<string, Profile>>({})
@@ -73,12 +73,12 @@ export const useProfileStore = defineStore("profile", () => {
 
   useUserLoginCallback(init)
 
-  async function update (id: string, changes) {
+  async function update (id: string, changes: Profile<DbProfileUpdate>) {
     isSaving.value = true
 
     const { data, error } = await supabase
       .from("profiles")
-      .update(changes)
+      .update(mapProfileToDb(changes))
       .eq("id", id)
       .select()
       .single()

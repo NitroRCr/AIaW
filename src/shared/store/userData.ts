@@ -6,8 +6,6 @@ interface UserData {
   defaultAssistantIds: Record<string, string>
   openedArtifacts: string[]
   tipDismissed: Record<string, boolean>
-  prodExpiredNotifiedTimestamp: number
-  evalExpiredNotified: boolean,
   leftSidebarOpen: boolean
   rightSidebarOpen: boolean
 }
@@ -17,8 +15,6 @@ const defaultUserData: UserData = {
   tipDismissed: {},
   lastDialogIds: {},
   defaultAssistantIds: {},
-  prodExpiredNotifiedTimestamp: null,
-  evalExpiredNotified: false,
   openedArtifacts: [],
   leftSidebarOpen: false,
   rightSidebarOpen: false,

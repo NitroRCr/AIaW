@@ -14,26 +14,26 @@ type DbWorkspaceMember = Database["public"]["Tables"]["workspace_members"]["Row"
 
 type WorkspaceMemberRole = "admin" | "member" | "guest" | "none"
 
-type WorkspaceDbType = DbWorkspaceRow | DbWorkspaceInsert | DbWorkspaceUpdate
+type DbWorkspace = DbWorkspaceRow | DbWorkspaceInsert | DbWorkspaceUpdate
 
 type WorkspaceMap = {
   avatar: Avatar
   vars: Record<string, string>
 }
 
-type Workspace<T extends WorkspaceDbType = DbWorkspaceRow> = OverrideProps<DtoToEntity<T>, WorkspaceMap>
+type Workspace<T extends DbWorkspace = DbWorkspaceRow> = OverrideProps<DtoToEntity<T>, WorkspaceMap>
 
 type WorkspaceMember = DtoToEntity<Omit<DbWorkspaceMember, 'profile'>> & {
   profile: Profile
 }
 
-const mapDbToWorkspace = <T extends WorkspaceDbType>(dbWorkspace: T) => {
+const mapDbToWorkspace = <T extends DbWorkspace>(dbWorkspace: T) => {
   const workspace = dtoToEntity(dbWorkspace) as Workspace
 
   return mapAvatarOrDefault(workspace, workspace.name)
 }
 
-const mapWorkspaceToDb = <T extends WorkspaceDbType>(workspace: Workspace<T>) =>
+const mapWorkspaceToDb = <T extends DbWorkspace>(workspace: Workspace<T>) =>
   entityToDto(workspace) as T
 
 const mapDbToWorkspaceMember = (dbWorkspaceMember: DbWorkspaceMember) => {
@@ -52,5 +52,5 @@ export { mapDbToWorkspace, mapDbToWorkspaceMember, mapWorkspaceMemberToDb, mapWo
 export type {
   WorkspaceMember, Workspace,
   WorkspaceMemberRole,
-  DbWorkspaceRow, DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate
+  DbWorkspaceRow, DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, DbWorkspace
 }

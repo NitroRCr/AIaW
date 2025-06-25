@@ -475,9 +475,13 @@ export type Database = {
           description: string | null
           homepage: string | null
           id: string
+          is_shared:
+            | Database["public"]["Enums"]["assistant_sharing_type"]
+            | null
           model: Json | null
           model_settings: Json
           name: string
+          parent_id: string | null
           plugins: Json
           prompt: string | null
           prompt_role: string | null
@@ -497,9 +501,13 @@ export type Database = {
           description?: string | null
           homepage?: string | null
           id?: string
+          is_shared?:
+            | Database["public"]["Enums"]["assistant_sharing_type"]
+            | null
           model?: Json | null
           model_settings?: Json
           name: string
+          parent_id?: string | null
           plugins?: Json
           prompt?: string | null
           prompt_role?: string | null
@@ -519,9 +527,13 @@ export type Database = {
           description?: string | null
           homepage?: string | null
           id?: string
+          is_shared?:
+            | Database["public"]["Enums"]["assistant_sharing_type"]
+            | null
           model?: Json | null
           model_settings?: Json
           name?: string
+          parent_id?: string | null
           plugins?: Json
           prompt?: string | null
           prompt_role?: string | null
@@ -534,6 +546,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_assistants_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "user_assistants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_assistants_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -599,6 +618,36 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_workspaces: {
+        Row: {
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_workspaces_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_workspaces_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspace_members: {
         Row: {
@@ -698,6 +747,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_assistant: {
+        Args: { assistant_id_param: string }
+        Returns: boolean
+      }
       can_manage_chat: {
         Args: { chat_id_param: string }
         Returns: boolean
@@ -736,6 +789,7 @@ export type Database = {
       }
     }
     Enums: {
+      assistant_sharing_type: "global" | "workspace"
       chat_type: "workspace" | "private"
     }
     CompositeTypes: {
@@ -852,6 +906,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      assistant_sharing_type: ["global", "workspace"],
       chat_type: ["workspace", "private"],
     },
   },

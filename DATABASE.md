@@ -18,9 +18,10 @@ This document provides a comprehensive overview of the Row Level Security (RLS) 
 - **profiles**: User profiles with basic information
 - **user_data**: Key-value storage for user preferences and settings
 - **user_plugins**: Plugins installed by users
-- **user_assistants**: AI assistants configured by users
+- **user_assistants**: AI assistants configured by users, with sharing capabilities
 - **custom_providers**: Custom LLM providers configured by users
 - **subproviders**: Provider configurations for custom providers
+- **user_workspaces**: Direct mapping between users and their accessible workspaces
 
 ### Content and Message Tables
 - **dialogs**: Conversations between users and assistants
@@ -37,6 +38,7 @@ This document provides a comprehensive overview of the Row Level Security (RLS) 
 ### Workspace-related Tables
 - **workspaces**: Containers for collaboration
 - **workspace_members**: Users who are members of workspaces with roles
+- **user_workspaces**: Denormalized table for quick user-to-workspace access lookups
 
 ## Core Security Functions
 
@@ -48,12 +50,16 @@ This document provides a comprehensive overview of the Row Level Security (RLS) 
 - `is_workspace_admin_or_owner(workspace_id_param)`: Checks if user is admin or owner of workspace
 - `is_workspace_member(workspace_id_param)`: Checks if user is a member of workspace (any role)
 - `is_workspace_owner(user_id)`: Checks if user owns any workspaces
+- `sync_user_workspaces()`: Trigger function to keep user_workspaces in sync with workspace_members
 
 ### Chat Access Control
 - `is_chat_member(chat_id_param)`: Checks if user is a member of chat
 - `is_chat_owner(chat_id_param)`: Checks if user is the owner of a chat
 - `can_manage_chat(chat_id_param)`: Checks if user can manage a chat (owner or workspace admin)
 - `start_private_chat_with(target_user_id, current_user_id)`: Creates a private chat between two users
+
+### Assistant Access Control
+- `can_manage_assistant(assistant_id_param)`: Checks if user can manage an assistant (owner or workspace admin for shared assistants)
 
 ### Other Functions
 - `add_workspace_owner_as_member()`: Trigger function to add workspace owner as admin member
@@ -137,18 +143,28 @@ This document provides a comprehensive overview of the Row Level Security (RLS) 
 - `User can update own artifact`: Users can update their artifacts
 - `User can delete own artifact`: Users can delete their artifacts
 
-### user_assistants, custom_providers, user_plugins
+### user_assistants
+- `Users can view their own assistants`: Users can view assistants they created
+- `Users can view global shared assistants`: Anyone can view globally shared assistants
+- `Workspace members can view workspace shared assistants`: Workspace members can view assistants shared to their workspace
+- `Workspace admins can manage workspace shared assistants`: Workspace admins can edit assistants shared to their workspace
+- `Users can update their assistants`: Users can update their own assistants
+- `Users can delete their assistants`: Users can delete their own assistants
+
+### custom_providers, user_plugins
 - Standard owner-based policies limiting access to creator
 
 ## Data Relationships
 
 ### Key Relationships
 - Workspaces can have parent-child relationships
+- Assistants can have parent-child relationships through parent_id
 - Chats can belong to workspaces
 - Dialog messages belong to dialogs
 - Message contents belong to dialog messages
 - Chat members link users to chats
 - Workspace members link users to workspaces
+- User workspaces provide a denormalized view of user-to-workspace relationships
 
 ### Cascade Deletes
 The database uses ON DELETE CASCADE extensively to maintain referential integrity:
@@ -159,7 +175,10 @@ The database uses ON DELETE CASCADE extensively to maintain referential integrit
 ## Triggers and Automation
 
 - `add_workspace_owner_as_member_trigger`: Automatically adds workspace owner as admin member
+- `sync_user_workspaces_insert_trigger` and `sync_user_workspaces_delete_trigger`: Maintain user_workspaces table
 - When a workspace is created, the owner is automatically added as an admin member
+- When users are added to workspace_members, a record is automatically added to user_workspaces
+- When users are removed from workspace_members, the corresponding record is removed from user_workspaces 
 - User profiles are automatically created when users sign up
 
 ## Security Considerations
@@ -176,6 +195,14 @@ All content access is validated through chains of ownership:
 - User is member of chat → Chat contains messages → User can access messages
 
 ## Recent Schema Changes
+
+### Assistant Sharing and User Workspaces (August 2025)
+- Added `parent_id` and `is_shared` to user_assistants table for inheritance and sharing
+- Created `assistant_sharing_type` ENUM with 'global' and 'workspace' values
+- Added `can_manage_assistant` function to handle complex assistant permissions
+- Created `user_workspaces` table for fast user-workspace relationship lookups
+- Added triggers to maintain user_workspaces data automatically
+- Enhanced RLS policies for shared assistants (global and workspace-level)
 
 ### Enhanced Access Control (July 2025)
 - Added `is_workspace_admin_or_owner` function to centralize permission checks

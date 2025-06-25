@@ -345,6 +345,7 @@
 
 <script setup lang="ts">
 import { MdCatalog, MdPreview } from "md-editor-v3"
+import { storeToRefs } from "pinia"
 import { copyToClipboard, useQuasar } from "quasar"
 import {
   computed,
@@ -361,7 +362,6 @@ import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
-import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
 import CopyBtn from "@/shared/components/CopyBtn.vue"
 import TextareaDialog from "@/shared/components/dialogs/TextareaDialog.vue"
 import MenuItem from "@/shared/components/menu/MenuItem.vue"
@@ -394,6 +394,7 @@ import MessageFile from "@/features/media/components/MessageFile.vue"
 import MessageImage from "@/features/media/components/MessageImage.vue"
 import ToolContent from "@/features/plugins/components/ToolContent.vue"
 import { usePluginsStore } from "@/features/plugins/store"
+import { useProfileStore } from "@/features/profile/store"
 
 import { DialogMessageNested } from "@/services/data/types/dialogMessage"
 import { MessageContentNested } from "@/services/data/types/messageContents"
@@ -510,9 +511,12 @@ const canCreateCyberlink = computed(() => {
       plugin.apis.some((api) => api.name === "create_cyberlink")
   )
 })
+
+const { myProfile } = storeToRefs(useProfileStore())
+
 const avatar = computed(() =>
   props.message.type === "user"
-    ? perfs.userAvatar
+    ? myProfile.value.avatar
     : assistantsStore.assistants.find(
       (a) => a.id === props.message.assistantId
     )?.avatar
@@ -537,13 +541,6 @@ const router = useRouter()
 function onAvatarClick () {
   if (props.message.type === "assistant") {
     router.push(`../assistants/${props.message.assistantId}`)
-  } else if (props.message.type === "user") {
-    $q.dialog({
-      component: PickAvatarDialog,
-      componentProps: { model: perfs.userAvatar, defaultTab: "text" },
-    }).onOk((avatar) => {
-      perfs.userAvatar = avatar
-    })
   }
 }
 

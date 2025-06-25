@@ -89,15 +89,17 @@
 
 <script setup lang="ts">
 import { MdPreview } from "md-editor-v3"
+import { storeToRefs } from "pinia"
 import { copyToClipboard, useQuasar } from "quasar"
 import { computed, reactive, ref } from "vue"
 
 import { AAvatar } from "@/shared/components/avatar"
 import { useMdPreviewProps } from "@/shared/composables/mdPreviewProps"
 import { useUserStore } from "@/shared/store/user"
-import { useUserPrefsStore } from "@/shared/store/userPrefs"
 import { ApiResultItem } from "@/shared/types"
 import { genId } from "@/shared/utils/functions"
+
+import { useProfileStore } from "@/features/profile/store"
 
 import { ChatMessage } from "@/services/data/types/chat"
 
@@ -123,13 +125,13 @@ const emit = defineEmits<{
   stream: [string]
 }>()
 
-const { data: perfs } = useUserPrefsStore()
+const { myProfile } = storeToRefs(useProfileStore())
 
 const denseMode = computed(() => $q.screen.lt.md)
 const colMode = computed(() => denseMode.value && !isMine.value)
 const avatar = computed(() =>
   isMine.value
-    ? perfs.userAvatar
+    ? myProfile.value.avatar
     : (props.message.sender?.avatar)
 )
 

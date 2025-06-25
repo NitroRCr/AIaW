@@ -1,14 +1,17 @@
 import { Avatar } from "@/shared/utils"
-import { dtoToEntity } from "@/shared/utils/dto/helpers"
+import { dtoToEntity, entityToDto } from "@/shared/utils/dto/helpers"
 import { DtoToEntity, OverrideProps } from "@/shared/utils/dto/types"
 
 import { Database } from "../supabase/database.types"
 
 type DbProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
+type DbProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"]
 
-type Profile = DtoToEntity<Omit<DbProfileRow, 'avatar'>> & {
+type DbProfile = DbProfileRow | DbProfileUpdate
+
+type Profile<T extends DbProfile = DbProfileRow> = OverrideProps<DtoToEntity<T>, {
   avatar: Avatar
-}
+}>
 
 type DbUserProfile = {
   user_id: string
@@ -19,7 +22,7 @@ type UserProfile = OverrideProps<DtoToEntity<DbUserProfile>, {
   profile: Profile
 }>
 
-const mapDbToProfile = (dbProfile: DbProfileRow) =>
+const mapDbToProfile = (dbProfile: DbProfile) =>
   dtoToEntity(dbProfile) as Profile
 
 const mapDbToUserProfile = (member: DbUserProfile): UserProfile => {
@@ -29,5 +32,8 @@ const mapDbToUserProfile = (member: DbUserProfile): UserProfile => {
   }
 }
 
-export { mapDbToProfile, mapDbToUserProfile }
-export type { Profile, UserProfile }
+const mapProfileToDb = <T extends DbProfile>(profile: Profile<T>): DbProfile =>
+  entityToDto(profile) as T
+
+export { mapDbToProfile, mapDbToUserProfile, mapProfileToDb }
+export type { Profile, UserProfile, DbProfileUpdate }

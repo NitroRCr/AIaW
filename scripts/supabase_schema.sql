@@ -58,6 +58,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 
+CREATE TYPE "public"."assistant_sharing_type" AS ENUM (
+    'global',
+    'workspace'
+);
+
+
+ALTER TYPE "public"."assistant_sharing_type" OWNER TO "postgres";
+
+
 CREATE TYPE "public"."chat_type" AS ENUM (
     'workspace',
     'private'
@@ -81,6 +90,41 @@ $$;
 
 
 ALTER FUNCTION "public"."add_workspace_owner_as_member"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."can_manage_assistant"("assistant_id_param" "uuid") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "row_security" TO 'off'
+    AS $$
+DECLARE
+  workspace_id_var uuid;
+  is_shared_var "public"."assistant_sharing_type";
+BEGIN
+  -- Get the workspace_id and is_shared for this assistant
+  SELECT workspace_id, is_shared INTO workspace_id_var, is_shared_var
+  FROM public.user_assistants
+  WHERE id = assistant_id_param;
+  
+  -- If user is the owner, they can manage
+  IF EXISTS (
+    SELECT 1 FROM public.user_assistants
+    WHERE id = assistant_id_param AND user_id = auth.uid()
+  ) THEN
+    RETURN true;
+  END IF;
+  
+  -- If assistant is workspace shared and user is admin of that workspace
+  IF is_shared_var = 'workspace' AND workspace_id_var IS NOT NULL THEN
+    RETURN get_workspace_role(workspace_id_var, auth.uid()) = 'admin';
+  END IF;
+  
+  -- Otherwise, user cannot manage
+  RETURN false;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."can_manage_assistant"("assistant_id_param" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."can_manage_chat"("chat_id_param" "uuid") RETURNS boolean
@@ -117,7 +161,7 @@ CREATE OR REPLACE FUNCTION "public"."create_profile_on_signup"() RETURNS "trigge
     AS $$
 begin
   insert into public.profiles (id, name)
-  values (new.id, new.email);
+  values (new.id, split_part(new.email, '@', 1));
   return new;
 end;
 $$;
@@ -289,6 +333,31 @@ $$;
 
 
 ALTER FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."sync_user_workspaces"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "row_security" TO 'off'
+    AS $$
+BEGIN
+    -- On INSERT to workspace_members, add corresponding record to user_workspaces
+    IF (TG_OP = 'INSERT') THEN
+        INSERT INTO public.user_workspaces (user_id, workspace_id)
+        VALUES (NEW.user_id, NEW.workspace_id)
+        ON CONFLICT (user_id, workspace_id) DO NOTHING;
+        RETURN NEW;
+    -- On DELETE from workspace_members, remove corresponding record from user_workspaces
+    ELSIF (TG_OP = 'DELETE') THEN
+        DELETE FROM public.user_workspaces
+        WHERE user_id = OLD.user_id AND workspace_id = OLD.workspace_id;
+        RETURN OLD;
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."sync_user_workspaces"() OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -481,6 +550,8 @@ CREATE TABLE IF NOT EXISTS "public"."user_assistants" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "avatar" "jsonb",
     "context_num" bigint DEFAULT '0'::bigint NOT NULL,
+    "parent_id" "uuid",
+    "is_shared" "public"."assistant_sharing_type",
     CONSTRAINT "user_assistants_prompt_role_check" CHECK (("prompt_role" = ANY (ARRAY['system'::"text", 'user'::"text", 'assistant'::"text"])))
 );
 
@@ -514,6 +585,15 @@ CREATE TABLE IF NOT EXISTS "public"."user_plugins" (
 
 
 ALTER TABLE "public"."user_plugins" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."user_workspaces" (
+    "user_id" "uuid" NOT NULL,
+    "workspace_id" "uuid" NOT NULL
+);
+
+
+ALTER TABLE "public"."user_workspaces" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."workspace_members" (
@@ -623,6 +703,11 @@ ALTER TABLE ONLY "public"."user_plugins"
 
 
 
+ALTER TABLE ONLY "public"."user_workspaces"
+    ADD CONSTRAINT "user_workspaces_pkey" PRIMARY KEY ("user_id", "workspace_id");
+
+
+
 ALTER TABLE ONLY "public"."workspace_members"
     ADD CONSTRAINT "workspace_members_pkey" PRIMARY KEY ("workspace_id", "user_id");
 
@@ -633,7 +718,23 @@ ALTER TABLE ONLY "public"."workspaces"
 
 
 
+CREATE INDEX "idx_user_assistants_is_shared" ON "public"."user_assistants" USING "btree" ("is_shared");
+
+
+
+CREATE INDEX "idx_user_assistants_parent_id" ON "public"."user_assistants" USING "btree" ("parent_id");
+
+
+
 CREATE OR REPLACE TRIGGER "add_workspace_owner_as_member_trigger" AFTER INSERT ON "public"."workspaces" FOR EACH ROW EXECUTE FUNCTION "public"."add_workspace_owner_as_member"();
+
+
+
+CREATE OR REPLACE TRIGGER "sync_user_workspaces_delete_trigger" AFTER DELETE ON "public"."workspace_members" FOR EACH ROW EXECUTE FUNCTION "public"."sync_user_workspaces"();
+
+
+
+CREATE OR REPLACE TRIGGER "sync_user_workspaces_insert_trigger" AFTER INSERT ON "public"."workspace_members" FOR EACH ROW EXECUTE FUNCTION "public"."sync_user_workspaces"();
 
 
 
@@ -743,6 +844,11 @@ ALTER TABLE ONLY "public"."subproviders"
 
 
 ALTER TABLE ONLY "public"."user_assistants"
+    ADD CONSTRAINT "user_assistants_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "public"."user_assistants"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."user_assistants"
     ADD CONSTRAINT "user_assistants_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
@@ -754,6 +860,16 @@ ALTER TABLE ONLY "public"."user_assistants"
 
 ALTER TABLE ONLY "public"."user_plugins"
     ADD CONSTRAINT "user_plugins_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."user_workspaces"
+    ADD CONSTRAINT "user_workspaces_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."user_workspaces"
+    ADD CONSTRAINT "user_workspaces_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE CASCADE;
 
 
 
@@ -977,6 +1093,10 @@ CREATE POLICY "User can update own stored reactives" ON "public"."user_data" FOR
 
 
 
+CREATE POLICY "Users can CRUD their own user_workspaces" ON "public"."user_workspaces" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Users can delete their assistants" ON "public"."user_assistants" FOR DELETE USING (("user_id" = "auth"."uid"()));
 
 
@@ -1051,7 +1171,7 @@ CREATE POLICY "Users can update their subproviders" ON "public"."subproviders" F
 
 
 
-CREATE POLICY "Users can view their assistants" ON "public"."user_assistants" FOR SELECT USING (("user_id" = "auth"."uid"()));
+CREATE POLICY "Users can view global shared assistants" ON "public"."user_assistants" FOR SELECT USING (("is_shared" = 'global'::"public"."assistant_sharing_type"));
 
 
 
@@ -1063,13 +1183,25 @@ CREATE POLICY "Users can view their dialogs" ON "public"."dialogs" FOR SELECT US
 
 
 
+CREATE POLICY "Users can view their own assistants" ON "public"."user_assistants" FOR SELECT USING (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Users can view their subproviders" ON "public"."subproviders" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM "public"."custom_providers" "cp"
   WHERE (("cp"."id" = "subproviders"."custom_provider_id") AND ("cp"."user_id" = "auth"."uid"())))));
 
 
 
+CREATE POLICY "Workspace admins can manage workspace shared assistants" ON "public"."user_assistants" USING ((("is_shared" = 'workspace'::"public"."assistant_sharing_type") AND ("workspace_id" IS NOT NULL) AND ("public"."get_workspace_role"("workspace_id", "auth"."uid"()) = 'admin'::"text")));
+
+
+
 CREATE POLICY "Workspace members can create workspace chats" ON "public"."chats" FOR INSERT WITH CHECK ((("workspace_id" IS NOT NULL) AND ("type" = 'workspace'::"public"."chat_type") AND ("public"."get_workspace_role"("workspace_id", "auth"."uid"()) = ANY (ARRAY['admin'::"text", 'member'::"text"]))));
+
+
+
+CREATE POLICY "Workspace members can view workspace shared assistants" ON "public"."user_assistants" FOR SELECT USING ((("is_shared" = 'workspace'::"public"."assistant_sharing_type") AND ("workspace_id" IS NOT NULL) AND "public"."is_workspace_member"("workspace_id")));
 
 
 
@@ -1115,6 +1247,9 @@ ALTER TABLE "public"."user_data" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_plugins" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."user_workspaces" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."workspace_members" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1146,6 +1281,10 @@ ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."messages";
 
 
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."profiles";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."user_assistants";
 
 
 
@@ -1341,6 +1480,12 @@ GRANT ALL ON FUNCTION "public"."add_workspace_owner_as_member"() TO "service_rol
 
 
 
+GRANT ALL ON FUNCTION "public"."can_manage_assistant"("assistant_id_param" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."can_manage_assistant"("assistant_id_param" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."can_manage_assistant"("assistant_id_param" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."can_manage_chat"("chat_id_param" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."can_manage_chat"("chat_id_param" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."can_manage_chat"("chat_id_param" "uuid") TO "service_role";
@@ -1398,6 +1543,12 @@ GRANT ALL ON FUNCTION "public"."is_workspace_owner"("user_id" "uuid") TO "servic
 GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."sync_user_workspaces"() TO "anon";
+GRANT ALL ON FUNCTION "public"."sync_user_workspaces"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."sync_user_workspaces"() TO "service_role";
 
 
 
@@ -1497,6 +1648,12 @@ GRANT ALL ON TABLE "public"."user_data" TO "service_role";
 GRANT ALL ON TABLE "public"."user_plugins" TO "anon";
 GRANT ALL ON TABLE "public"."user_plugins" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_plugins" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."user_workspaces" TO "anon";
+GRANT ALL ON TABLE "public"."user_workspaces" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_workspaces" TO "service_role";
 
 
 

@@ -11,7 +11,7 @@ import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCa
 import { AssistantDefaultPrompt } from "@/features/dialogs/utils/dialogTemplateDefinitions"
 
 import { supabase } from "@/services/data/supabase/client"
-import { Assistant, DbAssistantUpdate, mapAssistantToDb, mapDbToAssistant } from "@/services/data/types/assistant"
+import { Assistant, DbAssistantUpdate, mapAssistantToDb, mapDbToAssistant, mapDbToAssistantWithParent, toAssistant } from "@/services/data/types/assistant"
 
 /**
  * Store for managing AI assistants in the application
@@ -44,16 +44,40 @@ export const useAssistantsStore = defineStore("assistants", () => {
   watch(assistants, () => {
     hasChanges.value = true
   }, { deep: true })
-  const fetchAssistants = async () => {
+
+  const fetchMyAssistants = async () => {
     isLoaded.value = false
 
-    const { data, error } = await supabase.from("user_assistants").select("*")
+    const { data, error } = await supabase.from("user_assistants")
+      .select("*")
+      .is("parent_id", null)
 
     if (error) {
       console.error("Error fetching assistants:", error)
+      throw error
     }
 
-    assistants.value = data.map(mapDbToAssistant)
+    assistants.value = data.map(mapDbToAssistantWithParent)
+
+    setTimeout(() => {
+      isLoaded.value = true
+      hasChanges.value = false
+    })
+  }
+
+  const fetchGlobalAssistants = async () => {
+    isLoaded.value = false
+
+    const { data, error } = await supabase.from("user_assistants")
+      .select("*")
+      .eq("is_shared", "global")
+
+    if (error) {
+      console.error("Error fetching assistants:", error)
+      throw error
+    }
+
+    assistants.value = data.map(mapDbToAssistantWithParent)
 
     setTimeout(() => {
       isLoaded.value = true
@@ -64,7 +88,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
   const init = async () => {
     assistants.value = []
     isLoaded.value = false
-    await fetchAssistants()
+    await fetchMyAssistants()
   }
 
   useUserLoginCallback(init)
@@ -89,7 +113,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
         plugins: {},
         promptRole: "system",
         stream: true,
-        ...props,
+        ...toAssistant(props),
       }))
       .select()
       .single()
@@ -113,7 +137,7 @@ export const useAssistantsStore = defineStore("assistants", () => {
 
     const { data, error } = await supabase
       .from("user_assistants")
-      .update(mapAssistantToDb(changes))
+      .update(mapAssistantToDb(toAssistant(changes)))
       .eq("id", id)
       .select()
       .single()
@@ -180,5 +204,6 @@ export const useAssistantsStore = defineStore("assistants", () => {
     isLoaded,
     isSaving,
     hasChanges,
+    fetchGlobalAssistants,
   }
 })

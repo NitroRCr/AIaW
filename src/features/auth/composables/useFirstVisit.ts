@@ -15,34 +15,48 @@ import AuthDialog from "@/features/auth/components/AuthDialog.vue"
 import { AssistantDefaultPrompt } from "@/features/dialogs/utils/dialogTemplateDefinitions"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
+import { Assistant } from "@/services/data/types/assistant"
+
+const defaultAssistant = {
+  name: "Cyber Assistant",
+  avatar: defaultAvatar("AI"),
+  prompt: "",
+  promptTemplate: AssistantDefaultPrompt,
+  promptVars: [],
+  provider: null,
+  model: null,
+  modelSettings: { ...defaultModelSettings },
+  plugins: {},
+  promptRole: "system",
+  stream: true,
+  workspaceId: null, // Global Assistant
+} as Assistant
+
+// eslint-disable-next-line no-unused-vars
+const defaultWorkspaceId = "00000000-0000-0000-0000-000000000000"
+
+// eslint-disable-next-line no-unused-vars
+const defaultProviderData = {
+  name: "litellm",
+  model: "gpt-4o",
+}
+
 export function useFirstVisit () {
   const $q = useQuasar()
   const router = useRouter()
   const { t } = useI18n()
   const assistantsStore = useAssistantsStore()
+  // eslint-disable-next-line no-unused-vars
   const workspaceStore = useWorkspacesStore()
   const { isLoggedIn } = storeToRefs(useUserStore())
 
   // onboarding: if no assistants, add default assistant
   watch(
-    () => isLoggedIn && assistantsStore.isLoaded && workspaceStore.isLoaded,
+    () => isLoggedIn,
     async (val) => {
       if (val) {
         if (assistantsStore.assistants.length === 0) {
-          await assistantsStore.add({
-            name: t("db.defaultAssistant"),
-            avatar: defaultAvatar("AI"),
-            prompt: "",
-            promptTemplate: AssistantDefaultPrompt,
-            promptVars: [],
-            provider: null,
-            model: null,
-            modelSettings: { ...defaultModelSettings },
-            plugins: {},
-            promptRole: "system",
-            stream: true,
-            workspaceId: null, // Global Assistant
-          })
+          await assistantsStore.add(defaultAssistant)
         }
       }
     }
