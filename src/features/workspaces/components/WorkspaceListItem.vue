@@ -22,7 +22,10 @@
       <q-item-section>
         {{ item.name }}
       </q-item-section>
-      <menu-button :menu-ref="toRef(menuFolderRef)" />
+      <menu-button
+        v-if="isUserWorkspaceAdmin(item.id)"
+        :menu-ref="toRef(menuFolderRef)"
+      />
       <q-menu
         ref="menuFolderRef"
         context-menu
@@ -89,10 +92,14 @@
       />
     </q-item-section>
     <q-item-section>{{ item.name }}</q-item-section>
-    <menu-button :menu-ref="toRef(menuWorkspaceRef)" />
+    <menu-button
+      v-if="isUserWorkspaceAdmin(item.id)"
+      :menu-ref="toRef(menuWorkspaceRef)"
+    />
     <q-menu
       ref="menuWorkspaceRef"
       context-menu
+      v-if="isUserWorkspaceAdmin(item.id)"
     >
       <q-list style="min-width: 100px">
         <!-- TMP: disabled 'move' feature for now -->
@@ -126,7 +133,7 @@ import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import MenuButton from "@/shared/components/menu/MenuButton.vue"
 import MenuItem from "@/shared/components/menu/MenuItem.vue"
 
-import { useRootWorkspace } from "@/features/workspaces/composables"
+import { useRootWorkspace, useRightsManagement } from "@/features/workspaces/composables"
 import { useWorkspaceActions } from "@/features/workspaces/composables/useWorkspaceActions"
 
 import { Workspace } from "@/services/data/types/workspace"
@@ -135,7 +142,7 @@ const props = defineProps<{
   item: Workspace
   accept: "workspace" | "folder"
 }>()
-
+const { isUserWorkspaceAdmin } = useRightsManagement()
 const { addWorkspace, addFolder, moveItem, deleteItem } = useWorkspaceActions()
 const workspaces = useRootWorkspace(props.item.id)
 

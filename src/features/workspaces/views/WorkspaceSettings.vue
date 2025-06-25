@@ -10,9 +10,8 @@
       bg-sur
       class="relative-position"
     >
-      <loading-panel v-if="!isLoaded" />
       <notification-panel
-        v-else-if="!isAdmin"
+        v-if="!isAdmin"
         :title="$t('common.noAdmin')"
         :warning="true"
       >
@@ -128,7 +127,7 @@
         }"
       />
       <!-- Participant Management -->
-      <template v-if="workspace?.type === 'workspace' && workspace?.id && isLoaded">
+      <template v-if="workspace?.type === 'workspace' && workspace?.id">
         <q-separator spaced />
         <participant-manager
           type="workspace"
@@ -157,7 +156,6 @@ import { useI18n } from "vue-i18n"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import PickAvatarDialog from "@/shared/components/avatar/PickAvatarDialog.vue"
-import LoadingPanel from "@/shared/components/LoadingPanel.vue"
 import NotificationPanel from "@/shared/components/NotificationPanel.vue"
 import ParticipantManager from "@/shared/components/user/ParticipantManager.vue"
 import { useSetTitle } from "@/shared/composables/setTitle"
@@ -166,7 +164,7 @@ import { useUserDataStore } from "@/shared/store"
 import AssistantItem from "@/features/assistants/components/AssistantItem.vue"
 import { useAssistantsStore } from "@/features/assistants/store"
 import VarsInput from "@/features/prompt/components/VarsInput.vue"
-import { useIsWorkspaceAdmin } from "@/features/workspaces/composables/useIsWorkspaceAdmin"
+import { useRightsManagement } from "@/features/workspaces/composables/useRightsManagement"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
@@ -184,7 +182,8 @@ const $q = useQuasar()
 const workspaceId = computed(() => props.id)
 const workspace = computed(() => store.workspaces.find(w => w.id === workspaceId.value))
 
-const { isAdmin, isLoaded } = useIsWorkspaceAdmin(workspaceId)
+const { isUserWorkspaceAdmin } = useRightsManagement()
+const isAdmin = computed(() => isUserWorkspaceAdmin(workspaceId.value))
 
 const assistantsStore = useAssistantsStore()
 const assistantOptions = computed(() =>

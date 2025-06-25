@@ -27,16 +27,21 @@
     <q-item-section>
       {{ chat.name }}
     </q-item-section>
-    <menu-button :menu-ref="toRef(menuChatRef)" />
+    <menu-button
+      :menu-ref="toRef(menuChatRef)"
+      v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
+    />
     <q-menu
       ref="menuChatRef"
       context-menu
+      v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
     >
       <q-list style="min-width: 100px">
         <menu-item
           icon="sym_o_edit"
           :label="'Rename'"
           @click="renameItem(chat)"
+          v-if="chat.type === 'workspace'"
         />
         <menu-item
           icon="sym_o_delete"
@@ -48,6 +53,7 @@
           icon="sym_o_settings"
           :label="'Settings'"
           :to="{ path: `/chats/${chat.id}/settings`, query: route.query }"
+          v-if="chat.type === 'workspace'"
         />
       </q-list>
     </q-menu>
@@ -65,6 +71,7 @@ import MenuItem from "@/shared/components/menu/MenuItem.vue"
 import { dialogOptions } from "@/shared/utils/values"
 
 import { useWorkspaceChats } from "@/features/chats/composables/useWorkspaceChats"
+import { useRightsManagement } from "@/features/workspaces/composables"
 
 import { Chat } from "@/services/data/types/chat"
 
@@ -78,6 +85,7 @@ const selected = defineModel<string>("selected")
 
 const workspaceId = computed(() => props.chat.workspaceId)
 const { updateChat, removeChat } = useWorkspaceChats(workspaceId)
+const { isUserWorkspaceAdmin } = useRightsManagement()
 
 const menuChatRef = ref<QMenu | null>(null)
 

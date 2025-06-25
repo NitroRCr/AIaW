@@ -1,10 +1,11 @@
 import { throttle } from "lodash"
 import { defineStore } from "pinia"
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
 import { IconAvatar } from "@/shared/types"
 
+import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 import { DefaultWsIndexContent } from "@/features/dialogs/utils"
 import { useWorkspacesWithSubscription } from "@/features/workspaces/composables/useWorkspacesWithSubscription"
 
@@ -42,6 +43,15 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   watch(workspaces, () => {
     hasChanges.value = true
   }, { deep: true })
+
+  const init = async () => {
+    isLoadedMembers.value = false
+    workspaceMembers.value = {}
+    await fetchWorkspaceMembers()
+    isLoadedMembers.value = true
+  }
+
+  useUserLoginCallback(init)
 
   async function addWorkspace (props: Partial<Workspace>) {
     isSaving.value = true
@@ -217,49 +227,41 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     )
   }
 
-  async function getWorkspaceMembers (workspaceId: string) {
-    isLoadedMembers.value = false
+  async function fetchWorkspaceMembers () {
     const { data, error } = await supabase
       .from("workspace_members")
       .select("*, profile:profiles(*)")
-      .eq("workspace_id", workspaceId)
 
     if (error) {
       console.error("❌ Failed to get workspace members:", error.message)
       throw error
     }
 
-    workspaceMembers.value[workspaceId] = data.map(mapDbToWorkspaceMember)
+    workspaceMembers.value = data.reduce((acc, member) => {
+      acc[member.workspace_id] = [...(acc[member.workspace_id] || []), mapDbToWorkspaceMember(member)]
 
-    isLoadedMembers.value = true
+      return acc
+    }, {} as Record<string, WorkspaceMember[]>)
 
     return workspaceMembers.value
   }
 
-  async function isUserWorkspaceAdmin (workspaceId: string, userId: string) {
-    // const isOwner =
-    //   workspaces.value.find(
-    //     (workspace) =>
-    //       workspace.id === workspaceId && workspace.ownerId === userId
-    //   ) !== undefined
-
-    // if (isOwner) {
-    //   return "owner" as WorkspaceRole
-    // }
+  function isUserWorkspaceRole (workspaceId: string, userId: string) {
     const member = workspaceMembers.value[workspaceId]?.find(
       (member) => member.userId === userId
     )
-    console.log("isUserWorkspaceAdmin", workspaceId, userId, member)
+    console.log("isUserWorkspaceRole", workspaceId, userId,
+      workspaceMembers.value, workspaces, member)
 
     if (member) {
       return member.role as WorkspaceMemberRole
     }
 
-    return "none" as WorkspaceMemberRole
+    return null
   }
 
   return {
-    isLoaded,
+    isLoaded: computed(() => isLoaded.value && isLoadedMembers.value),
     workspaces,
     addWorkspace,
     updateItem,
@@ -268,8 +270,8 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     addWorkspaceMember,
     removeWorkspaceMember,
     updateWorkspaceMember,
-    getWorkspaceMembers,
-    isUserWorkspaceAdmin,
+    getWorkspaceMembers: fetchWorkspaceMembers,
+    isUserWorkspaceRole,
     isSaving,
     hasChanges,
     workspaceMembers

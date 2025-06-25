@@ -19,7 +19,7 @@
           color="primary"
           icon="sym_o_person_add"
           @click="showAddParticipantDialog"
-          :disable="!isAdmin || loading"
+          :disable="!isAdmin"
           dense
         >
           <q-tooltip>{{ addButtonTooltip }}</q-tooltip>
@@ -47,7 +47,7 @@
     </q-item>
 
     <!-- Loading state -->
-    <template v-if="loading && participants.length === 0">
+    <template v-if="participants.length === 0">
       <q-item class="q-px-md">
         <q-item-section>
           <q-skeleton height="40px" />
@@ -172,7 +172,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import ContactsDialog from '@/shared/components/dialogs/ContactsDialog.vue'
@@ -216,7 +216,6 @@ const userStore = useUserStore()
 const workspacesStore = useWorkspacesStore()
 const presenceStore = usePresenceStore()
 // Reactive state
-const loading = ref(false)
 const searchQuery = ref('')
 const roleUpdateLoading = ref<Record<string, boolean>>({})
 const removeLoading = ref<Record<string, boolean>>({})
@@ -316,25 +315,25 @@ const filteredParticipants = computed(() => {
 })
 
 // Methods
-const fetchParticipants = async () => {
-  loading.value = true
-  try {
-    if (props.type === 'workspace') {
-      await workspacesStore.getWorkspaceMembers(props.id)
-    } else {
-      // For chats, we would need to implement chat member fetching
-      // This would require extending the chat store with member management
-    }
-  } catch (error) {
-    console.error('Failed to fetch participants:', error)
-    $q.notify({
-      type: 'negative',
-      message: t('common.errorFetching')
-    })
-  } finally {
-    loading.value = false
-  }
-}
+// const fetchParticipants = async () => {
+//   loading.value = true
+//   try {
+//     if (props.type === 'workspace') {
+//       await workspacesStore.getWorkspaceMembers(props.id)
+//     } else {
+//       // For chats, we would need to implement chat member fetching
+//       // This would require extending the chat store with member management
+//     }
+//   } catch (error) {
+//     console.error('Failed to fetch participants:', error)
+//     $q.notify({
+//       type: 'negative',
+//       message: t('common.errorFetching')
+//     })
+//   } finally {
+//     loading.value = false
+//   }
+// }
 
 const showAddParticipantDialog = () => {
   // Get current participant user IDs to exclude from contacts list
@@ -501,8 +500,4 @@ const getRoleColor = (role: string): string => {
   return roleColors[role] || 'grey'
 }
 
-// Lifecycle
-onMounted(() => {
-  fetchParticipants()
-})
 </script>
