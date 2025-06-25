@@ -88,7 +88,7 @@
             />
           </q-item-section>
         </q-item>
-        <q-item
+        <!-- <q-item
           clickable
           v-ripple
           @click="$emit('toggle-drawer')"
@@ -104,7 +104,7 @@
           <q-item-section side>
             <q-icon name="sym_o_chevron_right" />
           </q-item-section>
-        </q-item>
+        </q-item> -->
         <q-item-label
           caption
           p="x-4 y-2"

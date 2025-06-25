@@ -21,6 +21,7 @@
         @click="uiStore.toggleMainDrawer"
       />
       <slot />
+
       <q-btn
         v-if="!noDrawer"
         flat
@@ -29,6 +30,10 @@
         icon="sym_o_segment"
         @click="$emit('toggle-drawer')"
         @contextmenu.prevent="$emit('contextmenu')"
+      />
+      <div
+        class="q-space"
+        v-else
       />
       <settings-area />
     </q-toolbar>
