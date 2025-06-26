@@ -35,16 +35,27 @@ You can use either a local Supabase instance (recommended for development) or co
 
 #### Local Supabase (via Docker Compose)
 
-1. Copy `.env.docker-compose` and fill in your secrets:
+1. Copy the environment file and fill in your secrets:
    ```bash
-   cp .env.docker-compose.example .env.docker-compose
+   cp env.docker-compose.example .env.docker-compose
    # Edit .env.docker-compose with your values
    ```
 2. Start Supabase services:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
-   This will launch Postgres, Auth, REST, and Studio on local ports (see `docker-compose.yml`).
+   This will launch all Supabase services including:
+   - **Studio** (Dashboard): http://localhost:8000
+   - **Kong** (API Gateway): http://localhost:8000
+   - **PostgREST** (REST API): http://localhost:8000/rest/v1/
+   - **Auth** (GoTrue): http://localhost:8000/auth/v1/
+   - **Storage**: http://localhost:8000/storage/v1/
+   - **Realtime**: http://localhost:8000/realtime/v1/
+   - **Analytics**: http://localhost:4000
+
+   **Default Dashboard Credentials:**
+   - Username: `supabase`
+   - Password: `this_password_is_insecure_and_should_be_updated`
 
 #### Cloud Supabase
 
