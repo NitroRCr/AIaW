@@ -156,14 +156,81 @@ $$;
 ALTER FUNCTION "public"."can_manage_chat"("chat_id_param" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."create_or_link_privy_user"("p_privy_user_id" "text", "p_wallet_address" "text" DEFAULT NULL::"text", "p_email" "text" DEFAULT NULL::"text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_supabase_uid uuid;
+  v_profile_name text;
+BEGIN
+  -- Get current authenticated user ID
+  v_supabase_uid := auth.uid();
+
+  IF v_supabase_uid IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated';
+  END IF;
+
+  -- Determine profile name (email username or wallet address)
+  IF p_email IS NOT NULL THEN
+    v_profile_name := split_part(p_email, '@', 1);
+  ELSIF p_wallet_address IS NOT NULL THEN
+    v_profile_name := substring(p_wallet_address from 1 for 8) || '...';
+  ELSE
+    v_profile_name := 'User';
+  END IF;
+
+  -- Create or update profile
+  INSERT INTO public.profiles (id, name)
+  VALUES (v_supabase_uid, v_profile_name)
+  ON CONFLICT (id)
+  DO UPDATE SET
+    name = EXCLUDED.name,
+    created_at = COALESCE(profiles.created_at, now());
+
+  -- Create or update Privy mapping
+  INSERT INTO public.privy_users (supabase_uid, privy_user_id, wallet_address, email)
+  VALUES (v_supabase_uid, p_privy_user_id, p_wallet_address, p_email)
+  ON CONFLICT (privy_user_id)
+  DO UPDATE SET
+    wallet_address = EXCLUDED.wallet_address,
+    email = EXCLUDED.email,
+    updated_at = now();
+
+  RETURN v_supabase_uid;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_or_link_privy_user"("p_privy_user_id" "text", "p_wallet_address" "text", "p_email" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."create_profile_on_signup"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
-begin
-  insert into public.profiles (id, name)
-  values (new.id, split_part(new.email, '@', 1));
-  return new;
-end;
+DECLARE
+  privy_user_id text;
+BEGIN
+  privy_user_id := NEW.raw_user_meta_data->>'privy_user_id';
+
+  IF privy_user_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- если профиль с таким privy_user_id уже есть — обновим id и email
+  IF EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.privy_user_id = privy_user_id
+  ) THEN
+    UPDATE public.profiles p
+    SET id = NEW.id,
+        email = NEW.email
+    WHERE p.privy_user_id = privy_user_id;
+  ELSE
+    INSERT INTO public.profiles (id, email, privy_user_id)
+    VALUES (NEW.id, NEW.email, privy_user_id);
+  END IF;
+
+  RETURN NEW;
+END;
 $$;
 
 
@@ -359,6 +426,19 @@ $$;
 
 ALTER FUNCTION "public"."sync_user_workspaces"() OWNER TO "postgres";
 
+
+CREATE OR REPLACE FUNCTION "public"."update_user_settings_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_user_settings_updated_at"() OWNER TO "postgres";
+
 SET default_tablespace = '';
 
 SET default_table_access_method = "heap";
@@ -491,12 +571,31 @@ ALTER TABLE ONLY "public"."messages" REPLICA IDENTITY FULL;
 ALTER TABLE "public"."messages" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."privy_users" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "supabase_uid" "uuid" NOT NULL,
+    "privy_user_id" "text" NOT NULL,
+    "wallet_address" "text",
+    "email" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."privy_users" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."privy_users" IS 'Mapping table between Privy users and Supabase auth users';
+
+
+
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "id" "uuid" NOT NULL,
     "name" "text" NOT NULL,
     "description" "text",
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "avatar" "jsonb"
+    "avatar" "jsonb",
+    "privy_user_id" "text"
 );
 
 
@@ -587,6 +686,22 @@ CREATE TABLE IF NOT EXISTS "public"."user_plugins" (
 ALTER TABLE "public"."user_plugins" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."user_settings" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" DEFAULT "auth"."uid"() NOT NULL,
+    "key" "text" NOT NULL,
+    "value" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "tags" "text"[] DEFAULT '{}'::"text"[],
+    "schema_definition" "jsonb",
+    "reference_id" "uuid",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."user_settings" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."user_workspaces" (
     "user_id" "uuid" NOT NULL,
     "workspace_id" "uuid" NOT NULL
@@ -668,8 +783,28 @@ ALTER TABLE ONLY "public"."messages"
 
 
 
+ALTER TABLE ONLY "public"."privy_users"
+    ADD CONSTRAINT "privy_users_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."privy_users"
+    ADD CONSTRAINT "privy_users_privy_user_id_key" UNIQUE ("privy_user_id");
+
+
+
+ALTER TABLE ONLY "public"."privy_users"
+    ADD CONSTRAINT "privy_users_supabase_uid_key" UNIQUE ("supabase_uid");
+
+
+
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_privy_user_id_key" UNIQUE ("privy_user_id");
 
 
 
@@ -703,6 +838,16 @@ ALTER TABLE ONLY "public"."user_plugins"
 
 
 
+ALTER TABLE ONLY "public"."user_settings"
+    ADD CONSTRAINT "user_settings_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."user_settings"
+    ADD CONSTRAINT "user_settings_user_id_key_unique" UNIQUE ("user_id", "key");
+
+
+
 ALTER TABLE ONLY "public"."user_workspaces"
     ADD CONSTRAINT "user_workspaces_pkey" PRIMARY KEY ("user_id", "workspace_id");
 
@@ -726,7 +871,23 @@ CREATE INDEX "idx_user_assistants_parent_id" ON "public"."user_assistants" USING
 
 
 
+CREATE INDEX "idx_user_settings_key" ON "public"."user_settings" USING "btree" ("key");
+
+
+
+CREATE INDEX "idx_user_settings_tags" ON "public"."user_settings" USING "gin" ("tags");
+
+
+
+CREATE INDEX "idx_user_settings_user_id" ON "public"."user_settings" USING "btree" ("user_id");
+
+
+
 CREATE OR REPLACE TRIGGER "add_workspace_owner_as_member_trigger" AFTER INSERT ON "public"."workspaces" FOR EACH ROW EXECUTE FUNCTION "public"."add_workspace_owner_as_member"();
+
+
+
+CREATE OR REPLACE TRIGGER "set_user_settings_updated_at" BEFORE UPDATE ON "public"."user_settings" FOR EACH ROW EXECUTE FUNCTION "public"."update_user_settings_updated_at"();
 
 
 
@@ -823,6 +984,11 @@ ALTER TABLE ONLY "public"."messages"
 
 
 
+ALTER TABLE ONLY "public"."privy_users"
+    ADD CONSTRAINT "privy_users_supabase_uid_fkey" FOREIGN KEY ("supabase_uid") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -860,6 +1026,16 @@ ALTER TABLE ONLY "public"."user_assistants"
 
 ALTER TABLE ONLY "public"."user_plugins"
     ADD CONSTRAINT "user_plugins_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."user_settings"
+    ADD CONSTRAINT "user_settings_reference_id_fkey" FOREIGN KEY ("reference_id") REFERENCES "public"."user_settings"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."user_settings"
+    ADD CONSTRAINT "user_settings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -903,21 +1079,11 @@ CREATE POLICY "Admin can CRUD any workspace message" ON "public"."messages" USIN
 
 
 
-CREATE POLICY "Admin or owner can CRUD workspace_members" ON "public"."workspace_members" USING ("public"."is_workspace_admin_or_owner"("workspace_id")) WITH CHECK ("public"."is_workspace_admin_or_owner"("workspace_id"));
-
-
-
 CREATE POLICY "Admin or owner can update workspace" ON "public"."workspaces" FOR UPDATE USING ("public"."is_workspace_admin_or_owner"("id"));
 
 
 
 CREATE POLICY "Any user can create a workspace" ON "public"."workspaces" FOR INSERT WITH CHECK (("auth"."uid"() IS NOT NULL));
-
-
-
-CREATE POLICY "Anyone can add themselves to public workspaces" ON "public"."workspace_members" FOR INSERT WITH CHECK ((("user_id" = "auth"."uid"()) AND ("role" = 'member'::"text") AND (EXISTS ( SELECT 1
-   FROM "public"."workspaces" "w"
-  WHERE (("w"."id" = "workspace_members"."workspace_id") AND ("w"."is_public" = true))))));
 
 
 
@@ -974,10 +1140,6 @@ CREATE POLICY "Members can read private workspace chats" ON "public"."chats" FOR
   WHERE (("w"."id" = "chats"."workspace_id") AND ("w"."is_public" = false)))) AND (EXISTS ( SELECT 1
    FROM "public"."workspace_members" "wm"
   WHERE (("wm"."workspace_id" = "chats"."workspace_id") AND ("wm"."user_id" = "auth"."uid"()))))));
-
-
-
-CREATE POLICY "Members can read workspace_members" ON "public"."workspace_members" FOR SELECT USING ("public"."is_workspace_member"("workspace_id"));
 
 
 
@@ -1093,6 +1255,10 @@ CREATE POLICY "User can update own stored reactives" ON "public"."user_data" FOR
 
 
 
+CREATE POLICY "Users can CRUD their own settings" ON "public"."user_settings" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Users can CRUD their own user_workspaces" ON "public"."user_workspaces" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
 
 
@@ -1133,6 +1299,10 @@ CREATE POLICY "Users can insert their custom providers" ON "public"."custom_prov
 
 
 
+CREATE POLICY "Users can insert their own Privy mapping" ON "public"."privy_users" FOR INSERT WITH CHECK (("supabase_uid" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Users can insert their own dialogs" ON "public"."dialogs" FOR INSERT WITH CHECK (("user_id" = "auth"."uid"()));
 
 
@@ -1150,6 +1320,10 @@ CREATE POLICY "Users can update their assistants" ON "public"."user_assistants" 
 
 
 CREATE POLICY "Users can update their custom providers" ON "public"."custom_providers" FOR UPDATE USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Users can update their own Privy mapping" ON "public"."privy_users" FOR UPDATE USING (("supabase_uid" = "auth"."uid"()));
 
 
 
@@ -1180,6 +1354,10 @@ CREATE POLICY "Users can view their custom providers" ON "public"."custom_provid
 
 
 CREATE POLICY "Users can view their dialogs" ON "public"."dialogs" FOR SELECT USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Users can view their own Privy mapping" ON "public"."privy_users" FOR SELECT USING (("supabase_uid" = "auth"."uid"()));
 
 
 
@@ -1232,6 +1410,9 @@ ALTER TABLE "public"."message_contents" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."messages" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."privy_users" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1247,10 +1428,33 @@ ALTER TABLE "public"."user_data" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_plugins" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."user_settings" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."user_workspaces" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."workspace_members" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "workspace_members_delete" ON "public"."workspace_members" FOR DELETE USING (("public"."is_workspace_admin_or_owner"("workspace_id") OR ("user_id" = "auth"."uid"())));
+
+
+
+CREATE POLICY "workspace_members_insert" ON "public"."workspace_members" FOR INSERT WITH CHECK (("public"."is_workspace_admin_or_owner"("workspace_id") OR (("user_id" = "auth"."uid"()) AND ("role" = 'member'::"text") AND (EXISTS ( SELECT 1
+   FROM "public"."workspaces" "w"
+  WHERE (("w"."id" = "workspace_members"."workspace_id") AND ("w"."is_public" = true)))))));
+
+
+
+CREATE POLICY "workspace_members_select" ON "public"."workspace_members" FOR SELECT USING (("public"."is_workspace_admin_or_owner"("workspace_id") OR "public"."is_workspace_member"("workspace_id") OR (EXISTS ( SELECT 1
+   FROM "public"."workspaces" "w"
+  WHERE (("w"."id" = "workspace_members"."workspace_id") AND ("w"."is_public" = true))))));
+
+
+
+CREATE POLICY "workspace_members_update" ON "public"."workspace_members" FOR UPDATE USING ("public"."is_workspace_admin_or_owner"("workspace_id"));
+
 
 
 ALTER TABLE "public"."workspaces" ENABLE ROW LEVEL SECURITY;
@@ -1492,6 +1696,12 @@ GRANT ALL ON FUNCTION "public"."can_manage_chat"("chat_id_param" "uuid") TO "ser
 
 
 
+GRANT ALL ON FUNCTION "public"."create_or_link_privy_user"("p_privy_user_id" "text", "p_wallet_address" "text", "p_email" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."create_or_link_privy_user"("p_privy_user_id" "text", "p_wallet_address" "text", "p_email" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_or_link_privy_user"("p_privy_user_id" "text", "p_wallet_address" "text", "p_email" "text") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."create_profile_on_signup"() TO "anon";
 GRANT ALL ON FUNCTION "public"."create_profile_on_signup"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_profile_on_signup"() TO "service_role";
@@ -1549,6 +1759,12 @@ GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid"
 GRANT ALL ON FUNCTION "public"."sync_user_workspaces"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_user_workspaces"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_user_workspaces"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_user_settings_updated_at"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_user_settings_updated_at"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_user_settings_updated_at"() TO "service_role";
 
 
 
@@ -1615,6 +1831,12 @@ GRANT ALL ON TABLE "public"."messages" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."privy_users" TO "anon";
+GRANT ALL ON TABLE "public"."privy_users" TO "authenticated";
+GRANT ALL ON TABLE "public"."privy_users" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."profiles" TO "anon";
 GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
@@ -1648,6 +1870,12 @@ GRANT ALL ON TABLE "public"."user_data" TO "service_role";
 GRANT ALL ON TABLE "public"."user_plugins" TO "anon";
 GRANT ALL ON TABLE "public"."user_plugins" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_plugins" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."user_settings" TO "anon";
+GRANT ALL ON TABLE "public"."user_settings" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_settings" TO "service_role";
 
 
 

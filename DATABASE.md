@@ -79,11 +79,11 @@ This document provides a comprehensive overview of the Row Level Security (RLS) 
 - **private**: Direct message chats between users
 
 ### Public vs Private Workspaces
-- **Public workspaces**: 
+- **Public workspaces**:
   - Visible to anyone
   - Anyone can join as a member
   - Content readable by anyone
-- **Private workspaces**: 
+- **Private workspaces**:
   - Only visible to members
   - Must be invited by admin or owner
   - Content only accessible to members
@@ -98,9 +98,18 @@ This document provides a comprehensive overview of the Row Level Security (RLS) 
 - `Owner can delete workspace`: Only owner can delete workspace
 
 ### workspace_members
-- `Admin or owner can CRUD workspace_members`: Only admin or owner can manage members
-- `Members can read workspace_members`: All members can see other members
-- `Anyone can add themselves to public workspaces`: Users can join public workspaces without invitation
+- **SELECT policy**: Can read member lists if admin/member OR workspace is public
+  - Admins and owners can always view workspace members
+  - Current workspace members can view other members
+  - Anyone can view members of public workspaces
+- **INSERT policy**: Can join if admin OR self-joining public workspace
+  - Admins and owners can add anyone to the workspace
+  - Users can add themselves to public workspaces as members
+- **UPDATE policy**: Only admin/owner can change roles
+  - Only workspace admins and owners can modify member roles
+- **DELETE policy**: Admin/owner can remove anyone, users can leave
+  - Admins and owners can remove any member
+  - Users can remove themselves (leave the workspace)
 
 ### chats
 - `Workspace members can create workspace chats`: Only workspace members (admin/member) can create workspace chats
@@ -178,7 +187,7 @@ The database uses ON DELETE CASCADE extensively to maintain referential integrit
 - `sync_user_workspaces_insert_trigger` and `sync_user_workspaces_delete_trigger`: Maintain user_workspaces table
 - When a workspace is created, the owner is automatically added as an admin member
 - When users are added to workspace_members, a record is automatically added to user_workspaces
-- When users are removed from workspace_members, the corresponding record is removed from user_workspaces 
+- When users are removed from workspace_members, the corresponding record is removed from user_workspaces
 - User profiles are automatically created when users sign up
 
 ## Security Considerations

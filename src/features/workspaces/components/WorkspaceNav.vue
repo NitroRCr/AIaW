@@ -12,16 +12,26 @@
       style="position: sticky; bottom: 0; z-index: 1"
       align="middle"
     >
-      <q-btn
-        ml-2
-        color="secondary"
-        :label="$t('workspaceNav.workspace')"
-        icon="sym_o_add"
-        flat
-        :content-inset-level="0.5"
-        class="full-width"
-        @click="addWorkspace()"
-      />
+      <div class="row q-gutter-sm">
+        <q-btn
+          color="secondary"
+          label=""
+          icon="sym_o_add"
+          flat
+          :content-inset-level="0.5"
+          class="col"
+          @click="addWorkspace()"
+        />
+        <q-btn
+          color="secondary"
+          label=""
+          icon="sym_o_search"
+          flat
+          :content-inset-level="0.5"
+          class="col"
+          @click="router.push('/workspaces')"
+        />
+      </div>
       <!-- <q-btn
         ml-1
         color="secondary"

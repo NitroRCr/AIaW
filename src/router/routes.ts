@@ -12,6 +12,7 @@ import PluginSettings from "@/features/plugins/views/PluginSettings.vue"
 import PluginsMarket from "@/features/plugins/views/PluginsMarket.vue"
 import CustomProvider from "@/features/providers/views/CustomProvider.vue"
 import SettingsView from "@/features/settings/views/SettingsView.vue"
+import UserWorkspacesManager from "@/features/workspaces/views/UserWorkspacesManager.vue"
 import WorkspaceIndex from "@/features/workspaces/views/WorkspaceIndex.vue"
 import WorkspaceSettings from "@/features/workspaces/views/WorkspaceSettings.vue"
 
@@ -27,6 +28,7 @@ import PluginsPage from "@/pages/PluginsPage.vue"
 import SetProvider from "@/pages/SetProvider.vue"
 import SettingsPage from "@/pages/SettingsPage.vue"
 import WorkspacePage from "@/pages/WorkspacePage.vue"
+import WorkspacesPage from "@/pages/WorkspacesPage.vue"
 
 const { t } = i18n.global
 
@@ -35,6 +37,17 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     component: MainLayout,
     children: [
+      {
+        path: "/workspaces",
+        component: WorkspacesPage,
+        children: [
+          {
+            path: "",
+            component: UserWorkspacesManager,
+            meta: { title: t("routes.workspaces") },
+          },
+        ],
+      },
       {
         path: "/workspaces/:workspaceId/",
         component: WorkspacePage,
