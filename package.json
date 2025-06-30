@@ -22,7 +22,9 @@
     "fix:imports": "eslint --ext .ts,.js,.vue . --fix --rule 'import/order: [\"error\"]' --rule 'no-restricted-imports: [\"error\"]'",
     "migrate:all": "npx tsx scripts/migrate_messages_tree.ts",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "supabase:start": "docker compose --env-file .env.docker-compose up -d",
+    "supabase:stop": "docker compose --env-file .env.docker-compose stop"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.13",
