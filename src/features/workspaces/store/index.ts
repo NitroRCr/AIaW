@@ -10,14 +10,26 @@ import { DefaultWsIndexContent } from "@/features/dialogs/utils"
 import { useWorkspacesWithSubscription } from "@/features/workspaces/composables/useWorkspacesWithSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
-import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspaceMember, mapWorkspaceToDb, Workspace, WorkspaceMember, WorkspaceMemberRole } from "@/services/data/types/workspace"
+import {
+  DbWorkspaceInsert,
+  DbWorkspaceMember,
+  DbWorkspaceUpdate,
+  mapDbToWorkspaceMember,
+  mapDbToUserWorkspace,
+  mapWorkspaceToDb,
+  Workspace,
+  WorkspaceMember,
+  WorkspaceMemberRole,
+  UserWorkspace
+} from "@/services/data/types/workspace"
 
 /**
- * Store for managing workspaces and workspace members
+ * Store for managing workspaces, workspace members, and user workspace relationships
  *
  * This store provides functionality for:
  * - Managing workspace CRUD operations (create, read, update, delete)
  * - Managing workspace members and their roles
+ * - Managing user workspace relationships (read-only, auto-maintained by DB triggers)
  * - Retrieving workspace membership information
  *
  * Workspaces are a fundamental organizational unit in the application that
@@ -30,12 +42,15 @@ import { DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, mapDbToWorkspa
  * @database
  * - Table: "workspaces" - Stores workspace data
  * - Table: "workspace_members" - Stores workspace membership and roles
+ * - Table: "user_workspaces" - Denormalized table for fast user-workspace lookups (auto-maintained)
  * - Related to: "profiles" table for member information
  */
 export const useWorkspacesStore = defineStore("workspaces", () => {
   const { workspaces, isLoaded } = useWorkspacesWithSubscription()
   const isLoadedMembers = ref(false)
+  const isLoadedUserWorkspaces = ref(false)
   const workspaceMembers = ref<Record<string, WorkspaceMember[]>>({})
+  const userWorkspaces = ref<Record<string, UserWorkspace[]>>({})
   const { t } = useI18n()
   const isSaving = ref(false)
   const hasChanges = ref(false)
@@ -46,9 +61,15 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
 
   const init = async () => {
     isLoadedMembers.value = false
+    isLoadedUserWorkspaces.value = false
     workspaceMembers.value = {}
-    await fetchWorkspaceMembers()
+    userWorkspaces.value = {}
+    await Promise.all([
+      fetchWorkspaceMembers(),
+      fetchUserWorkspaces()
+    ])
     isLoadedMembers.value = true
+    isLoadedUserWorkspaces.value = true
   }
 
   useUserLoginCallback(init)
@@ -184,6 +205,9 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       member,
     ]
 
+    // Refresh user workspaces as they are auto-maintained by triggers
+    await fetchUserWorkspaces(userId)
+
     return member
   }
 
@@ -202,6 +226,9 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     workspaceMembers.value[workspaceId] = workspaceMembers.value[workspaceId].filter(
       (member) => member.userId !== userId
     )
+
+    // Refresh user workspaces as they are auto-maintained by triggers
+    await fetchUserWorkspaces(userId)
   }
 
   async function updateWorkspaceMember (
@@ -246,6 +273,68 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     return workspaceMembers.value
   }
 
+  async function fetchUserWorkspaces (userId?: string) {
+    const query = supabase
+      .from("user_workspaces")
+      .select(`
+        *,
+        profile:profiles(*),
+        workspace:workspaces(*)
+      `)
+
+    if (userId) {
+      query.eq("user_id", userId)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error("❌ Failed to get user workspaces:", error.message)
+      throw error
+    }
+
+    const processedData = data.map(mapDbToUserWorkspace)
+
+    if (userId) {
+      // Update specific user's workspaces
+      userWorkspaces.value[userId] = processedData
+    } else {
+      // Group by user_id for all users
+      userWorkspaces.value = processedData.reduce((acc, userWorkspace) => {
+        acc[userWorkspace.userId] = [...(acc[userWorkspace.userId] || []), userWorkspace]
+
+        return acc
+      }, {} as Record<string, UserWorkspace[]>)
+    }
+
+    return userWorkspaces.value
+  }
+
+  async function getUserWorkspacesByUser (userId: string) {
+    if (!userWorkspaces.value[userId]) {
+      await fetchUserWorkspaces(userId)
+    }
+
+    return userWorkspaces.value[userId] || []
+  }
+
+  async function getUserWorkspacesByWorkspace (workspaceId: string) {
+    // Find all user-workspace relationships for a specific workspace
+    const allUserWorkspaces = Object.values(userWorkspaces.value).flat()
+
+    return allUserWorkspaces.filter(uw => uw.workspaceId === workspaceId)
+  }
+
+  function isUserInWorkspace (userId: string, workspaceId: string): boolean {
+    const userWorkspaceList = userWorkspaces.value[userId] || []
+
+    return userWorkspaceList.some(uw => uw.workspaceId === workspaceId)
+  }
+
+  function getUserAccessibleWorkspaces (userId: string): UserWorkspace[] {
+    return userWorkspaces.value[userId] || []
+  }
+
   function isUserWorkspaceRole (workspaceId: string, userId: string) {
     const member = workspaceMembers.value[workspaceId]?.find(
       (member) => member.userId === userId
@@ -261,8 +350,10 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   }
 
   return {
-    isLoaded: computed(() => isLoaded.value && isLoadedMembers.value),
+    isLoaded: computed(() => isLoaded.value && isLoadedMembers.value && isLoadedUserWorkspaces.value),
     workspaces,
+    workspaceMembers,
+    userWorkspaces,
     addWorkspace,
     updateItem,
     putItem,
@@ -271,9 +362,13 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     removeWorkspaceMember,
     updateWorkspaceMember,
     getWorkspaceMembers: fetchWorkspaceMembers,
+    getUserWorkspaces: fetchUserWorkspaces,
+    getUserWorkspacesByUser,
+    getUserWorkspacesByWorkspace,
+    isUserInWorkspace,
+    getUserAccessibleWorkspaces,
     isUserWorkspaceRole,
     isSaving,
-    hasChanges,
-    workspaceMembers
+    hasChanges
   }
 })

@@ -11,10 +11,14 @@ type DbWorkspaceRow = Database["public"]["Tables"]["workspaces"]["Row"]
 type DbWorkspaceInsert = Database["public"]["Tables"]["workspaces"]["Insert"]
 type DbWorkspaceUpdate = Database["public"]["Tables"]["workspaces"]["Update"]
 type DbWorkspaceMember = Database["public"]["Tables"]["workspace_members"]["Row"]
+type DbUserWorkspaceRow = Database["public"]["Tables"]["user_workspaces"]["Row"]
+type DbUserWorkspaceInsert = Database["public"]["Tables"]["user_workspaces"]["Insert"]
+type DbUserWorkspaceUpdate = Database["public"]["Tables"]["user_workspaces"]["Update"]
 
 type WorkspaceMemberRole = "admin" | "member" | "guest" | "none"
 
 type DbWorkspace = DbWorkspaceRow | DbWorkspaceInsert | DbWorkspaceUpdate
+type DbUserWorkspace = DbUserWorkspaceRow | DbUserWorkspaceInsert | DbUserWorkspaceUpdate
 
 type WorkspaceMap = {
   avatar: Avatar
@@ -25,6 +29,11 @@ type Workspace<T extends DbWorkspace = DbWorkspaceRow> = OverrideProps<DtoToEnti
 
 type WorkspaceMember = DtoToEntity<Omit<DbWorkspaceMember, 'profile'>> & {
   profile: Profile
+}
+
+type UserWorkspace = DtoToEntity<DbUserWorkspaceRow> & {
+  profile: Profile
+  workspace: Workspace
 }
 
 const mapDbToWorkspace = <T extends DbWorkspace>(dbWorkspace: T) => {
@@ -48,9 +57,45 @@ const mapDbToWorkspaceMember = (dbWorkspaceMember: DbWorkspaceMember) => {
 const mapWorkspaceMemberToDb = (workspaceMember: WorkspaceMember) =>
   entityToDto(workspaceMember) as DbWorkspaceMember
 
-export { mapDbToWorkspace, mapDbToWorkspaceMember, mapWorkspaceMemberToDb, mapWorkspaceToDb }
+const mapDbToUserWorkspace = (dbUserWorkspace: DbUserWorkspaceRow & {
+  profile?: any
+  workspace?: any
+}) => {
+  const userWorkspace = dtoToEntity(dbUserWorkspace) as UserWorkspace
+
+  return {
+    ...userWorkspace,
+    profile: mapAvatarOrDefault(userWorkspace.profile, userWorkspace.profile.name),
+    workspace: mapAvatarOrDefault(userWorkspace.workspace, userWorkspace.workspace.name)
+  }
+}
+
+const mapUserWorkspaceToDb = (userWorkspace: UserWorkspace) =>
+  entityToDto({
+    userId: userWorkspace.userId,
+    workspaceId: userWorkspace.workspaceId
+  }) as DbUserWorkspaceRow
+
+export {
+  mapDbToWorkspace,
+  mapDbToWorkspaceMember,
+  mapDbToUserWorkspace,
+  mapWorkspaceMemberToDb,
+  mapUserWorkspaceToDb,
+  mapWorkspaceToDb
+}
 export type {
-  WorkspaceMember, Workspace,
+  WorkspaceMember,
+  Workspace,
+  UserWorkspace,
   WorkspaceMemberRole,
-  DbWorkspaceRow, DbWorkspaceInsert, DbWorkspaceMember, DbWorkspaceUpdate, DbWorkspace
+  DbWorkspaceRow,
+  DbWorkspaceInsert,
+  DbWorkspaceMember,
+  DbWorkspaceUpdate,
+  DbWorkspace,
+  DbUserWorkspaceRow,
+  DbUserWorkspaceInsert,
+  DbUserWorkspaceUpdate,
+  DbUserWorkspace
 }

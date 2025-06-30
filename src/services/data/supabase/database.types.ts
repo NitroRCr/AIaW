@@ -375,6 +375,36 @@ export type Database = {
           },
         ]
       }
+      privy_users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          privy_user_id: string
+          supabase_uid: string
+          updated_at: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          privy_user_id: string
+          supabase_uid: string
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          privy_user_id?: string
+          supabase_uid?: string
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar: Json | null
@@ -382,6 +412,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          privy_user_id: string | null
         }
         Insert: {
           avatar?: Json | null
@@ -389,6 +420,7 @@ export type Database = {
           description?: string | null
           id: string
           name: string
+          privy_user_id?: string | null
         }
         Update: {
           avatar?: Json | null
@@ -396,6 +428,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          privy_user_id?: string | null
         }
         Relationships: []
       }
@@ -619,6 +652,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          reference_id: string | null
+          schema_definition: Json | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          reference_id?: string | null
+          schema_definition?: Json | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+          value?: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          reference_id?: string | null
+          schema_definition?: Json | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_workspaces: {
         Row: {
           user_id: string
@@ -754,6 +831,14 @@ export type Database = {
       can_manage_chat: {
         Args: { chat_id_param: string }
         Returns: boolean
+      }
+      create_or_link_privy_user: {
+        Args: {
+          p_privy_user_id: string
+          p_wallet_address?: string
+          p_email?: string
+        }
+        Returns: string
       }
       debug_workspaces: {
         Args: Record<PropertyKey, never>
