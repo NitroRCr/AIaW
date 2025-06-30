@@ -48,10 +48,10 @@
               </q-item>
             </q-list>
           </q-card-section>
-          <q-card-actions align="right">
+          <q-card-actions align="center">
             <q-btn
-              flat
               color="primary"
+              class="full-width"
               :label="buttonCaption"
               :loading
               :disable="!valid"
