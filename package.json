@@ -24,7 +24,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "supabase:start": "docker compose --env-file .env.docker-compose up -d",
-    "supabase:stop": "docker compose --env-file .env.docker-compose stop"
+    "supabase:stop": "docker compose --env-file .env.docker-compose stop",
+    "supabase:migrate": "bash supabase/migrate_to_dev.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.13",
