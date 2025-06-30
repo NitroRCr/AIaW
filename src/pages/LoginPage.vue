@@ -8,8 +8,8 @@
           Cyber AI
         </div>
         <q-card
+          :class="[$q.dark.isActive ? 'bg-grey-10' : 'bg-white']"
           min-w="320px"
-          class="bg-white"
         >
           <q-card-section>
             <div class="text-h6">
@@ -69,6 +69,7 @@
 </template>
 
 <script setup lang="ts">
+import { useQuasar } from 'quasar'
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
@@ -106,6 +107,8 @@ const { signIn, signUp } = useAuth({
     router.push("/")
   }
 })
+
+const $q = useQuasar()
 </script>
 <style scoped>
 .title {
