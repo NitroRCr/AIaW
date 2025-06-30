@@ -582,9 +582,9 @@ watch(() => perfs.value.provider, (provider) => {
   if (provider) {
     providersStore.getModelList(provider).then((modelsAvailable) => {
       providerModels.value = modelsAvailable.length > 0 ? modelsAvailable : models.map((m) => m.name)
-    }).catch((err) => {
+    }).catch(() => {
       $q.notify({
-        message: err.message,
+        message: "Invalid provider or API key",
         color: "negative",
       })
       providerModels.value = []
