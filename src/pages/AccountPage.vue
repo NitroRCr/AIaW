@@ -11,6 +11,7 @@
       class="relative-position"
     >
       <q-list
+        mt-10
         pb-2
         bg-sur
         max-w="1000px"
@@ -73,7 +74,13 @@
           v-ripple
           @click="signOut()"
         >
-          <q-item-section> Sign Out </q-item-section>
+          <q-item-section avatar>
+            <q-icon name="sym_o_logout" />
+          </q-item-section>
+
+          <q-item-section>
+            {{ $t("accountPage.signOut") }}
+          </q-item-section>
         </q-item>
       </q-list>
 

@@ -24,6 +24,7 @@ import ChatsPage from "@/pages/ChatsPage.vue"
 import CyberlinksPage from "@/pages/CyberlinksPage.vue"
 import EmptyPage from "@/pages/EmptyPage.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
+import LoginPage from "@/pages/LoginPage.vue"
 import PluginsPage from "@/pages/PluginsPage.vue"
 import SetProvider from "@/pages/SetProvider.vue"
 import SettingsPage from "@/pages/SettingsPage.vue"
@@ -33,6 +34,11 @@ import WorkspacesPage from "@/pages/WorkspacesPage.vue"
 const { t } = i18n.global
 
 const routes: RouteRecordRaw[] = [
+  {
+    path: "/login",
+    component: LoginPage,
+    meta: { title: "Login", public: true },
+  },
   {
     path: "/",
     component: MainLayout,
@@ -159,7 +165,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: "/account",
         component: AccountPage,
-        meta: { title: t("routes.account"), requiresAuth: true },
+        meta: { title: t("routes.account") },
       },
       {
         path: "/cyberlinks",

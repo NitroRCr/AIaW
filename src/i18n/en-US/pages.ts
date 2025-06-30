@@ -1,6 +1,7 @@
 export default {
   accountPage: {
-    accountTitle: "Account",
+    title: "Account",
+    user: "User",
     infoHeader: "Information",
     emailLabel: "Email",
     cloudSyncHeader: "Cloud Sync",
@@ -25,7 +26,7 @@ export default {
     orderHistoryHeader: "Order History",
     contactDeveloper:
       "If you encounter any abnormalities in your order, please contact the developer, Email:",
-    logoutButton: "Log Out",
+    signOut: "Sign Out",
     licenseOk: "Enabled",
     licenseExpired: "Expired",
     licenseDeactivated: "Deactivated",

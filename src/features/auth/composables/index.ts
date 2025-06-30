@@ -1,7 +1,7 @@
 import { useAuth } from "./useAuth"
 import { useCheckLogin } from "./useCheckLogin"
-import { useFirstVisit } from "./useFirstVisit"
 import { useMnemonic } from "./useMnemonic"
+import { useOnboarding } from "./useOnboarding"
 import { usePinModal } from "./usePinModal"
 import { useUserLoginCallback } from "./useUserLoginCallback"
 
@@ -11,5 +11,5 @@ export {
   useUserLoginCallback,
   useMnemonic,
   usePinModal,
-  useFirstVisit
+  useOnboarding
 }

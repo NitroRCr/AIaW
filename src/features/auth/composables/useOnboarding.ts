@@ -8,7 +8,7 @@ import { localData } from "@/shared/utils/localData"
 import { useAssistantsStore } from "@/features/assistants/store"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
-export function useFirstVisit () {
+export function useOnboarding () {
   const $q = useQuasar()
   const assistantsStore = useAssistantsStore()
   const userStore = useUserStore()
@@ -16,14 +16,14 @@ export function useFirstVisit () {
   // eslint-disable-next-line no-unused-vars
   const workspaceStore = useWorkspacesStore()
   const { isLoggedIn } = storeToRefs(useUserStore())
-  console.log("!!!!useFirstVisit isLoggedIn", isLoggedIn)
 
   const onboarding = async () => {
+    if (!isLoggedIn.value) {
+      return
+    }
+
     const noAssistants = assistantsStore.assistants.length === 0
-    const noWorkspaces = workspaceStore.workspaces.length === 0
-    console.log("noAssistants", noAssistants)
-    console.log("noWorkspaces", noWorkspaces)
-    console.log("localData.visited", localData.visited)
+    const noWorkspaces = workspaceStore.workspaces.length === 0 || !workspaceStore.workspaces.find((w) => w.id === defaultWorkspaceId)
 
     if (!localData.visited || (noAssistants && noWorkspaces)) {
       try {
@@ -42,7 +42,9 @@ export function useFirstVisit () {
         }
 
         if (noWorkspaces) {
-          await workspaceStore.addWorkspaceMember(defaultWorkspaceId, userStore.currentUserId, "member")
+          console.log("!!!!addWorkspaceMember", defaultWorkspaceId, userStore.currentUserId)
+          const res = await workspaceStore.addWorkspaceMember(defaultWorkspaceId, userStore.currentUserId, "member")
+          console.log("!!!!res", res)
         }
 
         $q.notify({

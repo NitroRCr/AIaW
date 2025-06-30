@@ -23,7 +23,7 @@ import { useUserStore, getMnemonic, useUserDataStore, useUserPerfsStore } from "
 import { useArtifactsStore } from "@/features/artifacts/store"
 import { useAssistantsStore } from "@/features/assistants/store"
 import PinModal from "@/features/auth/components/PinModal.vue"
-import { useFirstVisit } from "@/features/auth/composables/useFirstVisit"
+import { useOnboarding } from "@/features/auth/composables/useOnboarding"
 import { usePinModal } from "@/features/auth/composables/usePinModal"
 import { useAuthStore } from "@/features/auth/store/auth"
 import { useChatsStore } from "@/features/chats/store"
@@ -47,11 +47,12 @@ const { t } = useI18n()
 const $q = useQuasar()
 
 const userStore = useUserStore()
+const { onboarding } = useOnboarding()
 
 $q.loading.show()
 
 // TODO: investigate how to load all with sigle request
-const { isInitialized: userInitialized } = storeToRefs(userStore)
+const { isInitialized: userInitialized, isLoggedIn } = storeToRefs(userStore)
 const { isLoaded: assistantsLoaded } = storeToRefs(useAssistantsStore())
 const { isLoaded: chatsLoaded } = storeToRefs(useChatsStore())
 const { isLoaded: dialogsLoaded } = storeToRefs(useDialogsStore())
@@ -60,6 +61,7 @@ const { isLoaded: workspacesLoaded } = storeToRefs(useWorkspacesStore())
 const { ready: perfsLoaded } = storeToRefs(useUserPerfsStore())
 const { ready: userDataLoaded } = storeToRefs(useUserDataStore())
 const { isLoaded: artifactsLoaded } = storeToRefs(useArtifactsStore())
+
 const isAppReady = computed(
   () =>
     userInitialized.value &&
@@ -109,7 +111,6 @@ if (IsTauri) {
 provide("kepler", createKeplerWallet())
 
 useSetTheme()
-const { onboarding } = useFirstVisit()
 
 router.afterEach((to) => {
   if (to.meta.title) {
@@ -119,16 +120,18 @@ router.afterEach((to) => {
 
 // Check if user is authenticated
 router.beforeEach(async (to, from, next) => {
-  if (to.meta.requiresAuth) {
+  console.log("!!!!to", to, to.meta.public)
+
+  if (!to.meta.public) {
     await until(() => userInitialized.value).toBeTruthy()
 
-    if (!userInitialized.value) {
+    if (!isLoggedIn.value) {
       $q.notify({
         message: t("common.pleaseLogin"),
         color: "negative",
       })
 
-      return next("/")
+      return next("/login")
     }
   }
 

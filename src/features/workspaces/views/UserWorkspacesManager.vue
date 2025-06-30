@@ -200,9 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from "quasar"
 import { onMounted, ref } from "vue"
-import { useI18n } from "vue-i18n"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import DataListManager from "@/shared/components/data/DataListManager.vue"
@@ -212,8 +210,6 @@ import { useWorkspaceManager } from "@/features/workspaces/composables/useWorksp
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
-const { t } = useI18n()
-const $q = useQuasar()
 defineEmits<{
   'toggle-drawer': []
 }>()
