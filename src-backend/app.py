@@ -7,6 +7,8 @@ from typing import Optional, Dict, Any, AsyncIterator
 from fastapi.staticfiles import StaticFiles
 from llama_parse import LlamaParse
 import os
+import jwt
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv, find_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -52,11 +54,52 @@ LITELLM_URL = os.environ.get('LITELLM_URL')
 LITELLM_API_KEY = os.environ.get('LITELLM_API_KEY')
 IS_PRODUCTION = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
 
+# JWT settings for Supabase compatibility
+JWT_SECRET = os.environ.get('JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRY = int(os.environ.get('JWT_EXPIRY', 3600))  # Default 1 hour
+
 class ProxyRequest(BaseModel):
     method: str
     url: str
     headers: Optional[Dict[str, str]] = None
     body: Optional[Any] = None
+
+class PrivyAuthRequest(BaseModel):
+    privy_user_id: str
+    wallet_address: Optional[str] = None
+    email: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+def generate_jwt_token(privy_user_id: str, wallet_address: Optional[str] = None,
+                      email: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> str:
+    """
+    Generate JWT token compatible with Supabase auth
+    """
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(seconds=JWT_EXPIRY)
+
+    payload = {
+        'sub': privy_user_id,  # Subject - stable user identifier
+        'aud': 'authenticated',  # Audience - Supabase role
+        'role': 'authenticated',  # User role
+        'iss': 'aiaw-backend',  # Issuer
+        'iat': int(now.timestamp()),  # Issued at
+        'exp': int(expires_at.timestamp()),  # Expires at
+        'user_metadata': {
+            'privy_user_id': privy_user_id,
+            'wallet_address': wallet_address,
+            'email': email,
+            **(metadata or {})
+        }
+    }
+
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 @app.post('/cors/proxy')
 async def proxy(request: ProxyRequest):
@@ -210,6 +253,61 @@ async def searxng(request: Request):
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post('/auth/privy', response_model=AuthResponse)
+async def authenticate_with_privy(auth_request: PrivyAuthRequest):
+    """
+    Authenticate user with Privy and generate JWT token for Supabase
+    """
+    try:
+        # Generate JWT token
+        access_token = generate_jwt_token(
+            privy_user_id=auth_request.privy_user_id,
+            wallet_address=auth_request.wallet_address,
+            email=auth_request.email,
+            metadata=auth_request.metadata
+        )
+
+        return AuthResponse(
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=JWT_EXPIRY
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate token: {str(e)}")
+
+@app.get('/auth/test')
+async def test_auth():
+    """
+    Test endpoint to generate a fake JWT token for development
+    """
+    fake_user_id = "test-privy-user-123"
+    fake_wallet = "0x1234567890123456789012345678901234567890"
+    fake_email = "test@example.com"
+
+    try:
+        access_token = generate_jwt_token(
+            privy_user_id=fake_user_id,
+            wallet_address=fake_wallet,
+            email=fake_email,
+            metadata={"test": True}
+        )
+
+        return {
+            "message": "Test token generated successfully",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": JWT_EXPIRY,
+            "user_info": {
+                "privy_user_id": fake_user_id,
+                "wallet_address": fake_wallet,
+                "email": fake_email
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate test token: {str(e)}")
 
 # if IS_PRODUCTION:
 app.mount('/', StaticFiles(directory='static', html=True), name='static')
