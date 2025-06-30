@@ -31,6 +31,7 @@ import { useChatMessagesStore } from "@/features/chats/store/chatMessages"
 import { useDialogsStore } from "@/features/dialogs/store/dialogs"
 import { usePluginsStore } from "@/features/plugins/store"
 import { useGlobalPresence } from "@/features/profile/composables/useGlobalPresence"
+import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import type { CosmosWallet } from "@/services/blockchain/cosmos/CosmosWallet"
 import { createCosmosSigner } from "@/services/blockchain/cosmos/CosmosWallet"
@@ -49,11 +50,13 @@ const userStore = useUserStore()
 
 $q.loading.show()
 
+// TODO: investigate how to load all with sigle request
 const { isInitialized: userInitialized } = storeToRefs(userStore)
 const { isLoaded: assistantsLoaded } = storeToRefs(useAssistantsStore())
 const { isLoaded: chatsLoaded } = storeToRefs(useChatsStore())
 const { isLoaded: dialogsLoaded } = storeToRefs(useDialogsStore())
 const { isLoaded: pluginsLoaded } = storeToRefs(usePluginsStore())
+const { isLoaded: workspacesLoaded } = storeToRefs(useWorkspacesStore())
 const { ready: perfsLoaded } = storeToRefs(useUserPerfsStore())
 const { ready: userDataLoaded } = storeToRefs(useUserDataStore())
 const { isLoaded: artifactsLoaded } = storeToRefs(useArtifactsStore())
@@ -64,6 +67,7 @@ const isAppReady = computed(
     chatsLoaded.value &&
     dialogsLoaded.value &&
     pluginsLoaded.value &&
+    workspacesLoaded.value &&
     perfsLoaded.value &&
     userDataLoaded.value &&
     artifactsLoaded.value
@@ -74,6 +78,7 @@ watch(
   (isReady) => {
     if (isReady) {
       $q.loading.hide()
+      onboarding()
     }
   },
   { immediate: true }
@@ -104,7 +109,7 @@ if (IsTauri) {
 provide("kepler", createKeplerWallet())
 
 useSetTheme()
-useFirstVisit()
+const { onboarding } = useFirstVisit()
 
 router.afterEach((to) => {
   if (to.meta.title) {

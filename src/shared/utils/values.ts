@@ -243,6 +243,17 @@ const ProviderTypes: ProviderType[] = [
   },
 ]
 
+const getProviderData = (provider: string) => {
+  const providerData = ProviderTypes.find((p) => p.name === provider)
+
+  if (!providerData) return null
+
+  return {
+    type: providerData.name,
+    settings: providerData.settings,
+  }
+}
+
 const InputTypes = {
   textOnly: { user: [], assistant: [], tool: [] },
   commonVision: { user: ["image/*"], assistant: [], tool: [] },
@@ -326,6 +337,17 @@ const models: Model[] = [
   { name: "grok-3-mini-fast", inputTypes: InputTypes.textOnly },
   { name: "grok-3-mini-fast-beta", inputTypes: InputTypes.textOnly },
 ]
+
+const getModelData = (model: string) => {
+  const modelData = models.find((m) => m.name === model)
+
+  if (!modelData) return null
+
+  return {
+    name: modelData.name,
+    inputTypes: modelData.inputTypes,
+  }
+}
 const modelOptions = models.map((m) => m.name)
 const dialogOptions = {
   color: "primary",
@@ -1913,4 +1935,6 @@ export {
   materialSymbols,
   mdPreviewThemes,
   mdCodeThemes,
+  getProviderData,
+  getModelData
 }

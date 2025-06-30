@@ -207,30 +207,11 @@ ALTER FUNCTION "public"."create_or_link_privy_user"("p_privy_user_id" "text", "p
 CREATE OR REPLACE FUNCTION "public"."create_profile_on_signup"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
-DECLARE
-  privy_user_id text;
-BEGIN
-  privy_user_id := NEW.raw_user_meta_data->>'privy_user_id';
-
-  IF privy_user_id IS NULL THEN
-    RETURN NEW;
-  END IF;
-
-  -- если профиль с таким privy_user_id уже есть — обновим id и email
-  IF EXISTS (
-    SELECT 1 FROM public.profiles p WHERE p.privy_user_id = privy_user_id
-  ) THEN
-    UPDATE public.profiles p
-    SET id = NEW.id,
-        email = NEW.email
-    WHERE p.privy_user_id = privy_user_id;
-  ELSE
-    INSERT INTO public.profiles (id, email, privy_user_id)
-    VALUES (NEW.id, NEW.email, privy_user_id);
-  END IF;
-
-  RETURN NEW;
-END;
+begin
+  insert into public.profiles (id, name)
+  values (new.id, split_part(new.email, '@', 1));
+  return new;
+end;
 $$;
 
 

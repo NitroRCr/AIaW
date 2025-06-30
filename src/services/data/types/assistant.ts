@@ -54,4 +54,4 @@ const toAssistant = (item: Partial<AssistantWithParent>): Partial<Assistant> => 
 }
 
 export { mapDbToAssistant, mapDbToAssistantWithParent, mapAssistantToDb, toAssistant }
-export type { Assistant, DbAssistant, DbAssistantUpdate, AssistantWithParent, AssistantSharingType }
+export type { Assistant, DbAssistant, DbAssistantUpdate, AssistantWithParent, AssistantSharingType, DbAssistantInsert }
