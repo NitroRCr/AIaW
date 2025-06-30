@@ -38,6 +38,7 @@ import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveW
 
 const $q = useQuasar()
 const { workspace } = useActiveWorkspace()
+
 const avatar = computed(
   () =>
     workspace.value?.avatar ||
