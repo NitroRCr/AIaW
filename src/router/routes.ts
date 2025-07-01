@@ -46,6 +46,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: "/workspaces",
         component: WorkspacesPage,
+        meta: { title: t("routes.workspaces") },
         children: [
           {
             path: "",

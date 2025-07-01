@@ -8,11 +8,13 @@
     </q-toolbar-title>
   </view-common-header>
 
-  <q-page-container v-if="showPageContainer">
-    <q-page
-      p-2
-      :style-fn="pageFhStyle"
+  <!-- Common content wrapper -->
+  <component :is="showPageContainer ? 'q-page-container' : 'div'">
+    <component
+      :is="showPageContainer ? 'q-page' : 'div'"
+      v-bind="showPageContainer ? { p: 2, styleFn: pageFhStyle } : {}"
     >
+      <!-- Search input -->
       <div>
         <a-input
           :label="searchLabel"
@@ -20,12 +22,14 @@
           v-model="query"
         />
       </div>
+
+      <!-- Virtual scroll list -->
       <q-virtual-scroll
         mt-2
         v-slot="{ item, index }"
         :items="filteredItems"
       >
-        <q-item :key="index">
+        <q-item :key="item.id">
           <q-item-section avatar>
             <slot
               name="avatar"
@@ -88,6 +92,8 @@
           </q-item-section>
         </q-item>
       </q-virtual-scroll>
+
+      <!-- Loading indicator -->
       <q-inner-loading :showing="loading" />
 
       <!-- Empty state -->
@@ -106,105 +112,8 @@
           </div>
         </slot>
       </div>
-    </q-page>
-  </q-page-container>
-
-  <!-- Content without page container (for embedded use) -->
-  <div v-else>
-    <div>
-      <a-input
-        :label="searchLabel"
-        outlined
-        v-model="query"
-      />
-    </div>
-    <q-virtual-scroll
-      mt-2
-      v-slot="{ item, index }"
-      :items="filteredItems"
-    >
-      <q-item :key="index">
-        <q-item-section avatar>
-          <slot
-            name="avatar"
-            :item="item"
-            :index="index"
-          >
-            <a-avatar :avatar="item.avatar" />
-          </slot>
-        </q-item-section>
-        <q-item-section>
-          <q-item-label>
-            <slot
-              name="title"
-              :item="item"
-              :index="index"
-            >
-              {{ item.name }}
-            </slot>
-          </q-item-label>
-          <q-item-label caption>
-            <slot
-              name="subtitle"
-              :item="item"
-              :index="index"
-            >
-              {{ item.description }}
-            </slot>
-          </q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <slot
-            name="actions"
-            :item="item"
-            :index="index"
-          >
-            <q-btn
-              unelevated
-              bg-pri-c
-              text-on-pri-c
-              :label="actionLabel"
-              @click="$emit('action', item)"
-            >
-              <q-menu v-if="actionMenuItems.length > 0">
-                <q-list>
-                  <q-item
-                    v-for="menuItem in actionMenuItems"
-                    :key="menuItem.key"
-                    clickable
-                    v-close-popup
-                    @click="$emit('menu-action', menuItem.key, item)"
-                  >
-                    <q-item-section>
-                      {{ menuItem.label }}
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-          </slot>
-        </q-item-section>
-      </q-item>
-    </q-virtual-scroll>
-    <q-inner-loading :showing="loading" />
-
-    <!-- Empty state -->
-    <div
-      v-if="!loading && filteredItems.length === 0"
-      class="text-center q-pa-lg"
-    >
-      <slot name="empty-state">
-        <q-icon
-          name="sym_o_folder_open"
-          size="4em"
-          class="text-grey-5 q-mb-md"
-        />
-        <div class="text-h6 text-grey-6">
-          {{ emptyStateMessage }}
-        </div>
-      </slot>
-    </div>
-  </div>
+    </component>
+  </component>
 </template>
 
 <script setup lang="ts">
