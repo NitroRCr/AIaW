@@ -66,7 +66,7 @@ const mapDbToUserWorkspace = (dbUserWorkspace: DbUserWorkspaceRow & {
   return {
     ...userWorkspace,
     profile: mapAvatarOrDefault(userWorkspace.profile, userWorkspace.profile.name),
-    workspace: mapAvatarOrDefault(userWorkspace.workspace, userWorkspace.workspace.name)
+    workspace: mapDbToWorkspace(userWorkspace.workspace)
   }
 }
 

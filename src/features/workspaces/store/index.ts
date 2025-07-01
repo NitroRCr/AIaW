@@ -55,6 +55,10 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   const isSaving = ref(false)
   const hasChanges = ref(false)
 
+  // Real-time subscriptions for workspace members and user workspaces
+  let membersSubscription: ReturnType<typeof supabase.channel> | null = null
+  let userWorkspacesSubscription: ReturnType<typeof supabase.channel> | null = null
+
   watch(workspaces, () => {
     hasChanges.value = true
   }, { deep: true })
@@ -64,12 +68,219 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     isLoadedUserWorkspaces.value = false
     workspaceMembers.value = {}
     userWorkspaces.value = {}
+
+    // Unsubscribe from existing subscriptions
+    unsubscribeFromRealtimeUpdates()
+
     await Promise.all([
       fetchWorkspaceMembers(),
       fetchUserWorkspaces()
     ])
+
+    // Set up real-time subscriptions
+    subscribeToRealtimeUpdates()
+
     isLoadedMembers.value = true
     isLoadedUserWorkspaces.value = true
+  }
+
+  function subscribeToRealtimeUpdates() {
+    // Subscribe to workspace members changes
+    membersSubscription = supabase
+      .channel("workspace-members-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "workspace_members",
+        },
+        async (payload) => {
+          console.log("🔄 New workspace member added:", payload.new)
+
+          const memberData = payload.new as DbWorkspaceMember
+          const workspaceId = memberData.workspace_id
+          const userId = memberData.user_id
+
+          // Fetch complete member data with profile information
+          try {
+            const { data, error } = await supabase
+              .from("workspace_members")
+              .select("*, profile:profiles(*)")
+              .eq("workspace_id", workspaceId)
+              .eq("user_id", userId)
+              .single()
+
+            if (!error && data) {
+              const newMember = mapDbToWorkspaceMember(data as DbWorkspaceMember)
+
+              if (!workspaceMembers.value[workspaceId]) {
+                workspaceMembers.value[workspaceId] = []
+              }
+
+              // Check if member already exists to avoid duplicates
+              const exists = workspaceMembers.value[workspaceId].some(m => m.userId === userId)
+
+              if (!exists) {
+                workspaceMembers.value[workspaceId].push(newMember)
+                console.log("✅ Member added to local state:", newMember)
+              }
+
+              // Refresh user workspaces for the affected user
+              await fetchUserWorkspaces(userId)
+            } else {
+              console.error("❌ Failed to fetch complete member data:", error)
+            }
+          } catch (error) {
+            console.error("❌ Error handling member INSERT:", error)
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "workspace_members",
+        },
+        (payload) => {
+          console.log("🔄 Workspace member removed:", payload.old)
+
+          const oldMember = payload.old as DbWorkspaceMember
+          const workspaceId = oldMember.workspace_id
+          const userId = oldMember.user_id
+
+          if (workspaceMembers.value[workspaceId]) {
+            workspaceMembers.value[workspaceId] = workspaceMembers.value[workspaceId].filter(
+              (member) => member.userId !== userId
+            )
+            console.log("✅ Member removed from local state")
+          }
+
+          // Remove from user workspaces
+          if (userWorkspaces.value[userId]) {
+            userWorkspaces.value[userId] = userWorkspaces.value[userId].filter(
+              (uw) => uw.workspaceId !== workspaceId
+            )
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "workspace_members",
+        },
+        async (payload) => {
+          console.log("🔄 Workspace member updated:", payload.new)
+
+          const memberData = payload.new as DbWorkspaceMember
+          const workspaceId = memberData.workspace_id
+          const userId = memberData.user_id
+
+          // Fetch complete updated member data with profile information
+          try {
+            const { data, error } = await supabase
+              .from("workspace_members")
+              .select("*, profile:profiles(*)")
+              .eq("workspace_id", workspaceId)
+              .eq("user_id", userId)
+              .single()
+
+            if (!error && data) {
+              const updatedMember = mapDbToWorkspaceMember(data as DbWorkspaceMember)
+
+              if (workspaceMembers.value[workspaceId]) {
+                workspaceMembers.value[workspaceId] = workspaceMembers.value[workspaceId].map((member) =>
+                  member.userId === updatedMember.userId ? updatedMember : member
+                )
+                console.log("✅ Member updated in local state:", updatedMember)
+              }
+            } else {
+              console.error("❌ Failed to fetch updated member data:", error)
+            }
+          } catch (error) {
+            console.error("❌ Error handling member UPDATE:", error)
+          }
+        }
+      )
+      .subscribe()
+
+    // Subscribe to user workspaces changes (for immediate UI updates)
+    userWorkspacesSubscription = supabase
+      .channel("user-workspaces-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_workspaces",
+        },
+        async (payload) => {
+          const newUserWorkspace = payload.new as any
+          const userId = newUserWorkspace.user_id
+
+          // Fetch the complete user workspace data with relationships
+          const { data, error } = await supabase
+            .from("user_workspaces")
+            .select(`
+              *,
+              profile:profiles(*),
+              workspace:workspaces(*)
+            `)
+            .eq("user_id", userId)
+            .eq("workspace_id", newUserWorkspace.workspace_id)
+            .single()
+
+          if (!error && data) {
+            const userWorkspace = mapDbToUserWorkspace(data)
+
+            if (!userWorkspaces.value[userId]) {
+              userWorkspaces.value[userId] = []
+            }
+
+            // Add if not already exists
+            const exists = userWorkspaces.value[userId].some(uw => uw.workspaceId === userWorkspace.workspaceId)
+
+            if (!exists) {
+              userWorkspaces.value[userId].push(userWorkspace)
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "user_workspaces",
+        },
+        (payload) => {
+          const oldUserWorkspace = payload.old as any
+          const userId = oldUserWorkspace.user_id
+          const workspaceId = oldUserWorkspace.workspace_id
+
+          if (userWorkspaces.value[userId]) {
+            userWorkspaces.value[userId] = userWorkspaces.value[userId].filter(
+              (uw) => uw.workspaceId !== workspaceId
+            )
+          }
+        }
+      )
+      .subscribe()
+  }
+
+  function unsubscribeFromRealtimeUpdates() {
+    if (membersSubscription) {
+      membersSubscription.unsubscribe()
+      membersSubscription = null
+    }
+
+    if (userWorkspacesSubscription) {
+      userWorkspacesSubscription.unsubscribe()
+      userWorkspacesSubscription = null
+    }
   }
 
   useUserLoginCallback(init)
@@ -92,7 +303,26 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       hasChanges.value = false
     })
 
-    return insertItem(workspace)
+    const result = await insertItem(workspace)
+
+    // Refresh both user workspaces AND workspace members immediately after creation
+    // This ensures admin/owner functions work without page reload
+    if (result) {
+      // Use a small delay to ensure database triggers have completed
+      setTimeout(async () => {
+        try {
+          // Refresh both user workspaces and workspace members
+          await Promise.all([
+            fetchUserWorkspaces(),
+            fetchWorkspaceMembers()
+          ])
+        } catch (error) {
+          console.error('Failed to refresh workspace data after creation:', error)
+        }
+      }, 100)
+    }
+
+    return result
   }
 
   const update = async (id: string, changes:Workspace<DbWorkspaceUpdate>) => {
@@ -199,16 +429,9 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
-    const member = mapDbToWorkspaceMember(data as DbWorkspaceMember)
-    workspaceMembers.value[workspaceId] = [
-      ...workspaceMembers.value[workspaceId],
-      member,
-    ]
-
-    // Refresh user workspaces as they are auto-maintained by triggers
-    await fetchUserWorkspaces(userId)
-
-    return member
+    // Real-time subscriptions will handle updating the local state automatically
+    // No need to manually update workspaceMembers or fetch userWorkspaces
+    return mapDbToWorkspaceMember(data as DbWorkspaceMember)
   }
 
   async function removeWorkspaceMember (workspaceId: string, userId: string) {
@@ -223,12 +446,8 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
       throw error
     }
 
-    workspaceMembers.value[workspaceId] = workspaceMembers.value[workspaceId].filter(
-      (member) => member.userId !== userId
-    )
-
-    // Refresh user workspaces as they are auto-maintained by triggers
-    await fetchUserWorkspaces(userId)
+    // Real-time subscriptions will handle updating the local state automatically
+    // No need to manually update workspaceMembers or userWorkspaces
   }
 
   async function updateWorkspaceMember (
@@ -336,17 +555,34 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
   }
 
   function isUserWorkspaceRole (workspaceId: string, userId: string) {
-    const member = workspaceMembers.value[workspaceId]?.find(
+    // First check if we have workspace members data for this workspace
+    if (!workspaceMembers.value[workspaceId]) {
+      return null
+    }
+
+    const member = workspaceMembers.value[workspaceId].find(
       (member) => member.userId === userId
     )
-    console.log("isUserWorkspaceRole", workspaceId, userId,
-      workspaceMembers.value, workspaces, member)
 
     if (member) {
       return member.role as WorkspaceMemberRole
     }
 
     return null
+  }
+
+  // Debug helper function to check workspace membership data
+  function debugWorkspaceMembership(workspaceId: string, userId: string) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("🔍 Debug workspace membership:", {
+        workspaceId,
+        userId,
+        hasWorkspaceMembers: !!workspaceMembers.value[workspaceId],
+        membersCount: workspaceMembers.value[workspaceId]?.length || 0,
+        members: workspaceMembers.value[workspaceId],
+        userRole: isUserWorkspaceRole(workspaceId, userId)
+      })
+    }
   }
 
   return {
@@ -368,7 +604,10 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     isUserInWorkspace,
     getUserAccessibleWorkspaces,
     isUserWorkspaceRole,
+    ...(process.env.NODE_ENV === 'development' && { debugWorkspaceMembership }),
     isSaving,
-    hasChanges
+    hasChanges,
+    // Cleanup function for subscriptions
+    $dispose: unsubscribeFromRealtimeUpdates
   }
 })
