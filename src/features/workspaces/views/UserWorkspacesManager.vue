@@ -106,11 +106,6 @@ import { pageFhStyle } from "@/shared/utils/functions"
 import WorkspaceList from "@/features/workspaces/components/WorkspaceList.vue"
 import { useWorkspaceManager } from "@/features/workspaces/composables/useWorkspaceManager"
 
-// Import debug utilities for development only
-// if (process.env.NODE_ENV === 'development') {
-//   import("@/features/workspaces/utils/debug")
-// }
-
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
 /**
