@@ -23,7 +23,7 @@ import { useUserStore, getMnemonic, useUserDataStore, useUserPerfsStore } from "
 import { useArtifactsStore } from "@/features/artifacts/store"
 import { useAssistantsStore } from "@/features/assistants/store"
 import PinModal from "@/features/auth/components/PinModal.vue"
-import { useFirstVisit } from "@/features/auth/composables/useFirstVisit"
+import { useOnboarding } from "@/features/auth/composables/useOnboarding"
 import { usePinModal } from "@/features/auth/composables/usePinModal"
 import { useAuthStore } from "@/features/auth/store/auth"
 import { useChatsStore } from "@/features/chats/store"
@@ -31,6 +31,7 @@ import { useChatMessagesStore } from "@/features/chats/store/chatMessages"
 import { useDialogsStore } from "@/features/dialogs/store/dialogs"
 import { usePluginsStore } from "@/features/plugins/store"
 import { useGlobalPresence } from "@/features/profile/composables/useGlobalPresence"
+import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import type { CosmosWallet } from "@/services/blockchain/cosmos/CosmosWallet"
 import { createCosmosSigner } from "@/services/blockchain/cosmos/CosmosWallet"
@@ -39,24 +40,34 @@ import { EncryptionService } from "@/services/security/encryption/EncryptionServ
 
 import { IsTauri, IsWeb } from "./shared/utils/platformApi"
 import { checkUpdate, ready } from "./shared/utils/update"
+
+import { pinModalService } from "@/services"
+
 defineOptions({
   name: "App",
 })
 const { t } = useI18n()
 const $q = useQuasar()
 
+// Initialize pinModalService with Quasar instance
+pinModalService.initialize()
+
 const userStore = useUserStore()
+const { onboarding } = useOnboarding()
 
 $q.loading.show()
 
-const { isInitialized: userInitialized } = storeToRefs(userStore)
+// TODO: investigate how to load all with sigle request
+const { isInitialized: userInitialized, isLoggedIn } = storeToRefs(userStore)
 const { isLoaded: assistantsLoaded } = storeToRefs(useAssistantsStore())
 const { isLoaded: chatsLoaded } = storeToRefs(useChatsStore())
 const { isLoaded: dialogsLoaded } = storeToRefs(useDialogsStore())
 const { isLoaded: pluginsLoaded } = storeToRefs(usePluginsStore())
+const { isLoaded: workspacesLoaded } = storeToRefs(useWorkspacesStore())
 const { ready: perfsLoaded } = storeToRefs(useUserPerfsStore())
 const { ready: userDataLoaded } = storeToRefs(useUserDataStore())
 const { isLoaded: artifactsLoaded } = storeToRefs(useArtifactsStore())
+
 const isAppReady = computed(
   () =>
     userInitialized.value &&
@@ -64,6 +75,7 @@ const isAppReady = computed(
     chatsLoaded.value &&
     dialogsLoaded.value &&
     pluginsLoaded.value &&
+    workspacesLoaded.value &&
     perfsLoaded.value &&
     userDataLoaded.value &&
     artifactsLoaded.value
@@ -74,6 +86,7 @@ watch(
   (isReady) => {
     if (isReady) {
       $q.loading.hide()
+      onboarding()
     }
   },
   { immediate: true }
@@ -104,7 +117,6 @@ if (IsTauri) {
 provide("kepler", createKeplerWallet())
 
 useSetTheme()
-useFirstVisit()
 
 router.afterEach((to) => {
   if (to.meta.title) {
@@ -114,23 +126,25 @@ router.afterEach((to) => {
 
 // Check if user is authenticated
 router.beforeEach(async (to, from, next) => {
-  if (to.meta.requiresAuth) {
+  console.log("!!!!to", to, to.meta.public)
+
+  if (!to.meta.public) {
     await until(() => userInitialized.value).toBeTruthy()
 
-    if (!userInitialized.value) {
+    if (!isLoggedIn.value) {
       $q.notify({
         message: t("common.pleaseLogin"),
         color: "negative",
       })
 
-      return next("/")
+      return next("/login")
     }
   }
 
   return next()
 })
 
-// TODO: refactor this, move to composable
+// TODO: refactor this, move to composable panda
 const handlePinSubmit = async (pin: string) => {
   try {
     const authStore = useAuthStore()

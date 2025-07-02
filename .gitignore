@@ -57,4 +57,4 @@ dexie-cloud.key
 **/.claude/settings.local.json
 src-backend/__pycache__
 .env.docker
-volumes
+supabase/volumes

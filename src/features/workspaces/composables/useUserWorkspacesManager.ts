@@ -8,6 +8,26 @@ import { useWorkspacesStore } from "@/features/workspaces/store"
 import { UserWorkspace } from "@/services/data/types/workspace"
 
 /**
+ * Utility function to check if user has access to a specific workspace
+ */
+export function hasUserWorkspaceAccess(
+  userWorkspaces: UserWorkspace[],
+  workspaceId: string
+): boolean {
+  return userWorkspaces.some(uw => uw.workspaceId === workspaceId)
+}
+
+/**
+ * Utility function to find user workspace by workspace ID
+ */
+export function findUserWorkspace(
+  userWorkspaces: UserWorkspace[],
+  workspaceId: string
+): UserWorkspace | undefined {
+  return userWorkspaces.find(uw => uw.workspaceId === workspaceId)
+}
+
+/**
  * Composable for managing user workspaces
  * Provides user workspace specific operations and data access
  */
@@ -81,13 +101,13 @@ export function useUserWorkspacesManager() {
   }
 
   async function handleViewWorkspace(item: any) {
-    // Navigate to workspace - this would need router integration
-    console.log('Navigate to workspace:', item.workspaceId)
+    // TODO: Navigate to workspace - this would need router integration
+    // router.push(`/workspaces/${item.workspaceId}`)
   }
 
   async function handleViewUser(item: any) {
-    // Navigate to user profile - this would need router integration
-    console.log('Navigate to user:', item.userId)
+    // TODO: Navigate to user profile - this would need router integration
+    // router.push(`/users/${item.userId}`)
   }
 
   return {
@@ -110,6 +130,12 @@ export function useUserWorkspacesManager() {
     transformForList,
     handleRemoveAccess,
     handleViewWorkspace,
-    handleViewUser
+    handleViewUser,
+
+    // Utility functions
+    hasUserWorkspaceAccess: (workspaceId: string) =>
+      hasUserWorkspaceAccess(currentUserWorkspaces.value, workspaceId),
+    findUserWorkspace: (workspaceId: string) =>
+      findUserWorkspace(currentUserWorkspaces.value, workspaceId)
   }
 }

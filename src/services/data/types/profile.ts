@@ -1,4 +1,5 @@
 import { Avatar } from "@/shared/utils"
+import { mapAvatarOrDefault } from "@/shared/utils/avatar"
 import { dtoToEntity, entityToDto } from "@/shared/utils/dto/helpers"
 import { DtoToEntity, OverrideProps } from "@/shared/utils/dto/types"
 
@@ -23,7 +24,7 @@ type UserProfile = OverrideProps<DtoToEntity<DbUserProfile>, {
 }>
 
 const mapDbToProfile = (dbProfile: DbProfile) =>
-  dtoToEntity(dbProfile) as Profile
+  mapAvatarOrDefault(dtoToEntity(dbProfile) as Profile, dbProfile.name)
 
 const mapDbToUserProfile = (member: DbUserProfile): UserProfile => {
   return {

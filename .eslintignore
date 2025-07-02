@@ -9,4 +9,4 @@
 /quasar.config.*.temporary.compiled*
 database.types.ts
 src-backend/venv
-volumes
+supabase/volumes

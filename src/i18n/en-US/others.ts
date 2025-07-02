@@ -35,6 +35,7 @@ export default {
     errorProcessing: "Error processing request",
     confirmRemove: "Confirm Remove",
     confirmRemoveMessage: "Are you sure you want to remove {name}?",
+    pleaseLogin: "Please login to continue",
   },
   participantManager: {
     participants: "Participants",

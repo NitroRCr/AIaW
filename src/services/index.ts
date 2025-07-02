@@ -8,6 +8,9 @@ export { createKeplerWallet, CYBER_CONTRACT_ADDRESS } from "./blockchain/kepler/
 // Security services
 export { EncryptionService } from "./security/encryption/EncryptionService"
 
+// Auth services
+export { pinModalService, PinModalService } from "./auth/pinModalService"
+
 // AI/LLM services
 export {
   generateTitle,

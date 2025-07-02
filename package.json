@@ -1,9 +1,9 @@
 {
   "name": "aiaw",
   "version": "1.6.3",
-  "description": "精心设计的 AI (LLM) 客户端。全功能，轻量级；支持多工作区、插件系统、跨平台、本地优先+实时云同步",
-  "productName": "AI as Workspace",
-  "author": "NitroRCr <i@krytro.com>",
+  "description": "Cyber AI Frontend",
+  "productName": "Cyber AI",
+  "author": "Dasein <acidpictures@gmail.com>",
   "type": "module",
   "private": true,
   "scripts": {
@@ -22,7 +22,10 @@
     "fix:imports": "eslint --ext .ts,.js,.vue . --fix --rule 'import/order: [\"error\"]' --rule 'no-restricted-imports: [\"error\"]'",
     "migrate:all": "npx tsx scripts/migrate_messages_tree.ts",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "supabase:start": "docker compose --env-file .env.docker-compose up -d",
+    "supabase:stop": "docker compose --env-file .env.docker-compose stop",
+    "supabase:migrate": "bash supabase/migrate_to_dev.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.13",

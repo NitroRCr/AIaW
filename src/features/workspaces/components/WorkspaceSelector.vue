@@ -38,7 +38,7 @@ import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveW
 
 const $q = useQuasar()
 const { workspace } = useActiveWorkspace()
-console.log("---sm", $q.screen.lt.sm)
+
 const avatar = computed(
   () =>
     workspace.value?.avatar ||

@@ -38,10 +38,9 @@
       >
         <!-- My Workspaces Tab -->
         <q-tab-panel name="my-workspaces">
-          <data-list-manager
+          <workspace-list
             :title="$t('workspaces.myWorkspaces')"
             :search-label="$t('workspaces.search')"
-            :action-label="''"
             :empty-state-message="$t('workspaces.noMyWorkspaces')"
             :items="myWorkspaces"
             :loading="loading"
@@ -49,50 +48,6 @@
             :show-page-container="false"
             @action="handleWorkspaceAction"
           >
-            <template #avatar="{ item }">
-              <a-avatar :avatar="item.avatar" />
-            </template>
-
-            <template #title="{ item }">
-              <div class="row items-center q-gutter-sm">
-                <span>{{ item.name }}</span>
-              </div>
-            </template>
-
-            <template #subtitle="{ item }">
-              <div>
-                <div>{{ item.description || $t('workspaces.noDescription') }}</div>
-                <div>{{ $t('workspaces.createdBy') }}: {{ getOwnerName(item) }}</div>
-                <div v-if="item.isJoined">
-                  {{ $t('workspaces.joinedAt') }}: {{ formatDate(item.createdAt) }}
-                </div>
-                <div v-else-if="item.isOwned">
-                  {{ $t('workspaces.createdAt') }}: {{ formatDate(item.createdAt) }}
-                </div>
-              </div>
-            </template>
-
-            <template #actions="{ item }">
-              <q-btn
-                v-if="item.actionType === 'delete'"
-                unelevated
-                color="red"
-                text-color="white"
-                :label="$t('workspaces.delete')"
-                @click="deleteWorkspace(item)"
-                :loading="removing[item.id]"
-              />
-              <q-btn
-                v-else-if="item.actionType === 'leave'"
-                unelevated
-                color="negative"
-                text-color="white"
-                :label="$t('workspaces.leave')"
-                @click="leaveWorkspace(item)"
-                :loading="removing[item.id]"
-              />
-            </template>
-
             <template #empty-state>
               <q-icon
                 name="sym_o_group_work"
@@ -106,15 +61,14 @@
                 {{ $t('workspaces.noMyWorkspacesHint') }}
               </div>
             </template>
-          </data-list-manager>
+          </workspace-list>
         </q-tab-panel>
 
         <!-- Available Workspaces Tab -->
         <q-tab-panel name="available-workspaces">
-          <data-list-manager
+          <workspace-list
             :title="$t('workspaces.availableWorkspaces')"
             :search-label="$t('workspaces.search')"
-            :action-label="''"
             :empty-state-message="$t('workspaces.noAvailableWorkspaces')"
             :items="filteredAvailableWorkspaces"
             :loading="loading"
@@ -122,61 +76,6 @@
             :show-page-container="false"
             @action="handleWorkspaceAction"
           >
-            <template #avatar="{ item }">
-              <a-avatar :avatar="item.avatar" />
-            </template>
-
-            <template #title="{ item }">
-              <div class="row items-center q-gutter-sm">
-                <span>{{ item.name }}</span>
-              </div>
-            </template>
-
-            <template #subtitle="{ item }">
-              <div>
-                <div>{{ item.description || $t('workspaces.noDescription') }}</div>
-                <div>{{ $t('workspaces.createdBy') }}: {{ getOwnerName(item) }}</div>
-                <div v-if="item.isJoined">
-                  {{ $t('workspaces.joinedAt') }}: {{ formatDate(item.createdAt) }}
-                </div>
-                <div v-else-if="item.isOwned">
-                  {{ $t('workspaces.createdAt') }}: {{ formatDate(item.createdAt) }}
-                </div>
-                <div v-else>
-                  {{ $t('workspaces.createdAt') }}: {{ formatDate(item.createdAt) }}
-                </div>
-              </div>
-            </template>
-
-            <template #actions="{ item }">
-              <q-btn
-                v-if="item.actionType === 'delete'"
-                unelevated
-                color="red"
-                text-color="white"
-                :label="$t('workspaces.delete')"
-                @click="deleteWorkspace(item)"
-                :loading="removing[item.id]"
-              />
-              <q-icon
-                v-else-if="item.actionType === 'leave'"
-                name="sym_o_star"
-                size="md"
-                color="primary"
-                class="q-px-md"
-                style="display: flex; align-items: center; justify-content: center; min-height: 36px;"
-              />
-              <q-btn
-                v-else-if="item.actionType === 'join'"
-                unelevated
-                color="primary"
-                text-color="white"
-                :label="$t('workspaces.join')"
-                @click="joinWorkspace(item)"
-                :loading="adding[item.id]"
-              />
-            </template>
-
             <template #empty-state>
               <q-icon
                 name="sym_o_public"
@@ -190,7 +89,7 @@
                 {{ $t('workspaces.noAvailableWorkspacesHint') }}
               </div>
             </template>
-          </data-list-manager>
+          </workspace-list>
         </q-tab-panel>
       </q-tab-panels>
 
@@ -202,13 +101,37 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
 
-import AAvatar from "@/shared/components/avatar/AAvatar.vue"
-import DataListManager from "@/shared/components/data/DataListManager.vue"
 import { pageFhStyle } from "@/shared/utils/functions"
 
+import WorkspaceList from "@/features/workspaces/components/WorkspaceList.vue"
 import { useWorkspaceManager } from "@/features/workspaces/composables/useWorkspaceManager"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+
+/**
+ * UserWorkspacesManager Component
+ *
+ * This component provides a reactive interface for managing user workspaces.
+ * It includes the following reactivity features:
+ *
+ * 1. Real-time subscriptions: Automatically updates when workspaces, workspace members,
+ *    or user-workspace relationships change via database triggers
+ *
+ * 2. Immediate refresh after workspace creation: When a new workspace is created,
+ *    both user workspace data AND workspace members data are refreshed to ensure
+ *    the new workspace appears immediately with proper admin/owner functions
+ *
+ * 3. Optimized computed properties: Uses memoized computed properties for
+ *    efficient workspace ownership and membership checks
+ *
+ * 4. Manual refresh methods: Provides refreshWorkspaces() and refreshUserWorkspacesOnly()
+ *    methods for external components to trigger updates when needed
+ *
+ * 5. Debug utilities: In development mode, debug functions are available globally:
+ *    - window.debugWorkspace(workspaceId) - Debug membership for a specific workspace
+ *    - window.testWorkspaceReactivity(workspaceId) - Test reactivity after creation
+ *    - window.forceRefreshWorkspaceData() - Force refresh all workspace data
+ */
 
 defineEmits<{
   'toggle-drawer': []
@@ -220,22 +143,32 @@ const tab = ref("my-workspaces")
 const {
   // State
   loading,
-  adding,
-  removing,
 
   // Computed
   myWorkspaces,
   filteredAvailableWorkspaces,
-  getOwnerName,
 
   // Methods
   handleWorkspaceAction,
-  joinWorkspace,
-  leaveWorkspace,
-  deleteWorkspace,
   initializeWorkspaces,
-  formatDate
+  refreshUserWorkspaces
 } = useWorkspaceManager()
+
+// Add a refresh method for external triggers (e.g., when a workspace is created elsewhere)
+const refreshWorkspaces = async () => {
+  await initializeWorkspaces()
+}
+
+// Add a method to refresh just the user workspaces (lighter refresh)
+const refreshUserWorkspacesOnly = async () => {
+  await refreshUserWorkspaces()
+}
+
+// Expose refresh methods to parent components if needed
+defineExpose({
+  refreshWorkspaces,
+  refreshUserWorkspacesOnly
+})
 
 // Initialize data
 onMounted(async () => {

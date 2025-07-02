@@ -22,17 +22,12 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
-import { useQuasar } from "quasar"
 import { useRouter, useRoute } from "vue-router"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import { useUserStore } from "@/shared/store"
 
 import { useProfileStore } from "@/features/profile/store"
-
-import AuthDialog from "./AuthDialog.vue"
-
-const $q = useQuasar()
 
 const router = useRouter()
 const route = useRoute()
@@ -46,11 +41,7 @@ function onClick () {
   if (userStore.isLoggedIn) {
     router.push("/account")
   } else {
-    $q.dialog({
-      component: AuthDialog,
-    }).onOk(() => {
-      console.log("OOK")
-    })
+    router.push("/login")
   }
 }
 </script>
