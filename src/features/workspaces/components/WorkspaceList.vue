@@ -73,7 +73,6 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from "vue-i18n"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import DataListManager from "@/shared/components/data/DataListManager.vue"
@@ -90,7 +89,7 @@ interface Props {
   showPageContainer?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false,
   showHeader: true,
   showPageContainer: true
@@ -99,8 +98,6 @@ const props = withDefaults(defineProps<Props>(), {
 defineEmits<{
   'action': [item: any]
 }>()
-
-const { t } = useI18n()
 
 // Use workspace manager for common functionality
 const {

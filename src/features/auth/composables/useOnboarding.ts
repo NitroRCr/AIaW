@@ -16,7 +16,6 @@ export function useOnboarding () {
   const userStore = useUserStore()
   const { data: userPerf } = storeToRefs(useUserPerfsStore())
   const workspaceStore = useWorkspacesStore()
-  const { isLoggedIn } = storeToRefs(useUserStore())
 
   const onboarding = async () => {
     // Check if user is logged in first
