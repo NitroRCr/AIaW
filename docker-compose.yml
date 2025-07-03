@@ -472,9 +472,13 @@ services:
     restart: unless-stopped
     ports:
       - "8001:8000"
+    volumes:
+      - ./src-backend:/app
     environment:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRY: ${JWT_EXPIRY}
+      SUPABASE_URL: http://kong:8000
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       LITELLM_URL: ${LITELLM_URL:-}
       LITELLM_API_KEY: ${LITELLM_API_KEY:-}
       LLAMA_CLOUD_API_KEY: ${LLAMA_CLOUD_API_KEY:-}
