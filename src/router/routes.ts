@@ -4,6 +4,7 @@ import ShortcutKeys from "@/shared/views/ShortcutKeys.vue"
 
 import AssistantsMarket from "@/features/assistants/views/AssistantsMarket.vue"
 import AssistantView from "@/features/assistants/views/AssistantView.vue"
+import MyAssistantsView from "@/features/assistants/views/MyAssistantsView.vue"
 import ChatSettings from "@/features/chats/views/ChatSettings.vue"
 import ChatView from "@/features/chats/views/ChatView.vue"
 import DialogView from "@/features/dialogs/views/DialogView.vue"
@@ -12,6 +13,7 @@ import PluginSettings from "@/features/plugins/views/PluginSettings.vue"
 import PluginsMarket from "@/features/plugins/views/PluginsMarket.vue"
 import CustomProvider from "@/features/providers/views/CustomProvider.vue"
 import SettingsView from "@/features/settings/views/SettingsView.vue"
+import MyWorkspacesView from "@/features/workspaces/views/MyWorkspacesView.vue"
 import UserWorkspacesManager from "@/features/workspaces/views/UserWorkspacesManager.vue"
 import WorkspaceIndex from "@/features/workspaces/views/WorkspaceIndex.vue"
 import WorkspaceSettings from "@/features/workspaces/views/WorkspaceSettings.vue"
@@ -52,6 +54,11 @@ const routes: RouteRecordRaw[] = [
             component: UserWorkspacesManager,
             meta: { title: t("routes.workspaces") },
           },
+          {
+            path: "my",
+            component: MyWorkspacesView,
+            meta: { title: t("routes.myWorkspaces") },
+          },
         ],
       },
       {
@@ -71,7 +78,12 @@ const routes: RouteRecordRaw[] = [
             component: ChatView,
             props: (route) => ({ id: route.params.chatId }),
           },
-
+          {
+            path: "assistants",
+            component: MyAssistantsView,
+            props: (route) => ({ workspaceId: route.params.workspaceId }),
+            meta: { title: t("routes.myAssistants") },
+          },
           {
             path: "assistants/:assistantId",
             component: AssistantView,

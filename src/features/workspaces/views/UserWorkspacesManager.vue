@@ -1,7 +1,7 @@
 <template>
   <view-common-header @toggle-drawer="$emit('toggle-drawer')">
     <q-toolbar-title>
-      {{ $t("workspaces.title") }}
+      {{ $t("availableWorkspaces.title") }}
     </q-toolbar-title>
   </view-common-header>
   <q-page-container>

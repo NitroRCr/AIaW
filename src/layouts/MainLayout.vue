@@ -60,19 +60,6 @@
             :title="$t('View cyberlinks')"
           />
         </q-item-section>
-        <q-item-section side>
-          <q-btn
-            v-if="workspace"
-            flat
-            dense
-            icon="sym_o_home"
-            :to="`/workspaces/${workspace.id}`"
-            :class="{
-              'route-active': route.path === `/workspaces/${workspace.id}`,
-            }"
-            :title="$t('workspacePage.workspaceHome')"
-          />
-        </q-item-section>
       </q-item>
       <workspace-selector />
       <assistant-selector />
