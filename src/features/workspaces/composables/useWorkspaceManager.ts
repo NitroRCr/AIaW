@@ -25,7 +25,12 @@ export function useWorkspaceManager() {
 
     const ownershipMap = new Map<string, boolean>()
     workspacesStore.workspaces.forEach(workspace => {
-      ownershipMap.set(workspace.id, workspace.ownerId === userStore.currentUserId)
+      // Check both direct ownership and admin membership
+      const isDirectOwner = workspace.ownerId === userStore.currentUserId
+      const isAdminMember = workspacesStore.isUserWorkspaceRole(workspace.id, userStore.currentUserId) === 'admin'
+
+      // User is considered owner if they are direct owner OR admin member
+      ownershipMap.set(workspace.id, isDirectOwner || isAdminMember)
     })
 
     return ownershipMap
@@ -57,6 +62,15 @@ export function useWorkspaceManager() {
     return workspaceOwnershipMap.value.get(workspace.id) || false
   }
 
+  // Check if user is admin of a workspace
+  function isWorkspaceAdmin(workspace: any): boolean {
+    if (!userStore.currentUserId) return false
+
+    const role = workspacesStore.isUserWorkspaceRole(workspace.id, userStore.currentUserId)
+
+    return role === 'admin' || workspace.ownerId === userStore.currentUserId
+  }
+
   // Check if user is the last member in a workspace - now using memoized map
   function isLastMember(workspaceId: string): boolean {
     return lastMemberMap.value.get(workspaceId) || false
@@ -74,15 +88,33 @@ export function useWorkspaceManager() {
     const joinedWorkspaces = workspacesStore.getUserAccessibleWorkspaces(currentUserId)
       .map(uw => {
         const workspace = uw.workspace
-        const isOwner = workspaceOwnershipMap.value.get(workspace.id) || false
+        const isDirectOwner = workspace.ownerId === currentUserId
+        const userRole = workspacesStore.isUserWorkspaceRole(workspace.id, currentUserId)
+        const isAdmin = userRole === 'admin'
+        const isOwner = isDirectOwner || isAdmin
         const isLast = lastMemberMap.value.get(workspace.id) || false
+
+        // Determine action type based on ownership and membership
+        let actionType: 'delete' | 'leave' = 'leave'
+
+        if (isDirectOwner && isLast) {
+          // Direct owner and last member - can delete
+          actionType = 'delete'
+        } else if (isAdmin && isLast) {
+          // Admin and last member - can delete
+          actionType = 'delete'
+        } else {
+          // Regular member or not last - can only leave
+          actionType = 'leave'
+        }
 
         return {
           ...workspace,
           isJoined: true,
           isOwned: isOwner,
-          // If user is owner and last member, show delete action, otherwise show leave action
-          actionType: (isOwner && isLast) ? 'delete' : 'leave'
+          isAdmin,
+          userRole,
+          actionType
         }
       })
 
@@ -253,12 +285,36 @@ export function useWorkspaceManager() {
     }
   }
 
+  // Add a method to force refresh user workspaces (useful for ensuring reactivity)
+  async function refreshUserWorkspaces() {
+    if (userStore.currentUserId) {
+      try {
+        await workspacesStore.getUserWorkspaces(userStore.currentUserId)
+      } catch (error) {
+        console.error('Failed to refresh user workspaces:', error)
+      }
+    }
+  }
+
   // Utility function for date formatting
   function formatDate(dateString: string) {
     try {
       return new Date(dateString).toLocaleDateString()
     } catch {
       return dateString
+    }
+  }
+
+  // Add a debug method to check workspace membership
+  function debugWorkspaceMembership(workspace: any) {
+    if (process.env.NODE_ENV === 'development') {
+      if (!userStore.currentUserId || !workspace?.id) {
+        console.log("❌ Missing userId or workspaceId for debug")
+
+        return
+      }
+
+      workspacesStore.debugWorkspaceMembership(workspace.id, userStore.currentUserId)
     }
   }
 
@@ -280,8 +336,11 @@ export function useWorkspaceManager() {
     leaveWorkspace,
     deleteWorkspace,
     initializeWorkspaces,
+    refreshUserWorkspaces,
     formatDate,
     isWorkspaceOwner,
-    isLastMember
+    isWorkspaceAdmin,
+    isLastMember,
+    ...(process.env.NODE_ENV === 'development' && { debugWorkspaceMembership })
   }
 }

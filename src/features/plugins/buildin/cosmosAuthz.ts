@@ -6,7 +6,7 @@ import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx"
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx"
 
 import { Plugin } from "@/shared/types"
-import { IsTauri } from "@/shared/utils/platformApi"
+import { IsTauri, IsWeb } from "@/shared/utils/platformApi"
 
 import { useAuthStore } from "@/features/auth/store/auth"
 
@@ -16,7 +16,47 @@ import {
   getLocalStorageWalletState,
 } from "@/services/blockchain/kepler/KeplerWallet"
 
-import { WalletService } from "@/services"
+import { WalletService, pinModalService } from "@/services"
+
+// Helper function to request PIN for grantee on Web if needed
+const requestPinForGranteeIfNeeded = async (authStore: ReturnType<typeof useAuthStore>): Promise<boolean> => {
+  if (!IsWeb) return true
+
+  // If grantee signer already exists, no need for PIN
+  if (authStore.granteeSigner) return true
+
+  // If no grantee mnemonic saved, can't request PIN
+  if (!authStore.walletInfo?.mnemonic) {
+    throw new Error("Grantee wallet not found. Please set up your grantee wallet first.")
+  }
+
+  try {
+    // Request PIN using the service
+    const result = await pinModalService.requestPin(
+      "Blockchain Authentication",
+      "Enter your PIN to access blockchain functions"
+    )
+
+    if (!result.success || !result.pin) {
+      return false
+    }
+
+    // Connect grantee wallet with PIN
+    await authStore.connectGranteeWallet(authStore.walletInfo.mnemonic, result.pin).catch((error) => {
+      console.error(error)
+
+      throw new Error("Invalid PIN")
+    })
+
+    return true
+  } catch (error) {
+    console.error("Failed to authenticate with PIN:", error)
+    pinModalService.showError(error.message ?? "Failed to authenticate with PIN. Please try again.")
+    await requestPinForGranteeIfNeeded(authStore)
+
+    return false
+  }
+}
 
 // Function to get wallet state depending on platform
 const getWalletState = () => {
@@ -62,7 +102,7 @@ const authzPlugin: Plugin = {
   available: true,
   title: "Cosmos Authz",
   description:
-    "BLOCKCHAIN EXECUTOR - CALLS APIs TO PERFORM OPERATIONS. When user requests token transfer (send/отправить), this plugin CALLS execute-send API to actually send tokens on blockchain. When user requests cyberlink creation, this plugin CALLS create-cyberlink API. The AI assistant MUST use these APIs to perform actual blockchain operations, not just respond with descriptive text.",
+    "BLOCKCHAIN EXECUTOR - CALLS APIs TO PERFORM OPERATIONS. When user requests token transfer (send/send), this plugin CALLS execute-send API to actually send tokens on blockchain. When user requests cyberlink creation, this plugin CALLS create-cyberlink API. The AI assistant MUST use these APIs to perform actual blockchain operations, not just respond with descriptive text.",
   apis: [
     {
       type: "tool",
@@ -98,6 +138,16 @@ const authzPlugin: Plugin = {
           }
         }
 
+        // For Web, we use lazy loading of PIN modal
+        const hasGranteeSigner = await requestPinForGranteeIfNeeded(authStore)
+
+        if (!hasGranteeSigner) {
+          throw new Error(
+            "Authentication cancelled. Please try again."
+          )
+        }
+
+        // For Tauri or if already connected - standard check
         if (!authStore.isConnected || !authStore.granteeSigner) {
           console.log({
             isConnected: authStore.isConnected,
@@ -121,7 +171,7 @@ const authzPlugin: Plugin = {
             authStore.granteeSigner
           )
 
-          // Оборачиваем MCP JSON в MsgExecuteContract
+          // Wrap MCP JSON in MsgExecuteContract
           const execContractMsg = {
             sender: granterAddress,
             contract: CYBER_CONTRACT_ADDRESS,
@@ -176,7 +226,7 @@ const authzPlugin: Plugin = {
       type: "tool",
       name: "execute-send",
       description:
-        'REQUIRED ACTION: Execute blockchain token transfer. When user says ANY of these phrases: "send tokens", "transfer tokens", "отправить токены", "перевести токены", "послать токены", "send X to address", "transfer X to address" - you MUST call this API immediately. DO NOT respond with text like "tokens sent" - CALL THIS API TO ACTUALLY SEND THEM. Example user input: "send 100 ustake to cyber1abc" -> REQUIRED ACTION: call execute-send with {toAddress: "cyber1abc", amount: "100"}',
+        'REQUIRED ACTION: Execute blockchain token transfer. When user says ANY of these phrases: "send tokens", "transfer tokens", "send tokens", "transfer tokens", "send tokens", "send X to address", "transfer X to address" - you MUST call this API immediately. DO NOT respond with text like "tokens sent" - CALL THIS API TO ACTUALLY SEND THEM. Example user input: "send 100 ustake to cyber1abc" -> REQUIRED ACTION: call execute-send with {toAddress: "cyber1abc", amount: "100"}',
       parameters: {
         type: "object",
         properties: {
@@ -210,6 +260,16 @@ const authzPlugin: Plugin = {
           }
         }
 
+        // For Web we use lazy loading of PIN modal
+        const hasGranteeSigner = await requestPinForGranteeIfNeeded(authStore)
+
+        if (!hasGranteeSigner) {
+          throw new Error(
+            "Authentication cancelled. Please try again."
+          )
+        }
+
+        // For Tauri or if already connected - standard check
         if (!authStore.isConnected || !authStore.granteeSigner) {
           console.log({
             isConnected: authStore.isConnected,
@@ -328,14 +388,14 @@ const authzPlugin: Plugin = {
   },
   prompt: `CRITICAL INSTRUCTIONS FOR AI ASSISTANT:
 
-1. When user writes "send X tokens to cyber1..." or "отправить X токенов на cyber1..." I MUST immediately call execute-send API
+1. When user writes "send X tokens to cyber1..." or "send X tokens to cyber1..." I MUST immediately call execute-send API
 2. For ALL OTHER blockchain operations (cyberlink creation, update, delete, etc.) I MUST call broadcast-mcp-tx API with the JSON transaction body received from MCP
-3. I NEVER respond with text like "tokens sent" or "операция выполнена" without calling the API first
+3. I NEVER respond with text like "tokens sent" or "operation completed" without calling the API first
 4. I ALWAYS call the API to perform the actual blockchain operation
 
 EXAMPLES OF REQUIRED API CALLS:
 - User: "send 100 ustake to cyber1abc123" → I call execute-send({toAddress: "cyber1abc123", amount: "100"})
-- User: "отправить 50 токенов на cyber1def456" → I call execute-send({toAddress: "cyber1def456", amount: "50"})
+- User: "send 50 tokens to cyber1def456" → I call execute-send({toAddress: "cyber1def456", amount: "50"})
 
 I am a blockchain executor that PERFORMS operations by calling APIs, not a text generator that describes operations.
 when user asks to create/update/delete cyberlink use MCP tool to create transaction body and pass this body as msg

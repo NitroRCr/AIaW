@@ -1,0 +1,10 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+if typescript import (within files in src folder) is from features, shared or services use
+@features
+@shared
+@services
+prefixes accordingly rather then relative imports

@@ -50,24 +50,29 @@ import { useRouter, useRoute } from "vue-router"
 
 import { useUserDataStore } from "@/shared/store"
 
+import { useUserWorkspacesManager } from "@/features/workspaces/composables/useUserWorkspacesManager"
 import { useWorkspaceActions } from "@/features/workspaces/composables/useWorkspaceActions"
-import { useWorkspacesStore } from "@/features/workspaces/store"
-
-import { Workspace } from "@/services/data/types/workspace"
 
 import WorkspaceListSelect from "./WorkspaceListSelect.vue"
 
 const { addWorkspace } = useWorkspaceActions()
+const { findUserWorkspace } = useUserWorkspacesManager()
 const userDataStore = useUserDataStore()
 
-const workspaceStore = useWorkspacesStore()
 const router = useRouter()
 const route = useRoute()
 
 async function goTo (id: string) {
-  const workspace = workspaceStore.workspaces.find(
-    (w) => w.id === id
-  ) as Workspace
+  // Find workspace from user's accessible workspaces using utility function
+  const userWorkspace = findUserWorkspace(id)
+
+  if (!userWorkspace) {
+    console.warn(`User does not have access to workspace ${id}`)
+
+    return
+  }
+
+  const workspace = userWorkspace.workspace
   let path = `/workspaces/${workspace.id}`
   const dialogId = userDataStore.data.lastDialogIds[workspace.id]
 

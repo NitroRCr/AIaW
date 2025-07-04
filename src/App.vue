@@ -40,11 +40,17 @@ import { EncryptionService } from "@/services/security/encryption/EncryptionServ
 
 import { IsTauri, IsWeb } from "./shared/utils/platformApi"
 import { checkUpdate, ready } from "./shared/utils/update"
+
+import { pinModalService } from "@/services"
+
 defineOptions({
   name: "App",
 })
 const { t } = useI18n()
 const $q = useQuasar()
+
+// Initialize pinModalService with Quasar instance
+pinModalService.initialize()
 
 const userStore = useUserStore()
 const { onboarding } = useOnboarding()
@@ -138,7 +144,7 @@ router.beforeEach(async (to, from, next) => {
   return next()
 })
 
-// TODO: refactor this, move to composable
+// TODO: refactor this, move to composable panda
 const handlePinSubmit = async (pin: string) => {
   try {
     const authStore = useAuthStore()

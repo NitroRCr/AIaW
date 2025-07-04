@@ -40,7 +40,7 @@
               <q-btn
                 color="primary"
                 label="Create New Grantee Wallet"
-                @click="showPinModal = true"
+                @click="createGranteeWallet"
                 :loading="loading"
               />
             </div>
@@ -532,11 +532,6 @@
           </q-step>
         </q-stepper>
       </q-card-section>
-
-      <pin-modal
-        v-model="showPinModal"
-        @submit="handlePinSubmit"
-      />
     </q-card>
   </q-dialog>
 </template>
@@ -545,12 +540,11 @@
 import { useQuasar } from "quasar"
 import { ref, computed, onMounted, watch } from "vue"
 
-import PinModal from "@/features/auth/components/PinModal.vue"
 import { useAuthStore } from "@/features/auth/store/auth"
 
 import { WalletInfo } from "@/services/blockchain/authz/walletService"
 
-import { WalletService } from "@/services"
+import { WalletService, pinModalService } from "@/services"
 
 interface Props {
   modelValue: boolean
@@ -576,7 +570,6 @@ const dialogVisible = computed({
 // State
 const step = ref(1)
 const loading = ref(false)
-const showPinModal = ref(false)
 const granteeWallet = ref<WalletInfo | null>(null)
 const revokeLoading = ref({
   msgExec: false,
@@ -732,10 +725,19 @@ const regenerateWallet = async () => {
   step.value = 1
 }
 
-const handlePinSubmit = async (pin: string) => {
+const createGranteeWallet = async () => {
   loading.value = true
   try {
-    const newWalletInfo = await authStore.createGranteeWallet(pin)
+    const result = await pinModalService.requestPin(
+      "Create Grantee Wallet",
+      "Enter your PIN to encrypt the new grantee wallet"
+    )
+
+    if (!result.success || !result.pin) {
+      return
+    }
+
+    const newWalletInfo = await authStore.createGranteeWallet(result.pin)
     granteeWallet.value = newWalletInfo
 
     // Reset grants status for new wallet
@@ -776,7 +778,6 @@ const handlePinSubmit = async (pin: string) => {
     })
   } finally {
     loading.value = false
-    showPinModal.value = false
   }
 }
 

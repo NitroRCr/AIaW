@@ -27,6 +27,7 @@ import { avatarKey } from "@/shared/utils/functions"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
 const { workspace } = useActiveWorkspace()
+
 const avatar = computed(
   () =>
     workspace.value?.avatar ||

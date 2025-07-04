@@ -2,7 +2,7 @@
   "extends": "./.quasar/tsconfig.json",
   "exclude": [
     "./src-tauri",
-    "./supabase"
+    "./supabase/volumes"
   ],
   "compilerOptions": {
     "types": ["vite/client", "node", "jest"],
