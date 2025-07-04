@@ -3,19 +3,19 @@
     <div class="card-view__header">
       <div class="card-view__actions">
         <q-btn
+          icon="sym_o_search"
+          :label="findButtonCaption"
+          color="secondary"
+          outline
+          @click="$emit('find')"
+        />
+        <q-btn
           icon="sym_o_add"
           :label="addButtonCaption"
           color="primary"
           unelevated
           @click="$emit('add')"
           class="q-mr-sm"
-        />
-        <q-btn
-          icon="sym_o_search"
-          :label="findButtonCaption"
-          color="secondary"
-          outline
-          @click="$emit('find')"
         />
       </div>
     </div>
@@ -57,6 +57,8 @@ defineEmits<Emits>()
   &__actions {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 
   &__grid {

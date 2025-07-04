@@ -39,6 +39,13 @@
         <div class="card-component__name">
           {{ props.name }}
         </div>
+
+        <div
+          v-if="props.subtitle"
+          class="card-component__subtitle"
+        >
+          {{ props.subtitle }}
+        </div>
         <div
           v-if="props.description"
           class="card-component__description"
@@ -72,6 +79,7 @@ const props = defineProps<{
   showMoreBtn?: boolean
   badge?: string
   badgeColor?: string
+  subtitle?: string
 }>()
 
 const badgeBgComputed = computed(() => {
@@ -88,6 +96,8 @@ const badgeBgComputed = computed(() => {
   min-height: 160px;
   transition: all 0.2s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
@@ -119,15 +129,20 @@ const badgeBgComputed = computed(() => {
     word-break: break-word;
   }
 
-  &__description {
+  &__description, &__subtitle {
     font-size: 14px;
     color: var(--q-secondary);
     line-height: 1.4;
     word-break: break-word;
   }
 
+  &__subtitle {
+    font-size: 10px;
+  }
+
   &__content {
     padding: 0 16px 16px;
+    flex: 1;
   }
 
   &__badge {

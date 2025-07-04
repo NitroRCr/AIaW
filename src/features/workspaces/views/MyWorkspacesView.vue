@@ -24,9 +24,23 @@
           @more-click="showContextMenu($event as MouseEvent, workspace)"
           :badge="workspace.isPublic ? $t('myWorkspaces.public') : $t('myWorkspaces.private')"
           :badge-color="workspace.isPublic ? 'var(--q-primary)' : 'var(--q-negative)'"
+          :subtitle="`by ${getOwnerName(workspace)}`"
         >
           <div class="workspace-card-content">
-            <!-- <div class="workspace-stats">
+            <!-- You can add more content here if needed -->
+            <div class="workspace-actions">
+              <q-btn
+                icon="sym_o_exit_to_app"
+                color="negative"
+                :label="$t('myWorkspaces.leave')"
+                flat
+                dense
+                size="md"
+                @click.stop="leaveWorkspace(workspace)"
+              />
+            </div>
+          </div>
+          <!-- <div class="workspace-stats">
               <q-chip
                 v-if="workspace.type === 'folder'"
                 icon="sym_o_folder"
@@ -42,7 +56,6 @@
                 outline
               />
             </div> -->
-          </div>
         </card-item>
       </card-view>
 
@@ -77,7 +90,6 @@
           <q-item
             clickable
             @click="router.push(`/workspaces/${selectedWorkspace.id}/settings`)"
-            class="text-negative"
           >
             <q-item-section avatar>
               <q-icon name="sym_o_settings" />
@@ -87,7 +99,6 @@
           <q-item
             clickable
             @click="deleteItem(selectedWorkspace)"
-            class="text-negative"
           >
             <q-item-section avatar>
               <q-icon name="sym_o_delete" />
@@ -113,6 +124,8 @@ import { useWorkspaceActions } from '@/features/workspaces/composables/useWorksp
 
 import { Workspace } from '@/services/data/types/workspace'
 
+import { useWorkspaceManager } from '../composables/useWorkspaceManager'
+
 import ViewCommonHeader from '@/layouts/components/ViewCommonHeader.vue'
 
 const router = useRouter()
@@ -120,7 +133,10 @@ const userDataStore = useUserDataStore()
 defineEmits(["toggle-drawer"])
 const { isUserWorkspaceAdmin } = useRightsManagement()
 const { addWorkspace, addFolder, deleteItem } = useWorkspaceActions()
-
+const {
+  getOwnerName,
+  leaveWorkspace,
+} = useWorkspaceManager()
 const workspaces = useRootWorkspace(null)
 const contextMenuRef = ref<QMenu | null>(null)
 const selectedWorkspace = ref<Workspace | null>(null)
@@ -156,18 +172,20 @@ function showContextMenu(event: MouseEvent, workspace: Workspace) {
 
 .workspace-card-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.workspace-stats {
-  display: flex;
-  gap: 8px;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
 }
 
 .workspace-actions {
   display: flex;
   gap: 4px;
+  margin-top: auto;
+  align-self: flex-end;
+}
+
+.workspace-stats {
+  display: flex;
+  gap: 8px;
 }
 </style>

@@ -175,6 +175,7 @@ export default {
     myWorkspaces: "My Workspaces",
     public: "Public",
     private: "Private",
+    leave: "Leave",
   },
   myAssistants: {
     myAssistants: "assistants",
