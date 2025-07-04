@@ -125,18 +125,20 @@ const badgeBgComputed = computed(() => {
     font-size: 16px;
     font-weight: 600;
     color: var(--q-primary);
-    margin-bottom: 4px;
     word-break: break-word;
   }
 
   &__description, &__subtitle {
     font-size: 14px;
+    margin-top: 4px;
+
     color: var(--q-secondary);
     line-height: 1.4;
     word-break: break-word;
   }
 
   &__subtitle {
+    margin-top: auto;
     font-size: 10px;
   }
 
