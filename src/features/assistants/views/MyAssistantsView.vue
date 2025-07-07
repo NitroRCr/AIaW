@@ -127,7 +127,9 @@ function showContextMenu(event: MouseEvent, assistant: Assistant) {
 
 function setDefaultAssistant(id: string) {
   userData.value.defaultAssistantIds[workspaceId] = id
-  router.push(`/workspaces/${workspaceId}`)
+  const lastDialogId = userData.value.lastDialogIds[workspaceId]
+  const dialogPath = lastDialogId ? `/dialogs/${lastDialogId}` : ""
+  router.push(`/workspaces/${workspaceId}${dialogPath}`)
 }
 
 function goToSettings(id: string) {
