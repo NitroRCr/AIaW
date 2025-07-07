@@ -93,7 +93,7 @@ watch(currentAssistant, (newAssistant) => {
 const pluginsStore = usePluginsStore()
 
 async function setPlugin (plugin: Plugin, enabled: boolean) {
-  if (enabled && !assistant.value.plugins[plugin.id]) {
+  if (enabled) {
     const assistantPlugin: AssistantPlugin = {
       enabled: true,
       infos: [],
@@ -101,16 +101,23 @@ async function setPlugin (plugin: Plugin, enabled: boolean) {
       resources: [],
       vars: {},
     }
+    const currentPlugin = assistant.value.plugins[plugin.id]
+
+    // Todo sync tools and infos, if plugin tool not persisted, set enabled to true,
+    // if persisted before, but plugin was updated, do not include it in the new plugin
+
     plugin.apis.forEach((api) => {
       if (api.type === "tool") {
+        const currentTool = currentPlugin?.tools.find((t) => t.name === api.name)
         assistantPlugin.tools.push({
           name: api.name,
-          enabled: true,
+          enabled: currentTool !== undefined ? currentTool.enabled : true,
         })
       } else if (api.type === "info") {
+        const currentInfo = currentPlugin?.infos.find((i) => i.name === api.name)
         assistantPlugin.infos.push({
           name: api.name,
-          enabled: true,
+          enabled: currentInfo !== undefined ? currentInfo.enabled : true,
           args: {},
         })
       }

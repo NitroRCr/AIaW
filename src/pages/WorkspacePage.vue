@@ -217,6 +217,24 @@ const router = useRouter()
 console.log("ws page opened artifacts", openedArtifacts.value, focusedArtifact)
 
 watch(
+  () => route.query.openArtifact,
+  (val) => {
+    if (!val) return
+
+    const artifact = artifacts.value.find((a) => a.id === val)
+
+    if (artifact) {
+      if (!userDataStore.data.openedArtifacts.includes(artifact.id)) {
+        userDataStore.data.openedArtifacts.push(artifact.id)
+        router.replace({ query: { artifactId: artifact.id } })
+      }
+    } else {
+      router.replace({ query: { artifactId: focusedArtifact.value?.id } })
+    }
+  }
+)
+
+watch(
   focusedArtifact,
   (val) => {
     if (val) {
