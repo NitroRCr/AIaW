@@ -63,6 +63,8 @@ JWT_EXPIRY = int(os.environ.get('JWT_EXPIRY', 3600))  # Default 1 hour
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_KEY = os.environ.get('SERVICE_ROLE_KEY')
 
+print("JWT_SECRET", JWT_SECRET)
+
 class ProxyRequest(BaseModel):
     method: str
     url: str
@@ -136,6 +138,33 @@ def get_or_create_supabase_user(privy_user_id: str, wallet_address: str = None, 
         privy_resp = requests.post(f"{SUPABASE_URL}/rest/v1/privy_users", headers=headers, json=privy_payload)
         print(f"DEBUG: privy_users insert response status: {privy_resp.status_code}")
         return supabase_uid
+    elif auth_resp.status_code == 422 and 'email_exists' in auth_resp.text:
+        print("DEBUG: Email already exists, searching for user by email")
+        # Найти пользователя по email
+        user_search = requests.get(
+            f"{SUPABASE_URL}/auth/v1/admin/users?email={email}",
+            headers=headers
+        )
+        print(f"DEBUG: User search by email status: {user_search.status_code}")
+        user_data = user_search.json()
+        if user_search.status_code == 200 and user_data.get('users'):
+            user = user_data['users'][0]
+            supabase_uid = user['id']
+            print(f"DEBUG: Found existing user with UUID: {supabase_uid}")
+            # Добавляем в privy_users
+            privy_payload = {
+                "supabase_uid": supabase_uid,
+                "privy_user_id": privy_user_id,
+                "wallet_address": wallet_address,
+                "email": email
+            }
+            print("DEBUG: Adding user to privy_users table (email exists case)")
+            privy_resp = requests.post(f"{SUPABASE_URL}/rest/v1/privy_users", headers=headers, json=privy_payload)
+            print(f"DEBUG: privy_users insert response status: {privy_resp.status_code}")
+            return supabase_uid
+        else:
+            print("DEBUG: Email exists in Supabase but user not found by email")
+            raise Exception("Email exists in Supabase but user not found by email")
     print(f"DEBUG: Failed to create user. Response: {auth_resp.text}")
     raise Exception(f"Failed to create/find user for privy_user_id: {privy_user_id}")
 

@@ -15,53 +15,60 @@
             <div class="text-h6">
               Authorization
             </div>
-            <q-option-group
-              v-model="authType"
-              :options="authTypeOptions"
-              type="radio"
-              inline
-              dense
-              class="q-mt-md q-mb-md"
-            />
           </q-card-section>
-          <q-card-section p-0>
-            <q-list>
-              <q-item>
-                <q-item-section>
-                  <q-input
-                    filled
-                    type="email"
-                    v-model="email"
-                    label="Email"
-                    :rules="[emailRule]"
-                  />
-                </q-item-section>
-              </q-item>
-              <q-item>
-                <q-item-section>
-                  <q-input
-                    v-model="password"
-                    label="Password"
-                    type="password"
-                  />
-                </q-item-section>
-              </q-item>
-            </q-list>
+          <q-card-section>
+            <div v-if="step === 1">
+              <q-input
+                filled
+                type="email"
+                v-model="email"
+                label="Email"
+                :rules="[emailRule]"
+                :disable="loading"
+                @keyup.enter="sendCode"
+              />
+              <q-btn
+                color="primary"
+                class="full-width q-mt-md"
+                :label="'Send Code'"
+                :loading="loading"
+                :disable="!emailRule(email)"
+                @click="sendCode"
+              />
+            </div>
+            <div v-else>
+              <q-input
+                filled
+                type="text"
+                v-model="code"
+                label="Enter code from email"
+                maxlength="6"
+                :disable="loading"
+                @keyup.enter="loginWithCode"
+              />
+              <q-btn
+                color="primary"
+                class="full-width q-mt-md"
+                :label="'Login'"
+                :loading="loading"
+                :disable="code.length !== 6"
+                @click="loginWithCode"
+              />
+              <q-btn
+                flat
+                class="full-width q-mt-sm"
+                :label="'Back'"
+                :disable="loading"
+                @click="step = 1"
+              />
+            </div>
+            <div
+              v-if="error"
+              class="text-negative q-mt-md"
+            >
+              {{ error }}
+            </div>
           </q-card-section>
-          <q-card-actions align="center">
-            <q-btn
-              color="primary"
-              class="full-width"
-              :label="buttonCaption"
-              :loading
-              :disable="!valid"
-              @click="
-                authType === 'sign-in'
-                  ? signIn(email, password)
-                  : signUp(email, password)
-              "
-            />
-          </q-card-actions>
         </q-card>
       </q-page>
     </q-page-container>
@@ -70,46 +77,58 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar'
-import { computed, ref } from "vue"
-import { useRouter } from "vue-router"
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-import { useAuth } from "@/features/auth/composables/useAuth"
+import { usePrivyAuth } from '@/features/auth/composables'
 
-const router = useRouter()
-const authType = ref<"sign-in" | "sign-up">("sign-in")
-const authTypeOptions = [
-  { label: "Sign In", value: "sign-in" },
-  { label: "Sign Up", value: "sign-up" },
-]
-const buttonCaption = computed(() =>
-  authType.value === "sign-in" ? "Sign In" : "Sign Up"
-)
-
-const loading = ref(false)
-const password = ref("")
-const email = ref("")
-const valid = computed(
-  () =>
-    email.value.length > 0 &&
-    password.value.length > 0 &&
-    emailRule(email.value)
-)
-
-const emailRule = (val) => {
-  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-  return pattern.test(val) || "Please enter a valid email"
-}
-
-const { signIn, signUp } = useAuth({
-  loading,
-  onComplete: () => {
-    router.push("/")
-  }
-})
+import { privyAuthService } from '@/services/auth/privyAuthService'
 
 const $q = useQuasar()
+const router = useRouter()
+
+const step = ref(1)
+const email = ref('')
+const code = ref('')
+const loading = ref(false)
+const error = ref('')
+
+const emailRule = (val: string) => {
+  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  return pattern.test(val) || 'Please enter a valid email'
+}
+
+async function sendCode() {
+  error.value = ''
+  loading.value = true
+  try {
+    await privyAuthService.auth.email.sendCode(email.value)
+    $q.notify({ message: 'Code sent to your email', color: 'positive' })
+    step.value = 2
+  } catch (e: any) {
+    error.value = e?.message || 'Failed to send code'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function loginWithCode() {
+  error.value = ''
+  loading.value = true
+  try {
+    await usePrivyAuth().loginWithEmail(email.value, code.value)
+
+    $q.notify({ message: 'Login successful', color: 'positive' })
+    router.push('/')
+  } catch (e: any) {
+    error.value = e?.message || 'Login failed'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
+
 <style scoped>
 .title {
   font-size: 1.5rem;

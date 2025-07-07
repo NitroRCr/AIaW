@@ -122,7 +122,7 @@ const isValid = await verifyPin(enteredPin);
 ## Flow Diagram
 
 ```
-User Input → Authentication Request → 
+User Input → Authentication Request →
 Token Generation → Session Creation →
 Profile Loading → Workspace Access →
 Authenticated State
