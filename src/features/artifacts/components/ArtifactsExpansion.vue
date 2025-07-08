@@ -5,36 +5,6 @@
         <q-icon name="sym_o_article" />
       </q-item-section>
       <q-item-section> Artifacts </q-item-section>
-      <q-item-section side>
-        <q-btn
-          round
-          flat
-          icon="sym_o_more_vert"
-          size="sm"
-          @click.prevent.stop
-        >
-          <q-menu
-            auto-close
-          >
-            <q-list>
-              <select-file-btn
-                flat
-                dense
-                round
-                size="sm"
-                icon="sym_o_upload_file"
-                :title="$t('mainLayout.uploadFile')"
-                @input="artifactFromFiles"
-              />
-              <icon-side-button
-                :title="$t('mainLayout.createArtifact')"
-                icon="sym_o_add"
-                @click="createEmptyArtifact"
-              />
-            </q-list>
-          </q-menu>
-        </q-btn>
-      </q-item-section>
     </template>
     <template #default>
       <a-tip
@@ -50,7 +20,18 @@
           {{ $t("artifactsExpansion.artifactsGuideLink") }}
         </a>
       </a-tip>
-      <q-list min-h="100px">
+      <div class="flex flex-col">
+        <select-file-btn
+          @input="artifactFromFiles"
+        />
+        <icon-side-button
+          icon="sym_o_add"
+          small
+          @click="createEmptyArtifact"
+          :title="$t('mainLayout.createArtifact')"
+        />
+      </div>
+      <q-list pt-1>
         <div
           p="x-4 y-2"
           v-if="artifacts.length > 0"
@@ -135,7 +116,6 @@ import { Workspace } from "@/services/data/types/workspace"
 
 import ArtifactItemIcon from "./ArtifactItemIcon.vue"
 import ArtifactItemMenu from "./ArtifactItemMenu.vue"
-
 const artifacts: Ref<Artifact[]> = inject("artifacts")
 
 const filter = ref(null)

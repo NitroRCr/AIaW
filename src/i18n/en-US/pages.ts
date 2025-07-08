@@ -161,7 +161,7 @@ export default {
     localClient: "Local Client",
     lastDialogs: "Last AI Chats",
     pinnedChats: "Pinned Human Chats",
-    searchDialogs: "Search Dialogs",
+    searchDialogs: "Search",
     createDialog: "Create AI Chat",
     uploadFile: "Upload File",
     createArtifact: "Create Artifact",

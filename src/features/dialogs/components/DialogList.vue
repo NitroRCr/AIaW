@@ -24,8 +24,6 @@
         query: route.query,
       }"
       active-class="bg-sec-c text-on-sec-c"
-      item-rd
-      min-h="40px"
     >
       <q-item-section side />
       <q-item-section>
@@ -172,3 +170,10 @@ function deleteItem ({ id, name }) {
   })
 }
 </script>
+<style>
+.q-item {
+  min-height: 40px;
+  border-radius: 10px;
+  margin: 0 6px 0 6px;
+}
+</style>

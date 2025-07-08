@@ -852,6 +852,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_chats_with_unread_count: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          owner_id: string
+          type: string
+          workspace_id: string
+          created_at: string
+          avatar: Json
+          description: string
+          unread_count: number
+        }[]
+      }
       get_workspace_role: {
         Args: { workspace_id: string; user_id: string }
         Returns: string

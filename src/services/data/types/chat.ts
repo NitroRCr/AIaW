@@ -13,7 +13,7 @@ type DbChatMessage = DbChatMessageRow | DbChatMessageInsert
 
 type DbChatRow = Database["public"]["Tables"]["chats"]["Row"]
 type DbChatInsert = Database["public"]["Tables"]["chats"]["Insert"]
-type DbChat = DbChatRow | DbChatInsert
+type DbChat = DbChatRow | DbChatInsert & { unread_count?: number }
 
 // type DbChatMember = Database["public"]["Tables"]["chat_members"]["Row"]
 

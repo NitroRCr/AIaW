@@ -1,10 +1,10 @@
 <template>
   <icon-side-button
-    :title="$t('mainLayout.uploadFile')"
+    @click.prevent.stop="onClick"
     icon="sym_o_upload_file"
-    @click="onClick"
+    :title="$t('mainLayout.uploadFile')"
+    small
   >
-    <!-- <q-btn @click.prevent.stop="onClick"> -->
     <q-dialog v-model="show">
       <q-card>
         <q-card-section>

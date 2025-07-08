@@ -12,7 +12,7 @@
     <q-item-section
       avatar
       min-w-0
-      pl-4
+      pl-2
     >
       <a-avatar
         :avatar="chat.avatar"
