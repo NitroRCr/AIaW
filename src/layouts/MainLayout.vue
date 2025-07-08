@@ -19,7 +19,7 @@
           class="text-xl logo"
           @click="notifyVersion"
         >
-          <span class="mr-1">🟢</span><span>CYBER</span>
+          <span class="mr-1">🟣</span><span>CYBER</span>
         </div>
 
         <!-- <svg
@@ -34,7 +34,10 @@
           />
         </svg> -->
       </div>
-      <q-separator spaced />
+      <q-separator
+        spaced
+        mb-0
+      />
       <workspace-left-sidebar />
     </q-drawer>
     <router-view />
