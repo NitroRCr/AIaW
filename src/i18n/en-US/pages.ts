@@ -161,10 +161,11 @@ export default {
     localClient: "Local Client",
     lastDialogs: "Last AI Chats",
     pinnedChats: "Pinned Human Chats",
-    searchDialogs: "Search",
-    createDialog: "Create AI Chat",
+    searchDialogs: "Search AI Chats",
+    createDialog: "New AI Chat",
     uploadFile: "Upload File",
     createArtifact: "Create Artifact",
+    cyberlinks: "Cyberlinks",
   },
   myWorkspaces: {
     noDescription: "No description",

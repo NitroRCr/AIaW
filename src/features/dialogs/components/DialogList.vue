@@ -1,15 +1,16 @@
 <template>
   <icon-side-button
-    icon="sym_o_search"
-    :title="$t('mainLayout.searchDialogs')"
-    @click="showSearchDialog = true"
-  />
-  <icon-side-button
     icon="sym_o_rate_review"
     :title="$t('mainLayout.createDialog')"
     @click="onAdd"
   />
-  <sidebar-title title="Dialogs" />
+  <icon-side-button
+    icon="sym_o_search"
+    :title="$t('mainLayout.searchDialogs')"
+    @click="showSearchDialog = true"
+  />
+  <sidebar-title title="Chats" />
+
   <q-list>
     <empty-item
       v-if="dialogs.length === 0"

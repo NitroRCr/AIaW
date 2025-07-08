@@ -234,6 +234,32 @@ $$;
 ALTER FUNCTION "public"."debug_workspaces"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_chats_with_unread_count"() RETURNS TABLE("id" "text", "name" "text", "owner_id" "text", "type" "text", "workspace_id" "text", "created_at" timestamp with time zone, "avatar" "jsonb", "description" "text", "unread_count" integer)
+    LANGUAGE "sql"
+    AS $$
+  select
+    c.id,
+    c.name,
+    c.owner_id,
+    c.type,
+    c.workspace_id,
+    c.created_at,
+    c.avatar,
+    c.description,
+    (
+      select count(*)
+      from messages m
+      where m.chat_id = c.id and m.is_read = false
+    ) as unread_count
+  from chats c
+  order by c.created_at desc
+
+$$;
+
+
+ALTER FUNCTION "public"."get_chats_with_unread_count"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_workspace_role"("workspace_id" "uuid", "user_id" "uuid") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "row_security" TO 'off'
@@ -1693,6 +1719,12 @@ GRANT ALL ON FUNCTION "public"."create_profile_on_signup"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."debug_workspaces"() TO "anon";
 GRANT ALL ON FUNCTION "public"."debug_workspaces"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."debug_workspaces"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_chats_with_unread_count"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_chats_with_unread_count"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_chats_with_unread_count"() TO "service_role";
 
 
 

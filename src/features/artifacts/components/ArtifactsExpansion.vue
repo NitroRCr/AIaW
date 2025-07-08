@@ -7,7 +7,7 @@
       <q-item-section> Artifacts </q-item-section>
     </template>
     <template #default>
-      <a-tip
+      <!-- <a-tip
         tip-key="artifacts-usage"
         rd-0
       >
@@ -19,7 +19,7 @@
         >
           {{ $t("artifactsExpansion.artifactsGuideLink") }}
         </a>
-      </a-tip>
+      </a-tip> -->
       <div class="flex flex-col">
         <select-file-btn
           @input="artifactFromFiles"
@@ -100,7 +100,6 @@ import { computed, inject, ref, Ref, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter, useRoute } from "vue-router"
 
-import ATip from "@/shared/components/ATip.vue"
 import EmptyItem from "@/shared/components/layout/EmptyItem.vue"
 import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import { useUserDataStore } from "@/shared/store"
