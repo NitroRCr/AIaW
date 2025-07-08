@@ -2,10 +2,7 @@
   <q-item
     clickable
     :to="{
-      path:
-        chat.type === 'private'
-          ? `/chats/${chat.id}`
-          : `/workspaces/${chat.workspaceId}/chats/${chat.id}`,
+      path: `/workspaces/${chat.workspaceId || activeWorkspaceId }/chats/${chat.id}`,
       query: route.query,
     }"
     active-class="bg-sec-c text-on-sec-c"
@@ -71,7 +68,7 @@ import MenuItem from "@/shared/components/menu/MenuItem.vue"
 import { dialogOptions } from "@/shared/utils/values"
 
 import { useWorkspaceChats } from "@/features/chats/composables/useWorkspaceChats"
-import { useRightsManagement } from "@/features/workspaces/composables"
+import { useActiveWorkspace, useRightsManagement } from "@/features/workspaces/composables"
 
 import { Chat } from "@/services/data/types/chat"
 
@@ -85,6 +82,7 @@ const selected = defineModel<string>("selected")
 
 const workspaceId = computed(() => props.chat.workspaceId)
 const { updateChat, removeChat } = useWorkspaceChats(workspaceId)
+const { workspaceId: activeWorkspaceId } = useActiveWorkspace()
 const { isUserWorkspaceAdmin } = useRightsManagement()
 
 const menuChatRef = ref<QMenu | null>(null)

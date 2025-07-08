@@ -22,7 +22,6 @@ import { i18n } from "@/boot/i18n"
 import MainLayout from "@/layouts/MainLayout.vue"
 import AccountPage from "@/pages/AccountPage.vue"
 import AssistantsPage from "@/pages/AssistantsPage.vue"
-import ChatsPage from "@/pages/ChatsPage.vue"
 import CyberlinksPage from "@/pages/CyberlinksPage.vue"
 import EmptyPage from "@/pages/EmptyPage.vue"
 import ErrorNotFound from "@/pages/ErrorNotFound.vue"
@@ -79,6 +78,12 @@ const routes: RouteRecordRaw[] = [
             component: ChatView,
             props: (route) => ({ id: route.params.chatId }),
           },
+          {
+            path: ":chatId/settings",
+            component: ChatSettings,
+            props: (route) => ({ id: route.params.chatId }),
+          },
+
           {
             path: "assistants",
             component: MyAssistantsView,
@@ -157,23 +162,23 @@ const routes: RouteRecordRaw[] = [
           },
         ],
       },
-      {
-        path: "/chats/",
-        component: ChatsPage,
-        children: [
-          // { path: '', component: ChatView, meta: { title: t('routes.chatsMarket') } }
-          {
-            path: ":chatId/settings",
-            component: ChatSettings,
-            props: (route) => ({ id: route.params.chatId }),
-          },
-          {
-            path: ":chatId",
-            component: ChatView,
-            props: (route) => ({ id: route.params.chatId }),
-          },
-        ],
-      },
+      // {
+      //   path: "/chats/",
+      //   component: ChatsPage,
+      //   children: [
+      //     // { path: '', component: ChatView, meta: { title: t('routes.chatsMarket') } }
+      //     {
+      //       path: ":chatId/settings",
+      //       component: ChatSettings,
+      //       props: (route) => ({ id: route.params.chatId }),
+      //     },
+      //     {
+      //       path: ":chatId",
+      //       component: ChatView,
+      //       props: (route) => ({ id: route.params.chatId }),
+      //     },
+      //   ],
+      // },
       { path: "/set-provider", component: SetProvider },
       {
         path: "/account",

@@ -20,7 +20,6 @@
     "supabase:export-sql": "supabase db dump --data-only=false --file ./scripts/supabase_schema.sql",
     "eslint:fix": "eslint --ext .ts,.js,.vue . --fix",
     "fix:imports": "eslint --ext .ts,.js,.vue . --fix --rule 'import/order: [\"error\"]' --rule 'no-restricted-imports: [\"error\"]'",
-    "migrate:all": "npx tsx scripts/migrate_messages_tree.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "supabase:start": "docker compose --env-file .env.docker-compose up -d",

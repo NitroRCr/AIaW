@@ -148,7 +148,7 @@ export default {
     privateChat: "Private Chat Settings (not implemented)",
   },
   mainLayout: {
-    workspace: "Workspace | Workspaces",
+    workspace: "Active Workspace",
     chats: "Human Chats",
     dialogs: "AI Chats",
     assistants: "Assistants",
@@ -161,6 +161,8 @@ export default {
     localClient: "Local Client",
     lastDialogs: "Last AI Chats",
     pinnedChats: "Pinned Human Chats",
+    searchDialogs: "Search Dialogs",
+    createDialog: "Create AI Chat",
   },
   myWorkspaces: {
     noDescription: "No description",

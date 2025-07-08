@@ -1,4 +1,5 @@
 <template>
+  <sidebar-title title="Chats" />
   <q-list>
     <q-item>
       <q-item-section>
@@ -22,7 +23,7 @@
           no-caps
           @click="addItem"
         >
-          <q-tooltip> Create a new chat </q-tooltip>
+          <q-tooltip> New public chat </q-tooltip>
         </q-btn>
       </q-item-section>
       <q-item-section>
@@ -35,7 +36,7 @@
           no-margin
           @click.prevent.stop="showUserSelectDialog"
         >
-          <q-tooltip> Chat with user </q-tooltip>
+          <q-tooltip> New private chat </q-tooltip>
         </q-btn>
       </q-item-section>
     </q-item>
@@ -57,6 +58,7 @@ import { useQuasar } from "quasar"
 import { ref, toRef } from "vue"
 import { useRouter } from "vue-router"
 
+import SidebarTitle from "@/shared/components/layout/SidebarTitle.vue"
 import { useListenKey } from "@/shared/composables"
 import { useUserStore, useUserPerfsStore } from "@/shared/store"
 import { isPlatformEnabled } from "@/shared/utils/functions"
@@ -91,10 +93,10 @@ const showUserSelectDialog = () => {
 
 const onSelectUser = async (userId: string) => {
   const chatId = await chatsStore.startPrivateChatWith(userId)
-  router.push(
-    props.workspaceId
-      ? `/workspaces/${props.workspaceId}/chats/${chatId}`
-      : `/chats/${chatId}`
+  router.push(`/workspaces/${props.workspaceId}/chats/${chatId}`
+    // props.workspaceId
+    //   ? `/workspaces/${props.workspaceId}/chats/${chatId}`
+    //   : `/chats/${chatId}`
   )
 }
 

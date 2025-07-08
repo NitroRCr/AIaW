@@ -6,7 +6,7 @@ set -e
 SUPABASE_PROJECT_REF="${SUPABASE_PROJECT_REF:-khigxtpamihkpflxfvcr}"
 
 # Check required variables
-if [[ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
   echo "SUPABASE_ACCESS_TOKEN must be set"
   exit 1
 fi

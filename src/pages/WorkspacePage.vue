@@ -113,6 +113,30 @@
           :workspace-id="workspace.id"
           dense
         /> -->
+        <q-separator
+          mt-0
+          mb-0
+        />
+        <div class="flex w-full">
+          <icon-side-button
+            class="w-1/2"
+            title="Artifacts"
+            icon="sym_o_article"
+            :on-click="() => {
+              router.push(`/workspaces/${workspace.id}/artifacts`)
+            }"
+          />
+          <icon-side-button
+            class="w-1/2"
+            title="Files"
+            icon="sym_o_attach_file"
+            :on-click="() => {
+              router.push(`/workspaces/${workspace.id}/files`)
+            }"
+          />
+        </div>
+        <q-separator mt-0 />
+        <chat-list :workspace-id="workspace.id" />
         <template v-if="isPlatformEnabled(perfs.artifactsEnabled)">
           <q-separator />
           <artifacts-expansion
@@ -122,12 +146,11 @@
         </template>
         <!-- <chats-expansion
           :workspace-id="workspace.id"
-          :model-value="listOpen.chats"
-          @update:model-value="setListOpen('chats', $event)"
+          :model-value="true"
           max-h="40vh"
           of-y-auto
-        />
-        <q-separator /> -->
+        /> -->
+        <q-separator />
         <!-- <dialogs-expansion
           :workspace-id="workspace.id"
           :model-value="listOpen.dialogs"
@@ -150,6 +173,7 @@ import { computed, provide, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
 import DragableSeparator from "@/shared/components/DragableSeparator.vue"
+import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import { useUserPerfsStore } from "@/shared/store"
 import { useUserDataStore } from "@/shared/store/userData"
 import { artifactUnsaved, isPlatformEnabled } from "@/shared/utils/functions"
@@ -160,6 +184,7 @@ import ArtifactsExpansion from "@/features/artifacts/components/ArtifactsExpansi
 import { useCloseArtifact } from "@/features/artifacts/composables/useCloseArtifact"
 import { useArtifactsStore } from "@/features/artifacts/store"
 import EditArtifact from "@/features/artifacts/views/EditArtifact.vue"
+import ChatList from "@/features/chats/components/ChatList.vue"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import { Artifact } from "@/services/data/types/artifact"

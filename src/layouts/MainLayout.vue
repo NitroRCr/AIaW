@@ -21,11 +21,7 @@
         >
           <span class="mr-1">🟢</span><span>CYBER</span>
         </div>
-        <add-dialog-item
-          v-if="workspace"
-          main-layout
-          :workspace-id="workspace.id"
-        />
+
         <!-- <svg
           fill-on-sur-var
           h="24px"
@@ -39,63 +35,7 @@
         </svg> -->
       </div>
       <q-separator spaced />
-      <q-item
-        px-3
-        py-2
-        text-sec
-      >
-        <q-item-section>
-          {{ t("mainLayout.workspace", 1) }}
-        </q-item-section>
-        <q-item-section side>
-          <q-btn
-            v-if="canViewCyberlinks"
-            flat
-            dense
-            icon="sym_o_history"
-            :to="'/cyberlinks'"
-            :class="{
-              'route-active': route.path === '/cyberlinks',
-            }"
-            :title="$t('View cyberlinks')"
-          />
-        </q-item-section>
-      </q-item>
-      <workspace-selector />
-      <assistant-selector />
-      <!-- before -->
-      <!-- <workspace-nav mt-2 /> -->
-      <!-- end before -->
-      <div class="drawer-tabs-item">
-        <tabs-item />
-      </div>
-      <q-separator spaced />
-      <q-item
-        pt-3
-        px-4
-        text-sec
-        pb-0
-      >
-        <q-item-section>
-          {{ t("mainLayout.lastDialogs") }}
-        </q-item-section>
-      </q-item>
-      <q-item>
-        <last-dialogs />
-      </q-item>
-      <q-item
-        pt-3
-        px-4
-        pb-0
-        text-sec
-      >
-        <q-item-section>
-          {{ t("mainLayout.pinnedChats") }}
-        </q-item-section>
-      </q-item>
-      <q-item>
-        <pinned-chats />
-      </q-item>
+      <workspace-left-sidebar />
     </q-drawer>
     <router-view />
   </q-layout>
@@ -103,23 +43,15 @@
 
 <script setup>
 import { useQuasar } from "quasar"
-import { computed } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute } from "vue-router"
 
 import { DRAWER_WIDTH } from "@/shared/components/consts"
-import AssistantSelector from "@/shared/components/layout/AssistantSelector.vue"
-import LastDialogs from "@/shared/components/layout/LastDialogs.vue"
-import PinnedChats from "@/shared/components/layout/PinnedChats.vue"
-import TabsItem from "@/shared/components/layout/TabsItem.vue"
 import { useUiStateStore } from "@/shared/store"
 
-import AddDialogItem from "@/features/dialogs/components/AddDialogItem.vue"
-import { usePluginsStore } from "@/features/plugins/store"
-import WorkspaceSelector from "@/features/workspaces/components/WorkspaceSelector.vue"
-import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 import { useOpenLastWorkspace } from "@/features/workspaces/composables/useOpenLastWorkspace"
 
+import WorkspaceLeftSidebar from "@/layouts/components/WorkspaceLeftSidebar.vue"
 import version from "@/version.json"
 
 defineOptions({
@@ -128,28 +60,12 @@ defineOptions({
 
 const uiStore = useUiStateStore()
 const route = useRoute()
-const { workspace } = useActiveWorkspace()
 
 const { openLastWorkspace } = useOpenLastWorkspace()
 route.path === "/" && openLastWorkspace()
 
 const { t } = useI18n()
 const $q = useQuasar()
-
-const pluginsStore = usePluginsStore()
-const { assistant } = useActiveWorkspace()
-
-const canViewCyberlinks = computed(() => {
-  if (!assistant.value?.plugins) return false
-
-  const activePlugins = pluginsStore.plugins.filter(
-    (p) => p.available && assistant.value.plugins[p.id]?.enabled
-  )
-
-  return activePlugins.some((plugin) =>
-    plugin.apis.some((api) => api.name === "query_cyberlinks")
-  )
-})
 
 function notifyVersion () {
   $q.notify({
@@ -182,15 +98,11 @@ function notifyVersion () {
   font-weight: 800;
   text-shadow: 0 0 1px #000;
   letter-spacing: 0.1em;
-  color: #263238;
   top: -2px;
   position: relative;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  background: linear-gradient(90deg, #263238, #000);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+
 }
 .drawer-tabs-item {
   flex: 0 0 30%;
