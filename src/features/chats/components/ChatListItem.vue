@@ -22,6 +22,14 @@
     <q-item-section>
       {{ chat.name }}
     </q-item-section>
+    <q-item-section side>
+      <q-badge
+        rounded
+        v-if="chat.unreadCount > 0"
+        color="red"
+        :label="chat.unreadCount"
+      />
+    </q-item-section>
     <menu-button
       :menu-ref="toRef(menuChatRef)"
       v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
