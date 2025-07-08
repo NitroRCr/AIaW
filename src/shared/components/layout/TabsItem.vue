@@ -24,9 +24,7 @@
     v-model="activeTab"
     animated
   >
-    <q-tab-panel name="dialogs">
-      <dialog-list :workspace-id="workspaceId" />
-    </q-tab-panel>
+    <q-tab-panel name="dialogs" />
 
     <q-tab-panel name="chats">
       <chat-list :workspace-id="workspaceId" />
@@ -37,8 +35,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 
-import ChatList from "@/features/chats/components/ChatList.vue"
-import DialogList from "@/features/dialogs/components/DialogList.vue"
+import ChatList from "@/features/chats/components/ChatExpansion.vue"
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
 const { workspace } = useActiveWorkspace()

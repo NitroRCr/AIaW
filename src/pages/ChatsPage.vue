@@ -21,8 +21,6 @@
 import { useQuasar } from "quasar"
 import { computed, provide, ref } from "vue"
 
-import ChatsExpansion from "@/features/chats/components/ChatsExpansion.vue"
-
 const drawerOpen = ref(false)
 const drawerBreakpoint = 960
 const $q = useQuasar()

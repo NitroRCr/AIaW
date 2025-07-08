@@ -1,7 +1,7 @@
 <template>
   <view-common-header @toggle-drawer="$emit('toggle-drawer')">
     <q-toolbar-title>
-      {{ $t("workspaces.title") }}
+      {{ $t("workspaces.availableWorkspaces") }}
     </q-toolbar-title>
   </view-common-header>
   <q-page-container>
@@ -9,89 +9,30 @@
       p-2
       :style-fn="pageFhStyle"
     >
-      <!-- Tabs -->
-      <q-tabs
-        v-model="tab"
-        dense
-        class="text-grey"
-        active-color="primary"
-        indicator-color="primary"
-        align="justify"
-        narrow-indicator
-        mt-2
+      <workspace-list
+        :title="$t('workspaces.availableWorkspaces')"
+        :search-label="$t('workspaces.search')"
+        :empty-state-message="$t('workspaces.noAvailableWorkspaces')"
+        :items="filteredAvailableWorkspaces"
+        :loading="loading"
+        :show-header="false"
+        :show-page-container="false"
+        @action="handleWorkspaceAction"
       >
-        <q-tab
-          name="my-workspaces"
-          :label="$t('workspaces.myWorkspaces')"
-        />
-        <q-tab
-          name="available-workspaces"
-          :label="$t('workspaces.availableWorkspaces')"
-        />
-      </q-tabs>
-
-      <q-separator />
-
-      <q-tab-panels
-        v-model="tab"
-        animated
-      >
-        <!-- My Workspaces Tab -->
-        <q-tab-panel name="my-workspaces">
-          <workspace-list
-            :title="$t('workspaces.myWorkspaces')"
-            :search-label="$t('workspaces.search')"
-            :empty-state-message="$t('workspaces.noMyWorkspaces')"
-            :items="myWorkspaces"
-            :loading="loading"
-            :show-header="false"
-            :show-page-container="false"
-            @action="handleWorkspaceAction"
-          >
-            <template #empty-state>
-              <q-icon
-                name="sym_o_group_work"
-                size="4em"
-                class="text-grey-5 q-mb-md"
-              />
-              <div class="text-h6 text-grey-6">
-                {{ $t('workspaces.noMyWorkspaces') }}
-              </div>
-              <div class="text-body2 text-grey-5 q-mt-sm">
-                {{ $t('workspaces.noMyWorkspacesHint') }}
-              </div>
-            </template>
-          </workspace-list>
-        </q-tab-panel>
-
-        <!-- Available Workspaces Tab -->
-        <q-tab-panel name="available-workspaces">
-          <workspace-list
-            :title="$t('workspaces.availableWorkspaces')"
-            :search-label="$t('workspaces.search')"
-            :empty-state-message="$t('workspaces.noAvailableWorkspaces')"
-            :items="filteredAvailableWorkspaces"
-            :loading="loading"
-            :show-header="false"
-            :show-page-container="false"
-            @action="handleWorkspaceAction"
-          >
-            <template #empty-state>
-              <q-icon
-                name="sym_o_public"
-                size="4em"
-                class="text-grey-5 q-mb-md"
-              />
-              <div class="text-h6 text-grey-6">
-                {{ $t('workspaces.noAvailableWorkspaces') }}
-              </div>
-              <div class="text-body2 text-grey-5 q-mt-sm">
-                {{ $t('workspaces.noAvailableWorkspacesHint') }}
-              </div>
-            </template>
-          </workspace-list>
-        </q-tab-panel>
-      </q-tab-panels>
+        <template #empty-state>
+          <q-icon
+            name="sym_o_public"
+            size="4em"
+            class="text-grey-5 q-mb-md"
+          />
+          <div class="text-h6 text-grey-6">
+            {{ $t('workspaces.noAvailableWorkspaces') }}
+          </div>
+          <div class="text-body2 text-grey-5 q-mt-sm">
+            {{ $t('workspaces.noAvailableWorkspacesHint') }}
+          </div>
+        </template>
+      </workspace-list>
 
       <q-inner-loading :showing="loading" />
     </q-page>
@@ -99,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
+import { onMounted } from "vue"
 
 import { pageFhStyle } from "@/shared/utils/functions"
 
@@ -137,15 +78,12 @@ defineEmits<{
   'toggle-drawer': []
 }>()
 
-const tab = ref("my-workspaces")
-
 // Use the workspace manager composable
 const {
   // State
   loading,
 
   // Computed
-  myWorkspaces,
   filteredAvailableWorkspaces,
 
   // Methods
@@ -177,6 +115,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.q-page {
+  max-width: 1024px;
+  margin-right: auto;
+}
 /* Custom styles */
 .q-item__section--avatar {
   min-width: 48px;

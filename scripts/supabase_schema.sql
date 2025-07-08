@@ -543,7 +543,8 @@ CREATE TABLE IF NOT EXISTS "public"."messages" (
     "chat_id" "uuid",
     "sender_id" "uuid" DEFAULT "auth"."uid"() NOT NULL,
     "content" "text" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "is_read" boolean DEFAULT false NOT NULL
 );
 
 ALTER TABLE ONLY "public"."messages" REPLICA IDENTITY FULL;

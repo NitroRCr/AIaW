@@ -1,24 +1,20 @@
 <template>
+  <icon-side-button
+    icon="sym_o_search"
+    :title="$t('mainLayout.searchDialogs')"
+    @click="showSearchDialog = true"
+  />
+  <icon-side-button
+    icon="sym_o_rate_review"
+    :title="$t('mainLayout.createDialog')"
+    @click="onAdd"
+  />
+  <sidebar-title title="Dialogs" />
   <q-list>
-    <q-item
-      m-0
-      p-0
-    >
-      <q-btn
-        flat
-        dense
-        no-caps
-        no-padding
-        no-margin
-        icon="sym_o_search"
-        @click.prevent.stop="showSearchDialog = true"
-      >
-        <q-tooltip>
-          {{ $t("dialogList.searchDialogs") }}
-        </q-tooltip>
-      </q-btn>
-      <add-dialog-item :workspace-id="props.workspaceId" />
-    </q-item>
+    <empty-item
+      v-if="dialogs.length === 0"
+      text="No dialogs"
+    />
     <q-item
       v-for="dialog in [...dialogs].reverse()"
       :key="dialog.id"
@@ -31,6 +27,7 @@
       item-rd
       min-h="40px"
     >
+      <q-item-section side />
       <q-item-section>
         {{ dialog.name }}
       </q-item-section>
@@ -83,23 +80,40 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
 import { useQuasar } from "quasar"
-import { computed, ref } from "vue"
+import { computed, ref, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter, useRoute } from "vue-router"
 
+import EmptyItem from "@/shared/components/layout/EmptyItem.vue"
+import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
+import SidebarTitle from "@/shared/components/layout/SidebarTitle.vue"
 import MenuItem from "@/shared/components/menu/MenuItem.vue"
+import { useListenKey } from "@/shared/composables"
+import { useUserPerfsStore } from "@/shared/store"
+import { isPlatformEnabled } from "@/shared/utils/functions"
 import { dialogOptions } from "@/shared/utils/values"
 
 import SearchDialog from "@/features/dialogs/components/SearchDialog.vue"
 import { useDialogsStore } from "@/features/dialogs/store"
 import SelectWorkspaceDialog from "@/features/workspaces/components/SelectWorkspaceDialog.vue"
 
-import AddDialogItem from "./AddDialogItem.vue"
+import { useCreateDialog } from "../composables"
 
 const { t } = useI18n()
 const props = defineProps<{
   workspaceId: string
 }>()
+
+const { data: perfs } = storeToRefs(useUserPerfsStore())
+const { createDialog } = useCreateDialog(props.workspaceId)
+
+async function onAdd () {
+  await createDialog()
+}
+
+if (isPlatformEnabled(perfs.value.enableShortcutKey)) {
+  useListenKey(toRef(perfs.value, "createDialogKey"), onAdd)
+}
 
 const $q = useQuasar()
 const router = useRouter()

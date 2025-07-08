@@ -164,13 +164,16 @@ export const useAssistantTools = (
           if (!api.enabled) return
 
           const a = p.apis.find((a) => a.name === api.name)
-          const { name, prompt } = a
-          tools[`${p.id}-${name}`] = createTool(
-            engine.parseAndRenderSync(prompt, pluginVars),
-            p,
-            a,
-            callTool
-          )
+
+          if (a) {
+            const { name, prompt } = a
+            tools[`${p.id}-${name}`] = createTool(
+              engine.parseAndRenderSync(prompt, pluginVars),
+              p,
+              a,
+              callTool
+            )
+          }
         })
 
         const pluginInfos = {}

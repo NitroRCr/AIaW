@@ -40,7 +40,6 @@ export const useLlmDialog = (
 
   const genTitle = async (contents: Readonly<MessageContentNested[]>) => {
     try {
-      console.log("[---! genTitle", contents, systemSdkModel.value)
       const title = await generateTitle(
         systemSdkModel.value,
         contents,
@@ -132,7 +131,7 @@ export const useLlmDialog = (
     }
 
     // Auto generate title if enabled and it's a new dialog
-    if (perfs.autoGenTitle && dialogItems.value.length === 4) {
+    if (perfs.autoGenTitle && dialogItems.value.length === 3) {
       await genTitle(getMessageContents())
     }
   }

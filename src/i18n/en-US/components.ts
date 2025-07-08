@@ -93,6 +93,7 @@ export default {
   assistantItem: {
     unselected: "Unselected",
     global: "Global",
+    workspace: "Workspace",
   },
   importDataDialog: {
     title: "Import User Data",
