@@ -11,6 +11,10 @@
   />
   <sidebar-title title="Dialogs" />
   <q-list>
+    <empty-item
+      v-if="dialogs.length === 0"
+      text="No dialogs"
+    />
     <q-item
       v-for="dialog in [...dialogs].reverse()"
       :key="dialog.id"
@@ -80,6 +84,7 @@ import { computed, ref, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter, useRoute } from "vue-router"
 
+import EmptyItem from "@/shared/components/layout/EmptyItem.vue"
 import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import SidebarTitle from "@/shared/components/layout/SidebarTitle.vue"
 import MenuItem from "@/shared/components/menu/MenuItem.vue"

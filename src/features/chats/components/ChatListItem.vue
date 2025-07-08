@@ -1,4 +1,4 @@
-<template>
+4<template>
   <q-item
     clickable
     :to="{
@@ -6,15 +6,13 @@
       query: route.query,
     }"
     active-class="bg-sec-c text-on-sec-c"
-    item-rd
-    py-1.5
-    min-h-0
     @click="selected = chat.id"
     :class="{ 'route-active': chat.id === selected }"
   >
     <q-item-section
       avatar
       min-w-0
+      pl-4
     >
       <a-avatar
         :avatar="chat.avatar"

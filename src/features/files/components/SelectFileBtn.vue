@@ -1,5 +1,10 @@
 <template>
-  <q-btn @click.prevent.stop="onClick">
+  <icon-side-button
+    :title="$t('mainLayout.uploadFile')"
+    icon="sym_o_upload_file"
+    @click="onClick"
+  >
+    <!-- <q-btn @click.prevent.stop="onClick"> -->
     <q-dialog v-model="show">
       <q-card>
         <q-card-section>
@@ -33,12 +38,14 @@
       un-hidden
       multiple
     >
-  </q-btn>
+  </icon-side-button>
 </template>
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
 import { onUnmounted, ref } from "vue"
+
+import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 
 const emit = defineEmits<{
   input: [File[]]

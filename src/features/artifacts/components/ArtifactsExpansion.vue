@@ -1,29 +1,39 @@
 <template>
-  <q-expansion-item
-    header-class="text-lg py-0"
-    expand-icon-class="important:pl-2"
-  >
+  <q-expansion-item>
     <template #header>
+      <q-item-section avatar>
+        <q-icon name="sym_o_article" />
+      </q-item-section>
       <q-item-section> Artifacts </q-item-section>
       <q-item-section side>
-        <div>
-          <select-file-btn
-            flat
-            dense
-            round
-            icon="sym_o_upload_file"
-            :title="$t('artifactsExpansion.selectFile')"
-            @input="artifactFromFiles"
-          />
-          <q-btn
-            flat
-            dense
-            round
-            icon="sym_o_add"
-            :title="$t('artifactsExpansion.create')"
-            @click.prevent.stop="createEmptyArtifact"
-          />
-        </div>
+        <q-btn
+          round
+          flat
+          icon="sym_o_more_vert"
+          size="sm"
+          @click.prevent.stop
+        >
+          <q-menu
+            auto-close
+          >
+            <q-list>
+              <select-file-btn
+                flat
+                dense
+                round
+                size="sm"
+                icon="sym_o_upload_file"
+                :title="$t('mainLayout.uploadFile')"
+                @input="artifactFromFiles"
+              />
+              <icon-side-button
+                :title="$t('mainLayout.createArtifact')"
+                icon="sym_o_add"
+                @click="createEmptyArtifact"
+              />
+            </q-list>
+          </q-menu>
+        </q-btn>
       </q-item-section>
     </template>
     <template #default>
@@ -40,8 +50,11 @@
           {{ $t("artifactsExpansion.artifactsGuideLink") }}
         </a>
       </a-tip>
-      <q-list>
-        <div p="x-4 y-2">
+      <q-list min-h="100px">
+        <div
+          p="x-4 y-2"
+          v-if="artifacts.length > 0"
+        >
           <a-input
             dense
             outlined
@@ -50,6 +63,10 @@
             :placeholder="$t('artifactsExpansion.searchPlaceholder')"
           />
         </div>
+        <empty-item
+          v-if="filteredArtifacts.length === 0"
+          text="No artifacts"
+        />
         <q-item
           v-for="artifact in filteredArtifacts"
           :key="artifact.id"
@@ -103,6 +120,8 @@ import { useI18n } from "vue-i18n"
 import { useRouter, useRoute } from "vue-router"
 
 import ATip from "@/shared/components/ATip.vue"
+import EmptyItem from "@/shared/components/layout/EmptyItem.vue"
+import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import { useUserDataStore } from "@/shared/store"
 import { caselessIncludes, getFileExt, isTextFile } from "@/shared/utils/functions"
 import { dialogOptions } from "@/shared/utils/values"

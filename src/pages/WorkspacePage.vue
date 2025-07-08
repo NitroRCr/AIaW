@@ -23,34 +23,37 @@
         <q-separator
           mt-0
         />
-        <icon-side-button
+        <!-- <icon-side-button
           icon="sym_o_settings"
           :to="`/workspaces/${id}/settings`"
           :title="'Settings'"
           v-if="isUserWorkspaceAdmin(workspace?.id)"
-        />
-        <icon-side-button
-          title="Artifacts"
-          icon="sym_o_article"
-          @click="() => {
-            console.log('artifacts')
-          }"
-        />
-        <icon-side-button
-          title="Files"
-          icon="sym_o_attach_file"
-          @click="() => {
-            console.log('files')
-          }"
-        />
-        <q-separator mt-0 />
-        <chat-list :workspace-id="workspace.id" />
+          :active="false"
+        /> -->
+        <q-list>
+          <q-expansion-item
+            label="Files"
+            class="panel-item"
+            icon="sym_o_attach_file"
+          >
+            <q-card>
+              <q-card-section>
+                Not implemented yet
+              </q-card-section>
+            </q-card>
+          </q-expansion-item>
+          <artifacts-expansion />
+
+          <chat-expansion
+            :workspace-id="workspace.id"
+            :active="activeTab === 'chats'"
+          />
+        </q-list>
         <template v-if="isPlatformEnabled(perfs.artifactsEnabled)">
-          <q-separator />
-          <artifacts-expansion
+          <!-- <artifacts-expansion
             :model-value="true"
             of-y-auto
-          />
+          /> -->
         </template>
       </div>
     </q-drawer>
@@ -65,14 +68,13 @@
 import { useQuasar } from "quasar"
 import { computed, provide, ref, watch } from "vue"
 
-import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import { useUserPerfsStore } from "@/shared/store"
 import { useUserDataStore } from "@/shared/store/userData"
 import { isPlatformEnabled } from "@/shared/utils/functions"
 
 import ArtifactsExpansion from "@/features/artifacts/components/ArtifactsExpansion.vue"
 import { useArtifactsStore } from "@/features/artifacts/store"
-import ChatList from "@/features/chats/components/ChatList.vue"
+import ChatExpansion from "@/features/chats/components/ChatExpansion.vue"
 import ArtifactsPanel from "@/features/workspaces/components/ArtifactsPanel.vue"
 import { useRightsManagement } from "@/features/workspaces/composables"
 import { useWorkspacesStore } from "@/features/workspaces/store"
@@ -90,6 +92,8 @@ const workspacesStore = useWorkspacesStore()
 const userStore = useUserDataStore()
 
 const artifactsStore = useArtifactsStore()
+
+const activeTab = ref<"chats" | "files" | "artifacts">("chats")
 
 const workspace = computed<Workspace | undefined>(
   () =>
@@ -158,3 +162,11 @@ provide("rightDrawerAbove", rightDrawerAbove)
 const { data: perfs } = useUserPerfsStore()
 
 </script>
+<style>
+  .q-item {
+    min-height: 40px;
+  }
+  .q-card {
+   min-height: 200px;
+  }
+</style>

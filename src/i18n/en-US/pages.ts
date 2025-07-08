@@ -163,6 +163,8 @@ export default {
     pinnedChats: "Pinned Human Chats",
     searchDialogs: "Search Dialogs",
     createDialog: "Create AI Chat",
+    uploadFile: "Upload File",
+    createArtifact: "Create Artifact",
   },
   myWorkspaces: {
     noDescription: "No description",
