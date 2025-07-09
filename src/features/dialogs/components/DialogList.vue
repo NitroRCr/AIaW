@@ -14,7 +14,7 @@
   <q-list>
     <empty-item
       v-if="dialogs.length === 0"
-      text="No dialogs"
+      text="No conversations"
     />
     <q-item
       v-for="dialog in [...dialogs].reverse()"

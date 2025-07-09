@@ -1,5 +1,7 @@
 <template>
   <q-btn
+    flat
+    dense
     round
     v-if="myProfile"
     @click="onClick"

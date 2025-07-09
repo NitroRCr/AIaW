@@ -16,7 +16,7 @@
       <q-menu max-height="50vh">
         <q-list>
           <div v-if="isLoggedIn">
-            <q-item
+            <!-- <q-item
               clickable
               to="/assistants"
               active-class="route-active"
@@ -32,7 +32,7 @@
               <q-item-section>
                 {{ t("mainLayout.assistants") }}
               </q-item-section>
-            </q-item>
+            </q-item> -->
             <q-item
               clickable
               to="/plugins"

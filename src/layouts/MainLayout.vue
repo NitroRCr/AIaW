@@ -33,6 +33,13 @@
             xlink:href="/banner.svg#default"
           />
         </svg> -->
+        <q-btn
+          flat
+          dense
+          round
+          icon="sym_o_home"
+          @click="openLastWorkspace"
+        />
       </div>
       <q-separator
         spaced
