@@ -313,9 +313,21 @@ body .md-editor-preview-wrapper {
   z-index: 100;
 }
 
+.rd-md, [rd-md=""],
+.rd-lg, [rd-lg=""],
+.rd-xl, [rd-xl=""] {
+  border-radius: 10px;
+}
+
 .q-menu {
   border-radius: 10px;
-  padding: 6px 0;
+  padding: 5px;
+}
+
+.q-drawer {
+  &__content {
+    padding: 0 5px;
+  }
 }
 
 .q-field {
@@ -334,7 +346,7 @@ body .md-editor-preview-wrapper {
 .q-item {
   min-height: 40px;
   border-radius: 10px;
-  margin: 0 6px 1px 6px;
+  // margin: 0 6px 1px 6px;
   &.rounded, &.rd, &[rounded=""] {
     border-radius: 10px;
   }
