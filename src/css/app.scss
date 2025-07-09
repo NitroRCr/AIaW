@@ -315,6 +315,7 @@ body .md-editor-preview-wrapper {
 
 .q-menu {
   border-radius: 10px;
+  padding: 6px 0;
 }
 
 .q-field {
@@ -333,7 +334,7 @@ body .md-editor-preview-wrapper {
 .q-item {
   min-height: 40px;
   border-radius: 10px;
-  margin: 0 6px 0 6px;
+  margin: 0 6px 1px 6px;
   &.rounded, &.rd, &[rounded=""] {
     border-radius: 10px;
   }

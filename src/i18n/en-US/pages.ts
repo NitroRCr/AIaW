@@ -166,6 +166,7 @@ export default {
     uploadFile: "Upload File",
     createArtifact: "Create Artifact",
     cyberlinks: "Cyberlinks",
+    logout: "Logout",
   },
   myWorkspaces: {
     noDescription: "No description",

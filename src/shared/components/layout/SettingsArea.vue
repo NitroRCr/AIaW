@@ -3,73 +3,48 @@
     px-2
     flex
     text-on-sur-var
-    items-center
   >
     <dark-switch-btn />
     <q-space w-3 />
     <q-btn
       flat
       dense
+      to="/plugins"
+      icon="sym_o_extension"
+      :label="t('mainLayout.plugins')"
+    />
+    <q-space w-3 />
+
+    <q-btn
+      flat
+      dense
       round
-      icon="sym_o_settings"
     >
-      <q-menu max-height="50vh">
+      <a-avatar
+        :avatar="myProfile.avatar"
+        size="md"
+      />
+      <q-menu>
         <q-list>
-          <div v-if="isLoggedIn">
-            <!-- <q-item
-              clickable
-              to="/assistants"
-              active-class="route-active"
-              v-close-popup
-              min-h-0
-            >
-              <q-item-section
-                avatar
-                min-w-0
-              >
-                <q-icon name="sym_o_robot_2" />
-              </q-item-section>
-              <q-item-section>
-                {{ t("mainLayout.assistants") }}
-              </q-item-section>
-            </q-item> -->
-            <q-item
-              clickable
-              to="/plugins"
-              active-class="route-active"
-              v-close-popup
-              min-h-0
-            >
-              <q-item-section
-                avatar
-                min-w-0
-              >
-                <q-icon name="sym_o_extension" />
-              </q-item-section>
-              <q-item-section>
-                {{ t("mainLayout.plugins") }}
-              </q-item-section>
-            </q-item>
-            <q-item
-              clickable
-              to="/settings"
-              active-class="route-active"
-              v-close-popup
-              min-h-0
-            >
-              <q-item-section
-                avatar
-                min-w-0
-              >
-                <q-icon name="sym_o_settings" />
-              </q-item-section>
-              <q-item-section>
-                {{ t("mainLayout.settings") }}
-              </q-item-section>
-            </q-item>
-            <q-separator spaced />
-          </div>
           <menu-item
+            to="/account"
+            icon="sym_o_account_circle"
+            :label="myProfile.name"
+            class="highlight-label"
+          />
+          <!-- <menu-item
+            to="/plugins"
+            icon="sym_o_extension"
+            :label="t('mainLayout.plugins')"
+          /> -->
+          <menu-item
+            to="/settings"
+            min-h-0
+            icon="sym_o_settings"
+            :label="t('mainLayout.settings')"
+          />
+
+          <!-- <menu-item
             icon="sym_o_book_2"
             :label="t('mainLayout.usageGuide')"
             href="https://docs.aiaw.app/usage/"
@@ -93,7 +68,9 @@
               />
             </q-item-section>
             <q-item-section>GitHub</q-item-section>
-          </q-item>
+          </q-item> -->
+
+          <q-separator spaced />
           <menu-item
             v-if="IsWeb"
             icon="sym_o_download"
@@ -108,29 +85,50 @@
             href="https://aiaw.app"
             target="_blank"
           />
+          <menu-item
+            icon="sym_o_logout"
+            :label="t('mainLayout.logout')"
+            @click="signOut"
+            bg-secondary
+          />
         </q-list>
       </q-menu>
     </q-btn>
-
-    <account-btn
-      flat
-      no-caps
-    />
   </div>
 </template>
 
 <script setup>
 import { storeToRefs } from "pinia"
 import { useI18n } from "vue-i18n"
+import { useRouter } from "vue-router"
 
+import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import DarkSwitchBtn from "@/shared/components/DarkSwitchBtn.vue"
 import MenuItem from "@/shared/components/menu/MenuItem.vue"
-import { useUserStore } from "@/shared/store/user"
 import { IsWeb } from "@/shared/utils/platformApi"
 
-import AccountBtn from "@/features/auth/components/AccountBtn.vue"
+import { useAuth } from "@/features/auth/composables/useAuth"
+import { useProfileStore } from "@/features/profile/store"
+const { myProfile } = storeToRefs(useProfileStore())
+const router = useRouter()
 
-const { isLoggedIn } = storeToRefs(useUserStore())
-
+const { signOut } = useAuth({
+  onComplete: () => {
+    router.replace("/")
+  }
+})
 const { t } = useI18n()
+
 </script>
+
+<style scoped>
+.q-item {
+  min-width: 200px;
+  margin-bottom: 1px;
+}
+
+.highlight-label {
+  font-weight: bold;
+  /* color: var(--q-primary); */
+}
+</style>
