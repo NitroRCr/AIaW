@@ -243,7 +243,9 @@ const { genTitle, extractArtifact, streamLlmResponse, isStreaming } = useLlmDial
 
 watch(dialog, () => {
   if (!dialog.value) {
-    router.push(`/workspaces/${activeWorkspaceId.value}`)
+    nextTick(() => {
+      router.push(`/workspaces/${activeWorkspaceId.value}`)
+    })
     $q.notify({
       message: t("dialogView.errors.dialogNotFound"),
       color: "negative",
