@@ -129,9 +129,7 @@ function updateDialogModel(modelOverride: any) {
 </script>
 
 <style scoped>
-.q-btn {
-  border-radius: 10px;
-}
+
 .model-name {
   text-transform: none;
 }

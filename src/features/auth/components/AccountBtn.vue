@@ -8,7 +8,7 @@
   >
     <a-avatar
       :avatar="myProfile.avatar"
-      size="sm"
+      size="md"
     />
   </q-btn>
   <q-btn

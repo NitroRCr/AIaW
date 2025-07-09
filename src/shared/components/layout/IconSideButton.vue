@@ -73,11 +73,7 @@ const props = withDefaults(defineProps<{
 
 </script>
 <style scoped>
-.q-item {
-  min-height: 40px;
-  border-radius: 10px;
-  margin: 0 6px 0 6px;
-}
+
 .small {
   font-size: 13px;
   min-height: 32px;

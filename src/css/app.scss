@@ -312,3 +312,35 @@ body .md-editor-preview-wrapper {
   margin-top: auto;
   z-index: 100;
 }
+
+.q-menu {
+  border-radius: 10px;
+}
+
+.q-field {
+  &--outlined, &--filled {
+    .q-field {
+    &__control {
+      border-radius: 10px;
+      &:after {
+        background: none;
+      }
+    }
+    }
+  }
+}
+
+.q-item {
+  min-height: 40px;
+  border-radius: 10px;
+  margin: 0 6px 0 6px;
+  &.rounded, &.rd, &[rounded=""] {
+    border-radius: 10px;
+  }
+}
+
+.q-btn {
+  &--rectangle, &.rectangle, &[rectangle=""] {
+    border-radius: 10px;
+  }
+}

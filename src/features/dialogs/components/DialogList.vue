@@ -172,9 +172,5 @@ function deleteItem ({ id, name }) {
 }
 </script>
 <style>
-.q-item {
-  min-height: 40px;
-  border-radius: 10px;
-  margin: 0 6px 0 6px;
-}
+
 </style>
