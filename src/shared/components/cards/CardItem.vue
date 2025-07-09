@@ -15,6 +15,7 @@
         class="card-component__badge-more-btn"
         icon="sym_o_more_vert"
         dense
+        round
         size="sm"
         color="info"
         @click.stop
@@ -171,7 +172,6 @@ const badgeBgComputed = computed(() => {
   }
 
   &__badge-more-btn {
-    margin-left: 8px;
     z-index: 4;
   }
 }
