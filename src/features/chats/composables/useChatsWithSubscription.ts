@@ -1,4 +1,4 @@
-import { ref, readonly, watch } from "vue"
+import { ref, watch } from "vue"
 
 import { useUserStore } from "@/shared/store"
 import type { Avatar } from "@/shared/types"
@@ -162,7 +162,7 @@ export function useChatsWithSubscription () {
   )
 
   return {
-    chats: readonly(chats),
+    chats, // : readonly(chats),
     isLoaded,
   }
 }

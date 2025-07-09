@@ -6,7 +6,7 @@
   >
     <a-avatar
       :avatar="myProfile.avatar"
-      size="md"
+      size="sm"
     />
   </q-btn>
   <q-btn

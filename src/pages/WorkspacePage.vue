@@ -77,7 +77,6 @@ import ArtifactsExpansion from "@/features/artifacts/components/ArtifactsExpansi
 import { useArtifactsStore } from "@/features/artifacts/store"
 import ChatExpansion from "@/features/chats/components/ChatExpansion.vue"
 import ArtifactsPanel from "@/features/workspaces/components/ArtifactsPanel.vue"
-import { useRightsManagement } from "@/features/workspaces/composables"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import { Artifact } from "@/services/data/types/artifact"
@@ -88,7 +87,6 @@ import ErrorNotFound from "@/pages/ErrorNotFound.vue"
 const props = defineProps<{
   id: string
 }>()
-const { isUserWorkspaceAdmin } = useRightsManagement()
 const workspacesStore = useWorkspacesStore()
 const userStore = useUserDataStore()
 

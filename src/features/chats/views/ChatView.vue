@@ -299,7 +299,9 @@ const chat = computed<Chat>(() =>
 watch(
   () => props.id,
   (newId) => {
-    chatMessagesStore.fetchMessages(newId)
+    chatMessagesStore.fetchMessages(newId).then(() => {
+      chatsStore.markAsRead(newId)
+    })
   },
   { immediate: true }
 )
@@ -324,6 +326,7 @@ watch(
   (newLength, oldLength) => {
     if (newLength > oldLength) {
       // New message added
+      chatsStore.markAsRead(props.id)
       nextTick().then(() => {
         scroll("bottom")
       })

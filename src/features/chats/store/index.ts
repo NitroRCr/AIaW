@@ -281,6 +281,35 @@ export const useChatsStore = defineStore("chats", () => {
     return chatId
   }
 
+  const markAsRead = async (chatId: string) => {
+    const { error } = await supabase.rpc('mark_chat_as_read', {
+      p_chat_id: chatId
+    })
+
+    if (error) {
+      console.error("❌ Failed to mark chat as read:", error.message)
+      throw error
+    }
+
+    const chat = chats.value.find(chat => chat.id === chatId)
+
+    if (chat) {
+      chat.unreadCount = 0
+    }
+  }
+
+  const incrementUnreadCount = (chatId: string) => {
+    const chat = chats.value.find(c => c.id === chatId)
+
+    if (chat) {
+      if (typeof chat.unreadCount === "number") {
+        chat.unreadCount += 1
+      } else {
+        chat.unreadCount = 1
+      }
+    }
+  }
+
   return {
     chats: readonly(chats),
     isLoaded,
@@ -292,5 +321,7 @@ export const useChatsStore = defineStore("chats", () => {
     startPrivateChatWith,
     isSaving,
     hasChanges,
+    markAsRead,
+    incrementUnreadCount,
   }
 })
