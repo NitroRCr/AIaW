@@ -11,17 +11,16 @@
     >
       <span class="card-component__badge-text">{{ props.badge }}</span>
       <q-btn
-        v-if="showMoreBtn && props.onMoreClick"
+        v-if="showMoreBtn"
         class="card-component__badge-more-btn"
         icon="sym_o_more_vert"
         dense
+        round
         size="sm"
         color="info"
-        @click.stop="props.onMoreClick"
+        @click.stop
       >
-        <q-tooltip v-if="props.moreTooltip">
-          {{ props.moreTooltip }}
-        </q-tooltip>
+        <slot name="menu" />
       </q-btn>
     </div>
     <q-card-section class="card-component__header">
@@ -74,8 +73,6 @@ const props = defineProps<{
   name: string
   description?: string
   avatar: Avatar
-  onMoreClick?:(e: MouseEvent) => void
-  moreTooltip?: string
   showMoreBtn?: boolean
   badge?: string
   badgeColor?: string
@@ -175,7 +172,6 @@ const badgeBgComputed = computed(() => {
   }
 
   &__badge-more-btn {
-    margin-left: 8px;
     z-index: 4;
   }
 }

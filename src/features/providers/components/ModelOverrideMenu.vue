@@ -1,23 +1,19 @@
 <template>
-  <div
+  <q-btn
     v-if="model && assistant && dialog"
-    text-on-sur-var
-    my-2
-    of-hidden
-    whitespace-nowrap
-    text-ellipsis
-    cursor-pointer
+    flat
+    dense
+    icon="sym_o_neurology"
+    icon-right="sym_o_keyboard_arrow_down"
   >
-    <q-icon
-      name="sym_o_neurology"
-      size="24px"
-    />
-    <code
-      bg-sur-c-high
+    <div
       px="6px"
       py="3px"
       text="xs"
-    >{{ model.name }}</code>
+      class="model-name"
+    >
+      {{ model.name }}
+    </div>
     <q-menu important:max-w="300px">
       <q-list>
         <template v-if="assistant.model">
@@ -86,7 +82,7 @@
         />
       </q-list>
     </q-menu>
-  </div>
+  </q-btn>
 </template>
 
 <script setup lang="ts">
@@ -131,3 +127,10 @@ function updateDialogModel(modelOverride: any) {
   })
 }
 </script>
+
+<style scoped>
+
+.model-name {
+  text-transform: none;
+}
+</style>

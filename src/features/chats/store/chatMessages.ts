@@ -1,17 +1,27 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
 
+import { useUserStore } from "@/shared/store"
+
 import { useChatMessagesSubscription } from "@/features/chats/composables/useChatMessagesSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
 import { ChatMessage, DbChatMessageInsert, mapChatMessageToDb, mapDbToChatMessage } from "@/services/data/types/chat"
 
+import { useChatsStore } from "./index"
+
 export const useChatMessagesStore = defineStore("chat-messages", () => {
+  const chatsStore = useChatsStore()
+  const userStore = useUserStore()
   const messagesByChat = ref<Record<string, ChatMessage[]>>({})
 
   const onNewMessage = (message: ChatMessage) => {
     if (!messagesByChat.value[message.chatId]) {
       messagesByChat.value[message.chatId] = []
+    }
+
+    if (message.senderId !== userStore.currentUserId) {
+      chatsStore.incrementUnreadCount(message.chatId)
     }
 
     messagesByChat.value[message.chatId].push(message)

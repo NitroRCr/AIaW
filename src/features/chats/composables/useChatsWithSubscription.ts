@@ -1,4 +1,4 @@
-import { ref, readonly, watch } from "vue"
+import { ref, watch } from "vue"
 
 import { useUserStore } from "@/shared/store"
 import type { Avatar } from "@/shared/types"
@@ -6,7 +6,7 @@ import { mapAvatarOrDefault } from "@/shared/utils/avatar"
 import { defaultTextAvatar } from "@/shared/utils/functions"
 
 import { supabase } from "@/services/data/supabase/client"
-import { mapDbToChat, type Chat } from "@/services/data/types/chat"
+import { DbChat, mapDbToChat, type Chat } from "@/services/data/types/chat"
 import { mapDbToUserProfile } from "@/services/data/types/profile"
 const chats = ref<Chat[]>([])
 let isSubscribed = false
@@ -52,10 +52,12 @@ async function extendChatsWithDisplayName (
 }
 
 async function fetchChats (currentUserId: string | null) {
-  const { data, error } = await supabase
-    .from("chats")
-    .select("*")
-    .order("created_at", { ascending: false })
+  const { data, error } = await supabase.rpc('get_chats_with_unread_count')
+  // const { data, error } = await supabase
+  // .from("chats")
+  //   .select(`*, unread_count:messages(count:is_read_false)`)
+  //   .order("created_at", { ascending: false })
+  console.log("----fetchChats", data)
 
   if (error) {
     console.error("❌ Failed to fetch chats:", error.message)
@@ -64,7 +66,7 @@ async function fetchChats (currentUserId: string | null) {
   }
 
   chats.value = await extendChatsWithDisplayName(
-    data.map(mapDbToChat),
+    data.map((c) => ({ ...mapDbToChat(c as DbChat) })),
     currentUserId
   )
 }
@@ -160,7 +162,7 @@ export function useChatsWithSubscription () {
   )
 
   return {
-    chats: readonly(chats),
+    chats, // : readonly(chats),
     isLoaded,
   }
 }

@@ -199,6 +199,36 @@ $$;
 ALTER FUNCTION "public"."debug_workspaces"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_chats_with_unread_count"() RETURNS TABLE("id" "text", "name" "text", "owner_id" "text", "type" "text", "workspace_id" "text", "created_at" timestamp with time zone, "avatar" "jsonb", "description" "text", "unread_count" integer)
+    LANGUAGE "sql"
+    AS $$
+SELECT
+    c.id,
+    c.name,
+    c.owner_id,
+    c.type,
+    c.workspace_id,
+    c.created_at,
+    c.avatar,
+    c.description,
+    (
+        SELECT count(*)
+        FROM messages m
+        WHERE m.chat_id = c.id
+          AND NOT EXISTS (
+              SELECT 1
+              FROM message_read mr
+              WHERE mr.id = m.id AND mr.user_id = auth.uid()
+          )
+    ) AS unread_count
+FROM chats c
+ORDER BY c.created_at DESC;
+$$;
+
+
+ALTER FUNCTION "public"."get_chats_with_unread_count"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_workspace_role"("workspace_id" "uuid", "user_id" "uuid") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "row_security" TO 'off'
@@ -301,6 +331,36 @@ $$;
 
 
 ALTER FUNCTION "public"."is_workspace_owner"("user_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."mark_chat_as_read"("p_chat_id" "uuid") RETURNS "void"
+    LANGUAGE "sql"
+    AS $$
+INSERT INTO message_read (id, user_id)
+SELECT m.id, auth.uid()
+FROM messages m
+LEFT JOIN message_read mr ON mr.id = m.id AND mr.user_id = auth.uid()
+WHERE m.chat_id = p_chat_id
+  AND mr.id IS NULL;
+$$;
+
+
+ALTER FUNCTION "public"."mark_chat_as_read"("p_chat_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."mark_message_as_read_by_sender"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO message_read (id, user_id)
+  VALUES (NEW.id, NEW.sender_id);
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."mark_message_as_read_by_sender"() OWNER TO "postgres";
+
 
 CREATE OR REPLACE FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -502,13 +562,21 @@ CREATE TABLE IF NOT EXISTS "public"."message_contents" (
 ALTER TABLE "public"."message_contents" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."message_read" (
+    "id" "uuid" NOT NULL,
+    "user_id" "uuid" DEFAULT "auth"."uid"() NOT NULL
+);
+
+
+ALTER TABLE "public"."message_read" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."messages" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "chat_id" "uuid",
     "sender_id" "uuid" DEFAULT "auth"."uid"() NOT NULL,
     "content" "text" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "is_read" boolean DEFAULT false NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 ALTER TABLE ONLY "public"."messages" REPLICA IDENTITY FULL;
@@ -708,6 +776,11 @@ ALTER TABLE ONLY "public"."dialogs"
 
 
 
+ALTER TABLE ONLY "public"."message_read"
+    ADD CONSTRAINT "message_read_pkey" PRIMARY KEY ("id", "user_id");
+
+
+
 ALTER TABLE ONLY "public"."messages"
     ADD CONSTRAINT "messages_pkey" PRIMARY KEY ("id");
 
@@ -893,6 +966,16 @@ ALTER TABLE ONLY "public"."message_contents"
 
 
 
+ALTER TABLE ONLY "public"."message_read"
+    ADD CONSTRAINT "message_read_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."messages"("id");
+
+
+
+ALTER TABLE ONLY "public"."message_read"
+    ADD CONSTRAINT "message_read_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+
+
+
 ALTER TABLE ONLY "public"."messages"
     ADD CONSTRAINT "messages_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "public"."chats"("id") ON DELETE CASCADE;
 
@@ -1026,6 +1109,10 @@ CREATE POLICY "Chat members can create messages" ON "public"."messages" FOR INSE
    FROM ("public"."chats" "c"
      JOIN "public"."workspace_members" "wm" ON (("c"."workspace_id" = "wm"."workspace_id")))
   WHERE (("c"."id" = "messages"."chat_id") AND ("c"."type" = 'workspace'::"public"."chat_type") AND ("wm"."user_id" = "auth"."uid"()))))));
+
+
+
+CREATE POLICY "Chat members can read all members of their chats" ON "public"."chat_members" FOR SELECT USING ("public"."is_chat_member"("chat_id"));
 
 
 
@@ -1199,6 +1286,10 @@ CREATE POLICY "Users can delete their subproviders" ON "public"."subproviders" F
 
 
 
+CREATE POLICY "Users can insert own read markers" ON "public"."message_read" FOR INSERT WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Users can insert subproviders under their custom providers" ON "public"."subproviders" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."custom_providers" "cp"
   WHERE (("cp"."id" = "subproviders"."custom_provider_id") AND ("cp"."user_id" = "auth"."uid"())))));
@@ -1222,6 +1313,10 @@ CREATE POLICY "Users can insert their plugins" ON "public"."user_plugins" FOR IN
 
 
 CREATE POLICY "Users can read their plugins" ON "public"."user_plugins" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can select their read markers" ON "public"."message_read" FOR SELECT USING (("user_id" = "auth"."uid"()));
 
 
 
@@ -1307,6 +1402,9 @@ ALTER TABLE "public"."dialogs" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."message_contents" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."message_read" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."messages" ENABLE ROW LEVEL SECURITY;
@@ -1595,6 +1693,48 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."get_chats_with_unread_count"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_chats_with_unread_count"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_chats_with_unread_count"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_workspace_role"("workspace_id" "uuid", "user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_workspace_role"("workspace_id" "uuid", "user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_workspace_role"("workspace_id" "uuid", "user_id" "uuid") TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ALL ON FUNCTION "public"."mark_chat_as_read"("p_chat_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."mark_chat_as_read"("p_chat_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."mark_chat_as_read"("p_chat_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."mark_message_as_read_by_sender"() TO "anon";
+GRANT ALL ON FUNCTION "public"."mark_message_as_read_by_sender"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."mark_message_as_read_by_sender"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."start_private_chat_with"("target_user_id" "uuid", "current_user_id" "uuid") TO "service_role";
 
 
 
@@ -1640,24 +1780,15 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."message_read" TO "anon";
+GRANT ALL ON TABLE "public"."message_read" TO "authenticated";
+GRANT ALL ON TABLE "public"."message_read" TO "service_role";
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+GRANT ALL ON TABLE "public"."messages" TO "anon";
+GRANT ALL ON TABLE "public"."messages" TO "authenticated";
+GRANT ALL ON TABLE "public"."messages" TO "service_role";
 
 
 

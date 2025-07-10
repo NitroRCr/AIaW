@@ -1,4 +1,4 @@
-4<template>
+<template>
   <q-item
     clickable
     :to="{
@@ -12,7 +12,7 @@
     <q-item-section
       avatar
       min-w-0
-      pl-4
+      pl-2
     >
       <a-avatar
         :avatar="chat.avatar"
@@ -22,36 +22,46 @@
     <q-item-section>
       {{ chat.name }}
     </q-item-section>
-    <menu-button
-      :menu-ref="toRef(menuChatRef)"
-      v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
-    />
-    <q-menu
-      ref="menuChatRef"
-      context-menu
-      v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
-    >
-      <q-list style="min-width: 100px">
-        <menu-item
-          icon="sym_o_edit"
-          :label="'Rename'"
-          @click="renameItem(chat)"
-          v-if="chat.type === 'workspace'"
-        />
-        <menu-item
-          icon="sym_o_delete"
-          :label="'Delete'"
-          @click="deleteItem(chat)"
-          hover:text-err
-        />
-        <menu-item
-          icon="sym_o_settings"
-          :label="'Settings'"
-          :to="{ path: `/chats/${chat.id}/settings`, query: route.query }"
-          v-if="chat.type === 'workspace'"
-        />
-      </q-list>
-    </q-menu>
+    <q-item-section side>
+      <q-badge
+        rounded
+        v-if="chat.unreadCount > 0"
+        color="red"
+        :label="chat.unreadCount"
+      />
+    </q-item-section>
+    <q-item-section side>
+      <menu-button
+        :menu-ref="toRef(menuChatRef)"
+        v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
+      />
+      <q-menu
+        ref="menuChatRef"
+        context-menu
+        v-if="isUserWorkspaceAdmin(chat.workspaceId) || chat.type === 'private'"
+      >
+        <q-list style="min-width: 100px">
+          <menu-item
+            icon="sym_o_edit"
+            :label="'Rename'"
+            @click="renameItem(chat)"
+            v-if="chat.type === 'workspace'"
+          />
+          <menu-item
+            icon="sym_o_delete"
+            :label="'Delete'"
+            @click="deleteItem(chat)"
+            hover:text-err
+          />
+          <menu-item
+            icon="sym_o_settings"
+            :label="'Settings'"
+            :to="{ path: `/chats/${chat.id}/settings`, query: route.query }"
+            v-if="chat.type === 'workspace'"
+          />
+        </q-list>
+      </q-menu>
+    </q-item-section>
   </q-item>
 </template>
 

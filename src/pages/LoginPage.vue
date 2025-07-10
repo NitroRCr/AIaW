@@ -5,16 +5,13 @@
         class="flex flex-center flex-col gradient-bg"
       >
         <div class="title">
-          Cyber AI
+          🟣 Cyber AI
         </div>
         <q-card
           :class="[$q.dark.isActive ? 'bg-grey-10' : 'bg-white']"
           min-w="320px"
         >
           <q-card-section>
-            <div class="text-h6">
-              Authorization
-            </div>
             <q-option-group
               v-model="authType"
               :options="authTypeOptions"
@@ -29,7 +26,7 @@
               <q-item>
                 <q-item-section>
                   <q-input
-                    filled
+                    stack-label
                     type="email"
                     v-model="email"
                     label="Email"
@@ -40,6 +37,7 @@
               <q-item>
                 <q-item-section>
                   <q-input
+                    stack-label
                     v-model="password"
                     label="Password"
                     type="password"
@@ -114,13 +112,13 @@ const $q = useQuasar()
 .title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #000;
+  color: var(--q-primary);
   font-family: 'Material Symbols Outlined';
   margin-bottom: 1.5rem;
 }
 
 .gradient-bg {
   min-height: 100vh;
-  background: linear-gradient(135deg, #6dd5ed 10%, #2193b0 100%);
+  /* background: linear-gradient(135deg, #6dd5ed 10%, #2193b0 100%); */
 }
 </style>

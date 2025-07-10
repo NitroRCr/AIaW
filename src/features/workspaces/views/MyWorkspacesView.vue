@@ -21,11 +21,57 @@
           :show-more-btn="isUserWorkspaceAdmin(workspace.id)"
           :more-tooltip="$t('myWorkspaces.options')"
           @click="selectWorkspace(workspace)"
-          @more-click="showContextMenu($event as MouseEvent, workspace)"
           :badge="workspace.isPublic ? $t('myWorkspaces.public') : $t('myWorkspaces.private')"
           :badge-color="workspace.isPublic ? 'var(--q-primary)' : 'var(--q-negative)'"
           :subtitle="`by ${getOwnerName(workspace)}`"
         >
+          <template #menu>
+            <q-menu>
+              <q-list style="min-width: 150px">
+                <q-item
+                  v-if="workspace?.type === 'folder'"
+                  clickable
+                  @click="addWorkspace(workspace.id)"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="sym_o_add" />
+                  </q-item-section>
+                  <q-item-section>{{ $t('workspaceListItem.newWorkspace') }}</q-item-section>
+                </q-item>
+
+                <q-item
+                  v-if="workspace?.type === 'folder'"
+                  clickable
+                  @click="addFolder(workspace.id)"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="sym_o_create_new_folder" />
+                  </q-item-section>
+                  <q-item-section>{{ $t('workspaceListItem.newFolder') }}</q-item-section>
+                </q-item>
+
+                <q-separator v-if="workspace?.type === 'folder'" />
+                <q-item
+                  clickable
+                  @click="router.push(`/workspaces/${workspace.id}/settings`)"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="sym_o_settings" />
+                  </q-item-section>
+                  <q-item-section>{{ $t('myWorkspaces.settings') }}</q-item-section>
+                </q-item>
+                <q-item
+                  clickable
+                  @click="deleteItem(workspace)"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="sym_o_delete" />
+                  </q-item-section>
+                  <q-item-section>{{ $t('workspaceListItem.delete') }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </template>
           <div class="workspace-card-content">
             <!-- You can add more content here if needed -->
             <div class="workspace-actions">
@@ -58,62 +104,12 @@
             </div> -->
         </card-item>
       </card-view>
-
-      <q-menu
-        ref="contextMenuRef"
-        context-menu
-      >
-        <q-list style="min-width: 150px">
-          <q-item
-            v-if="selectedWorkspace?.type === 'folder'"
-            clickable
-            @click="addWorkspace(selectedWorkspace.id)"
-          >
-            <q-item-section avatar>
-              <q-icon name="sym_o_add" />
-            </q-item-section>
-            <q-item-section>{{ $t('workspaceListItem.newWorkspace') }}</q-item-section>
-          </q-item>
-
-          <q-item
-            v-if="selectedWorkspace?.type === 'folder'"
-            clickable
-            @click="addFolder(selectedWorkspace.id)"
-          >
-            <q-item-section avatar>
-              <q-icon name="sym_o_create_new_folder" />
-            </q-item-section>
-            <q-item-section>{{ $t('workspaceListItem.newFolder') }}</q-item-section>
-          </q-item>
-
-          <q-separator v-if="selectedWorkspace?.type === 'folder'" />
-          <q-item
-            clickable
-            @click="router.push(`/workspaces/${selectedWorkspace.id}/settings`)"
-          >
-            <q-item-section avatar>
-              <q-icon name="sym_o_settings" />
-            </q-item-section>
-            <q-item-section>{{ $t('myWorkspaces.settings') }}</q-item-section>
-          </q-item>
-          <q-item
-            clickable
-            @click="deleteItem(selectedWorkspace)"
-          >
-            <q-item-section avatar>
-              <q-icon name="sym_o_delete" />
-            </q-item-section>
-            <q-item-section>{{ $t('workspaceListItem.delete') }}</q-item-section>
-          </q-item>
-        </q-list>
-      </q-menu>
     </q-page>
   </q-page-container>
 </template>
 
 <script setup lang="ts">
 import { QMenu } from 'quasar'
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { CardView, CardItem } from '@/shared/components/cards'
@@ -138,9 +134,6 @@ const {
   leaveWorkspace,
 } = useWorkspaceManager()
 const workspaces = useRootWorkspace(null)
-const contextMenuRef = ref<QMenu | null>(null)
-const selectedWorkspace = ref<Workspace | null>(null)
-console.log("--my-workspaces-view", workspaces.value)
 
 function selectWorkspace(workspace: Workspace) {
   let path = `/workspaces/${workspace.id}`
@@ -157,10 +150,6 @@ function navigateToWorkspaces() {
   router.push('/workspaces')
 }
 
-function showContextMenu(event: MouseEvent, workspace: Workspace) {
-  selectedWorkspace.value = workspace
-  contextMenuRef.value?.show(event)
-}
 </script>
 
 <style lang="scss" scoped>

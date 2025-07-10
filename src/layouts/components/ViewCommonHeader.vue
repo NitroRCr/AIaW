@@ -21,7 +21,6 @@
         @click="uiStore.toggleMainDrawer"
       />
       <slot />
-
       <q-btn
         v-if="!noDrawer"
         flat
@@ -55,4 +54,3 @@ const props = defineProps<{
 }>()
 const back = useBack(props.backTo)
 </script>
-<style scoped></style>

@@ -133,25 +133,52 @@
         </div>
         <MessageInputControl
           ref="messageInputControl"
-          :model="model"
-          :assistant="assistant"
-          :sdk-model="sdkModel"
-          :model-options="modelOptions"
-          @update:model-options="modelOptions = $event"
-          :active-plugins="activePlugins"
-          :usage="usage"
+          :supported-input-types="model?.inputTypes?.user || []"
           :loading="isStreaming || !!dialogItems.at(-2)?.message?.generatingSession"
           :input-empty="inputEmpty"
           :input-text="inputMessageContent?.text"
-          :input-vars="dialog?.inputVars || {}"
           :add-input-items="addInputItems"
+          :process-other-files="processOtherFiles"
           @send="sendUserMessageAndGenerateResponse"
           @abort="abortController?.abort()"
-          @update-input-vars="(name, value) => dialog && (dialog.inputVars[name] = value)"
           @update-input-text="inputMessageContent && updateInputText($event)"
           @keydown-enter="handleInputEnterKeyPress"
           @paste="onPaste"
-        />
+        >
+          <template #input-extension>
+            <AssistantInputExtension
+              ref="assistantExtension"
+              :assistant="assistant"
+              :model="model"
+              :sdk-model="sdkModel"
+              :model-options="modelOptions"
+              @update:model-options="modelOptions = $event"
+              :active-plugins="activePlugins"
+              :input-vars="dialog?.inputVars || {}"
+              :dialog-id="dialogId"
+              :workspace-id="workspaceId"
+              @update-input-vars="(name, value) => dialog && (dialog.inputVars[name] = value)"
+            />
+          </template>
+
+          <template #tokens-consumption>
+            <AssistantInputExtension
+              :assistant="assistant"
+              :usage="usage"
+              :usage-only="true"
+            />
+          </template>
+
+          <template #below-controls>
+            <AssistantInputExtension
+              v-if="assistant && assistantExtension?.showVars && assistant.promptVars?.length"
+              :assistant="assistant"
+              :input-vars="dialog?.inputVars || {}"
+              :prompt-vars-only="true"
+              @update-input-vars="(name, value) => dialog && (dialog.inputVars[name] = value)"
+            />
+          </template>
+        </MessageInputControl>
       </div>
     </q-page>
   </q-page-container>
@@ -180,6 +207,7 @@ import {
   wrapQuote
 } from "@/shared/utils/functions"
 
+import AssistantInputExtension from "@/features/dialogs/components/AssistantInputExtension.vue"
 import MessageItem from "@/features/dialogs/components/MessageItem.vue"
 import { useDialogInput } from "@/features/dialogs/composables/useDialogInput"
 import { useDialogMessages } from "@/features/dialogs/composables/useDialogMessages"
@@ -243,7 +271,9 @@ const { genTitle, extractArtifact, streamLlmResponse, isStreaming } = useLlmDial
 
 watch(dialog, () => {
   if (!dialog.value) {
-    router.push(`/workspaces/${activeWorkspaceId.value}`)
+    nextTick(() => {
+      router.push(`/workspaces/${activeWorkspaceId.value}`)
+    })
     $q.notify({
       message: t("dialogView.errors.dialogNotFound"),
       color: "negative",
@@ -263,6 +293,7 @@ const lockingBottom = computed(
 // stream abort controller
 const abortController = ref<AbortController | null>(null)
 const messageInputControl = ref()
+const assistantExtension = ref()
 const showVars = ref(true)
 
 watch(
@@ -390,7 +421,7 @@ async function parseFiles (files: File[]) {
 
   await addInputItems(parsedItems)
 
-  otherFiles.length &&
+  if (otherFiles.length) {
     $q
       .dialog({
         component: ParseFilesDialog,
@@ -399,6 +430,23 @@ async function parseFiles (files: File[]) {
       .onOk((files: ApiResultItem[]) => {
         addInputItems(files)
       })
+  }
+}
+
+async function processOtherFiles (files: File[]) {
+  if (!files.length) return
+
+  return new Promise<void>((resolve) => {
+    $q.dialog({
+      component: ParseFilesDialog,
+      componentProps: { files, plugins: assistant.value.plugins }
+    }).onOk((processedFiles: ApiResultItem[]) => {
+      addInputItems(processedFiles)
+      resolve()
+    }).onCancel(() => {
+      resolve()
+    })
+  })
 }
 
 async function quote (item: ApiResultItem) {
@@ -486,6 +534,7 @@ const activePlugins = computed<Plugin[]>(() =>
     )
     : []
 )
+
 const usage = computed(() => dialogItems.value.at(-2)?.message?.usage)
 
 async function copyContent () {
@@ -523,7 +572,6 @@ watch(
           //   updateMsgRoute(route)
           //   await until(chain).changed()
           // }
-
           await nextTick()
           const { items } = getEls()
           const item = items[route.length - 1]
@@ -776,7 +824,9 @@ watch(
   }
 )
 
-defineEmits(["toggle-drawer"])
+defineEmits<{
+  'toggle-drawer': []
+}>()
 
 useSetTitle(computed(() => dialog.value?.name))
 </script>

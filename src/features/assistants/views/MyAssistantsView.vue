@@ -19,12 +19,38 @@
           :description="assistant.description || $t('myAssistants.noDescription')"
           :avatar="assistant.avatar"
           @click="setDefaultAssistant(assistant.id)"
-          @more-click="showContextMenu($event as MouseEvent, assistant)"
           :show-more-btn="true"
-          :more-tooltip="$t('myAssistants.options')"
           :badge="assistant.workspaceId ? $t('assistantItem.workspace') : $t('assistantItem.global')"
           :badge-color="assistant.workspaceId ? 'var(--q-primary)' : 'var(--q-secondary)'"
         >
+          <template #menu>
+            <q-menu>
+              <q-list style="min-width: 100px">
+                <menu-item
+                  icon="sym_o_move_item"
+                  :label="$t('assistantsExpansion.moveToGlobal')"
+                  @click="move(assistant.id, null)"
+                />
+                <menu-item
+                  icon="sym_o_move_item"
+                  :label="$t('assistantsExpansion.moveToWorkspace')"
+                  @click="moveToWorkspace(assistant.id)"
+                />
+                <menu-item
+                  icon="sym_o_delete"
+                  :label="$t('assistantsExpansion.delete')"
+                  @click="deleteItem(assistant)"
+                  hover:text-err
+                />
+                <menu-item
+                  icon="sym_o_settings"
+                  :label="$t('assistantsExpansion.settings')"
+                  @click="goToSettings(assistant.id)"
+                  hover:text-primary
+                />
+              </q-list>
+            </q-menu>
+          </template>
           <div class="assistant-card-content">
             <div
               class="assistant-stats"
@@ -47,35 +73,6 @@
           </div>
         </card-item>
       </card-view>
-      <q-menu
-        ref="contextMenuRef"
-        context-menu
-      >
-        <q-list style="min-width: 100px">
-          <menu-item
-            icon="sym_o_move_item"
-            :label="$t('assistantsExpansion.moveToGlobal')"
-            @click="move(selectedAssistant.id, null)"
-          />
-          <menu-item
-            icon="sym_o_move_item"
-            :label="$t('assistantsExpansion.moveToWorkspace')"
-            @click="moveToWorkspace(selectedAssistant.id)"
-          />
-          <menu-item
-            icon="sym_o_delete"
-            :label="$t('assistantsExpansion.delete')"
-            @click="deleteItem(selectedAssistant)"
-            hover:text-err
-          />
-          <menu-item
-            icon="sym_o_settings"
-            :label="$t('assistantsExpansion.settings')"
-            @click="goToSettings(selectedAssistant.id)"
-            hover:text-primary
-          />
-        </q-list>
-      </q-menu>
     </q-page>
   </q-page-container>
 </template>
@@ -83,7 +80,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useQuasar, QMenu } from 'quasar'
-import { computed, defineEmits, ref } from 'vue'
+import { computed, defineEmits } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -97,15 +94,12 @@ import { useAssistantsStore } from '@/features/assistants/store'
 import SelectWorkspaceDialog from '@/features/workspaces/components/SelectWorkspaceDialog.vue'
 import { useActiveWorkspace } from '@/features/workspaces/composables/useActiveWorkspace'
 
-import { Assistant } from '@/services/data/types/assistant'
-
 import ViewCommonHeader from '@/layouts/components/ViewCommonHeader.vue'
 
 const router = useRouter()
 const route = useRoute()
 const $q = useQuasar()
 const { t } = useI18n()
-const contextMenuRef = ref<QMenu | null>(null)
 
 defineEmits(["toggle-drawer"])
 const workspaceId = route.params.workspaceId as string
@@ -113,17 +107,11 @@ const assistantsStore = useAssistantsStore()
 const { data: perfs } = storeToRefs(useUserPerfsStore())
 const { data: userData } = storeToRefs(useUserDataStore())
 const { workspace } = useActiveWorkspace()
-const selectedAssistant = ref<Assistant | null>(null)
 const assistants = computed(() =>
   assistantsStore.assistants.filter(
     (a) => a.workspaceId === workspaceId || a.workspaceId == null
   )
 )
-
-function showContextMenu(event: MouseEvent, assistant: Assistant) {
-  selectedAssistant.value = assistant
-  contextMenuRef.value?.show(event)
-}
 
 function setDefaultAssistant(id: string) {
   userData.value.defaultAssistantIds[workspaceId] = id

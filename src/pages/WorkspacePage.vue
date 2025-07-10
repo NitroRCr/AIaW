@@ -22,6 +22,7 @@
       >
         <q-separator
           mt-0
+          mb-2
         />
         <!-- <icon-side-button
           icon="sym_o_settings"
@@ -161,10 +162,5 @@ const { data: perfs } = useUserPerfsStore()
 
 </script>
 <style>
-  .q-item {
-    min-height: 40px;
-  }
-  .q-card {
-   min-height: 200px;
-  }
+
 </style>

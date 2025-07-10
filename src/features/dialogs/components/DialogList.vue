@@ -1,19 +1,20 @@
 <template>
   <icon-side-button
-    icon="sym_o_search"
-    :title="$t('mainLayout.searchDialogs')"
-    @click="showSearchDialog = true"
-  />
-  <icon-side-button
     icon="sym_o_rate_review"
     :title="$t('mainLayout.createDialog')"
     @click="onAdd"
   />
-  <sidebar-title title="Dialogs" />
+  <icon-side-button
+    icon="sym_o_search"
+    :title="$t('mainLayout.searchDialogs')"
+    @click="showSearchDialog = true"
+  />
+  <sidebar-title title="Chats" />
+
   <q-list>
     <empty-item
       v-if="dialogs.length === 0"
-      text="No dialogs"
+      text="No conversations"
     />
     <q-item
       v-for="dialog in [...dialogs].reverse()"
@@ -24,8 +25,6 @@
         query: route.query,
       }"
       active-class="bg-sec-c text-on-sec-c"
-      item-rd
-      min-h="40px"
     >
       <q-item-section side />
       <q-item-section>
@@ -105,7 +104,7 @@ const props = defineProps<{
 }>()
 
 const { data: perfs } = storeToRefs(useUserPerfsStore())
-const { createDialog } = useCreateDialog(props.workspaceId)
+const { createDialog } = useCreateDialog(toRef(props, "workspaceId"))
 
 async function onAdd () {
   await createDialog()
@@ -172,3 +171,6 @@ function deleteItem ({ id, name }) {
   })
 }
 </script>
+<style>
+
+</style>

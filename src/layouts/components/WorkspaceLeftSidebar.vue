@@ -1,19 +1,12 @@
 <template>
-  <sidebar-title :title="t('mainLayout.workspace')">
-    <template #icon>
-      <q-btn
-        v-if="canViewCyberlinks"
-        flat
-        dense
-        icon="sym_o_history"
-        :to="'/cyberlinks'"
-        :class="{
-          'route-active': route.path === '/cyberlinks',
-        }"
-        :title="$t('View cyberlinks')"
-      />
-    </template>
-  </sidebar-title>
+  <icon-side-button
+    v-if="canViewCyberlinks"
+    icon="sym_o_hub"
+    :title="$t('mainLayout.cyberlinks')"
+    :to="'/cyberlinks'"
+  />
+  <sidebar-title :title="t('mainLayout.workspace')" />
+
   <icon-side-button
     :icon="workspace?.avatar || emptyAvatar"
     :title="workspace?.name || 'Select a workspace...'"
@@ -26,8 +19,10 @@
     :to="`/workspaces/${workspace.id}/assistants`"
     direction="right"
   />
-  <q-separator spaced />
-  <dialog-list :workspace-id="workspaceId" />
+  <div class="pt-2" />
+  <dialog-list
+    :workspace-id="workspaceId"
+  />
   <!-- <sidebar-title title="Last Dialogs" />
   <q-item>
     <last-dialogs />

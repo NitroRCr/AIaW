@@ -312,3 +312,52 @@ body .md-editor-preview-wrapper {
   margin-top: auto;
   z-index: 100;
 }
+
+.rd-md, [rd-md=""],
+.rd-lg, [rd-lg=""],
+.rd-xl, [rd-xl=""] {
+  border-radius: 10px;
+}
+
+.q-menu {
+  border-radius: 10px;
+  padding: 5px;
+}
+
+.q-drawer {
+  &__content {
+    padding: 0 5px;
+  }
+}
+
+.q-field {
+  &--outlined, &--filled {
+    .q-field {
+    &__control {
+      border-radius: 10px;
+      &:after {
+        background: none;
+      }
+    }
+    }
+  }
+}
+
+.q-item {
+  min-height: 40px;
+  border-radius: 10px;
+  // margin: 0 6px 1px 6px;
+  &.rounded, &.rd, &[rounded=""] {
+    border-radius: 10px;
+  }
+}
+
+.q-btn {
+  &--rectangle, &.rectangle, &[rectangle=""] {
+    border-radius: 10px;
+  }
+}
+
+.q-card {
+  border-radius: 10px;
+}

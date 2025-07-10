@@ -1,3 +1,4 @@
+import { Ref } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
@@ -8,7 +9,7 @@ import { useDialogMessagesStore, useDialogsStore } from "@/features/dialogs/stor
 import { DbDialogMessageUpdate, DialogMessage } from "@/services/data/types/dialogMessage"
 import { Dialog } from "@/services/data/types/dialogs"
 
-export function useCreateDialog (workspaceId: string) {
+export function useCreateDialog (workspaceId: Ref<string>) {
   const router = useRouter()
   const dialogsStore = useDialogsStore()
   const { t } = useI18n()
@@ -16,12 +17,13 @@ export function useCreateDialog (workspaceId: string) {
   async function createDialog (props: Partial<Dialog> = {}, message?: DialogMessage<DbDialogMessageUpdate>) {
     const userStore = useUserDataStore()
     const dialogMessagesStore = useDialogMessagesStore()
+    console.log("----createDialog", workspaceId, props, message)
 
     return await dialogsStore.addDialog(
       {
-        workspaceId,
+        workspaceId: workspaceId.value,
         name: t("createDialog.newDialog"),
-        assistantId: userStore.data.defaultAssistantIds[workspaceId] || null,
+        assistantId: userStore.data.defaultAssistantIds[workspaceId.value] || null,
         inputVars: {},
         ...props,
       }
@@ -43,7 +45,7 @@ export function useCreateDialog (workspaceId: string) {
 
       return dialog
     }).then(async (dialog) => {
-      router.push(`/workspaces/${workspaceId}/dialogs/${dialog.id}`)
+      router.push(`/workspaces/${workspaceId.value}/dialogs/${dialog.id}`)
 
       return dialog
     })

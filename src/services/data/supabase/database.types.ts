@@ -341,13 +341,35 @@ export type Database = {
           },
         ]
       }
+      message_read: {
+        Row: {
+          id: string
+          user_id: string
+        }
+        Insert: {
+          id: string
+          user_id?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_read_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           chat_id: string | null
           content: string
           created_at: string
           id: string
-          is_read: boolean
           sender_id: string
         }
         Insert: {
@@ -355,7 +377,6 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
-          is_read?: boolean
           sender_id?: string
         }
         Update: {
@@ -363,7 +384,6 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
-          is_read?: boolean
           sender_id?: string
         }
         Relationships: [
@@ -852,6 +872,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_chats_with_unread_count: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          owner_id: string
+          type: string
+          workspace_id: string
+          created_at: string
+          avatar: Json
+          description: string
+          unread_count: number
+        }[]
+      }
       get_workspace_role: {
         Args: { workspace_id: string; user_id: string }
         Returns: string
@@ -875,6 +909,10 @@ export type Database = {
       is_workspace_owner: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      mark_chat_as_read: {
+        Args: { p_chat_id: string }
+        Returns: undefined
       }
       start_private_chat_with: {
         Args: { target_user_id: string; current_user_id: string }

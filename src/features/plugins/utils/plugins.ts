@@ -1059,7 +1059,7 @@ const docParsePlugin: Plugin = {
 
         return [
           {
-            type: "file",
+            type: "text",
             contentText: docs
               .map((r) => r.text)
               .join("\n--------page-separator--------\n"),
