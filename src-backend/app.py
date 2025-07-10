@@ -162,7 +162,7 @@ def get_or_create_user(wallet_address: str, email: str) -> str:
             print(f"DEBUG: Found user by email with UUID: {supabase_uid}")
 
             # Обновляем `user_metadata` с `wallet_address`
-            update_payload = {"data": {**user.get('user_metadata', {}), "wallet_address": wallet_address}}
+            update_payload = {"user_metadata": {**user.get('user_metadata', {}), "wallet_address": wallet_address}}
             requests.put(f"{SUPABASE_URL}/auth/v1/admin/users/{supabase_uid}", headers=headers, json=update_payload)
 
             # Обновляем профиль с `wallet_address`
@@ -186,7 +186,7 @@ def generate_jwt_token_for_uuid(uuid: str, wallet_address: str = None, email: st
         'sub': uuid,  # UUID!
         'aud': 'authenticated',
         'role': 'authenticated',
-        'iss': 'aiaw-backend',
+        'iss': 'supabase',
         'iat': int(now.timestamp()),
         'exp': int(expires_at.timestamp()),
         'user_metadata': {

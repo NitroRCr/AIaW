@@ -60,6 +60,17 @@
               "
             />
           </q-card-actions>
+          <q-separator class="q-my-md" />
+          <q-card-actions align="center">
+            <q-btn
+              color="secondary"
+              outline
+              class="full-width"
+              label="With Wallet"
+              :loading="walletLoading"
+              @click="handleWalletAuth"
+            />
+          </q-card-actions>
         </q-card>
       </q-page>
     </q-page-container>
@@ -72,6 +83,7 @@ import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
 import { useAuth } from "@/features/auth/composables/useAuth"
+import { useWalletAuth } from "@/features/auth/composables/useWalletAuth"
 
 const router = useRouter()
 const authType = ref<"sign-in" | "sign-up">("sign-in")
@@ -105,6 +117,22 @@ const { signIn, signUp } = useAuth({
     router.push("/")
   }
 })
+
+// Wallet authentication
+const { isLoading: walletLoading, authenticateWithWallet } = useWalletAuth({
+  onAuthSuccess: () => {
+    router.push("/")
+  }
+})
+
+const handleWalletAuth = async () => {
+  try {
+    await authenticateWithWallet()
+  } catch (error) {
+    // Error is already handled in useWalletAuth
+    console.error("Wallet authentication error:", error)
+  }
+}
 
 const $q = useQuasar()
 </script>
