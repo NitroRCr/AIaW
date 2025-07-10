@@ -4,22 +4,15 @@
   >
     <MessageInputControl
       ref="messageInputControl"
-      :model="model"
-      :assistant="assistant"
-      :sdk-model="sdkModel"
-      :model-options="modelOptions"
-      @update:model-options="modelOptions = $event"
-      :active-plugins="activePlugins"
+      :supported-input-types="model?.inputTypes?.user || []"
       :input-empty="inputEmpty"
       :input-text="inputText"
-      :input-vars="inputVars"
       :add-input-items="addInputItems"
+      :process-other-files="processOtherFiles"
       @send="initDialog"
-      @update-input-vars="(name, value) => inputVars[name] = value"
       @update-input-text="inputText = $event"
       @keydown-enter="handleInputEnterKeyPress"
       @paste="onPaste"
-      :init-dialog="true"
     />
   </div>
 </template>
@@ -33,8 +26,7 @@ import MessageInputControl from "@/shared/components/input/control/MessageInputC
 import { useListenKey } from "@/shared/composables"
 import { useUserPerfsStore } from "@/shared/store"
 import type {
-  ApiResultItem,
-  Plugin
+  ApiResultItem
 } from "@/shared/types"
 import { parseFilesToApiResultItems } from "@/shared/utils/files"
 import {
@@ -42,7 +34,6 @@ import {
   textBeginning
 } from "@/shared/utils/functions"
 
-import { usePluginsStore } from "@/features/plugins/store"
 import { useActiveWorkspace } from "@/features/workspaces/composables"
 
 import { DbDialogMessageUpdate, DialogMessage } from "@/services/data/types/dialogMessage"
@@ -52,7 +43,7 @@ import { useCreateDialog, useDialogMessages, useDialogModel } from "../composabl
 import ParseFilesDialog from "./ParseFilesDialog.vue"
 
 const { assistant, workspaceId } = useActiveWorkspace()
-const { model, sdkModel, modelOptions } = useDialogModel(null, assistant)
+const { model } = useDialogModel(null, assistant)
 const dialogId = ref<string | null>(null)
 const { addApiResultStoredItem, lastMessage } = useDialogMessages(dialogId)
 
@@ -62,7 +53,6 @@ const inputItems = ref<ApiResultItem[]>([])
 
 const inputEmpty = computed(() => !inputText.value && !inputItems.value.length)
 
-const pluginsStore = usePluginsStore()
 const { data: perfs } = useUserPerfsStore()
 // eslint-disable-next-line no-unused-vars
 const { createDialog } = useCreateDialog(workspaceId.value)
@@ -90,13 +80,14 @@ function initDialog () {
   }, message).then(async (dialog) => {
     dialogId.value = dialog.id
 
-    await Promise.all(inputItems.value.map(item => addApiResultStoredItem(lastMessage.value.id,
-      lastMessage.value.messageContents[0].id, item)))
+    await Promise.all(inputItems.value.map(item => {
+      return addApiResultStoredItem(lastMessage.value.id, lastMessage.value.messageContents[0].id, item)
+    }))
   })
 }
 
 async function addInputItems (items: ApiResultItem[]) {
-  inputItems.value = items
+  inputItems.value.push(...items)
 }
 
 function focusInput () {
@@ -137,7 +128,7 @@ onUnmounted(() => removeEventListener("paste", onPaste))
 async function parseFiles (files: File[]) {
   if (!files.length) return
 
-  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, model.value.inputTypes.user, (maxFileSize, file) => {
+  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, model.value?.inputTypes?.user || [], (maxFileSize, file) => {
     $q.notify({
       message: t("dialogView.fileTooLarge", {
         maxSize: maxFileSize
@@ -146,7 +137,6 @@ async function parseFiles (files: File[]) {
     })
   })
 
-  // addInputItems(parsedItems)
   addInputItems(parsedItems)
 
   if (otherFiles.length) {
@@ -154,7 +144,7 @@ async function parseFiles (files: File[]) {
       component: ParseFilesDialog,
       componentProps: { files: otherFiles, plugins: assistant.value.plugins }
     }).onOk((files: ApiResultItem[]) => {
-      // addInputItems(files)
+      addInputItems(files)
     })
   }
 }
@@ -173,15 +163,23 @@ function handleInputEnterKeyPress (ev: KeyboardEvent) {
   }
 }
 
-const activePlugins = computed<Plugin[]>(() =>
-  assistant.value
-    ? pluginsStore.plugins.filter(
-      (p) => p.available && assistant.value.plugins[p.id]?.enabled
-    )
-    : []
-)
-
 if (isPlatformEnabled(perfs.enableShortcutKey)) {
   useListenKey(toRef(perfs, "focusDialogInputKey"), () => focusInput())
+}
+
+async function processOtherFiles (files: File[]) {
+  if (!files.length) return
+
+  return new Promise<void>((resolve) => {
+    $q.dialog({
+      component: ParseFilesDialog,
+      componentProps: { files, plugins: assistant.value.plugins }
+    }).onOk((processedFiles: ApiResultItem[]) => {
+      addInputItems(processedFiles)
+      resolve()
+    }).onCancel(() => {
+      resolve()
+    })
+  })
 }
 </script>
