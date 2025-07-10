@@ -17,7 +17,6 @@ export function useCreateDialog (workspaceId: Ref<string>) {
   async function createDialog (props: Partial<Dialog> = {}, message?: DialogMessage<DbDialogMessageUpdate>) {
     const userStore = useUserDataStore()
     const dialogMessagesStore = useDialogMessagesStore()
-    console.log("----createDialog", workspaceId, props, message)
 
     return await dialogsStore.addDialog(
       {

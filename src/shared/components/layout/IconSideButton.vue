@@ -31,7 +31,7 @@
       <a-avatar
         v-else
         :avatar="props.icon"
-        size="24px"
+        :size="props.small ? '16px' : '24px'"
       />
       <!-- <q-tooltip v-if="props.small">
         {{ props.title }}

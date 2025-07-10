@@ -27,7 +27,6 @@
       <div class="card-component__avatar">
         <AAvatar
           :avatar="props.avatar"
-          size="lg"
         />
       </div>
 

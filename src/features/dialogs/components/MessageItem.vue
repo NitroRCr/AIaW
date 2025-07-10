@@ -18,10 +18,6 @@
         <a-avatar
           v-if="avatar"
           :avatar
-          :size="colMode ? '36px' : denseMode ? '40px' : '48px'"
-          :class="colMode ? 'mx-3' : 'xs:mx-3 sm:mx-4'"
-          @click="onAvatarClick"
-          cursor-pointer
         />
         <div
           v-if="name"

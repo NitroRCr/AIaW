@@ -5,10 +5,12 @@
   >
     {{ avatar.text }}
   </q-avatar>
+
   <image-avatar
     v-else-if="avatar?.type === 'image'"
     :id="avatar.imageId"
     :style
+    :key="avatar.imageId"
   />
   <q-avatar
     v-else-if="avatar?.type === 'icon'"

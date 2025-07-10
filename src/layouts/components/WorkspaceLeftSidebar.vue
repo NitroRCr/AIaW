@@ -13,6 +13,8 @@
     :to="`/workspaces/my`"
     direction="right"
   />
+  <sidebar-title :title="'Assistant'" />
+
   <icon-side-button
     :icon="assistant?.avatar || emptyAvatar"
     :title="assistant?.name || 'Select an assistant'"

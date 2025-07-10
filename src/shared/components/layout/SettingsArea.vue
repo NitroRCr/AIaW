@@ -22,7 +22,6 @@
     >
       <a-avatar
         :avatar="myProfile.avatar"
-        size="md"
       />
       <q-menu>
         <q-list>
