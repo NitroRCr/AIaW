@@ -104,7 +104,7 @@ const props = defineProps<{
 }>()
 
 const { data: perfs } = storeToRefs(useUserPerfsStore())
-const { createDialog } = useCreateDialog(props.workspaceId)
+const { createDialog } = useCreateDialog(toRef(props, "workspaceId"))
 
 async function onAdd () {
   await createDialog()
