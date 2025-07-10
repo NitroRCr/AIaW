@@ -5,9 +5,10 @@ from pydantic import BaseModel
 import aiohttp
 from typing import Optional, Dict, Any, AsyncIterator
 from fastapi.staticfiles import StaticFiles
-from llama_parse import LlamaParse
+# from llama_parse import LlamaParse
 import os
 import jwt
+import json
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv, find_dotenv
 from fastapi.middleware.cors import CORSMiddleware
@@ -77,98 +78,108 @@ class PrivyAuthRequest(BaseModel):
     email: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
+class WalletAuthRequest(BaseModel):
+    wallet_address: str
+
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
-def get_or_create_supabase_user(privy_user_id: str, wallet_address: str = None, email: str = None) -> str:
+def get_or_create_user(wallet_address: str, email: str) -> str:
     """
-    Find or create a Supabase user by privy_user_id. Returns the UUID (as string).
+    Find or create a Supabase user by wallet_address. Returns the UUID (as string).
     """
-    print(f"DEBUG: get_or_create_supabase_user called for privy_user_id: {privy_user_id}")
-    print(f"DEBUG: SUPABASE_URL: {SUPABASE_URL}")
-    print(f"DEBUG: SERVICE_ROLE_KEY available: {bool(SUPABASE_SERVICE_KEY)}")
-
+    print(f"DEBUG: get_or_create_user called for wallet: {wallet_address}")
     headers = {
         'apikey': SUPABASE_SERVICE_KEY,
         'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}',
         'Content-Type': 'application/json',
+        'x-supabase-bypass-rls': 'true'  # Обходим RLS
     }
-    # 1. Поиск в privy_users
-    print("DEBUG: Searching for existing user in privy_users table")
+
+    # 1. Поиск по wallet_address в таблице profiles
+    print(f"DEBUG: Searching for existing user by wallet_address: {wallet_address}")
     resp = requests.get(
-        f"{SUPABASE_URL}/rest/v1/privy_users?privy_user_id=eq.{privy_user_id}&select=supabase_uid",
+        f"{SUPABASE_URL}/rest/v1/profiles?wallet_address=eq.{wallet_address}&select=id",
         headers=headers
     )
     print(f"DEBUG: Search response status: {resp.status_code}")
     if resp.status_code == 200 and resp.json():
-        print(f"DEBUG: Found existing user: {resp.json()[0]['supabase_uid']}")
-        return resp.json()[0]['supabase_uid']
+        supabase_uid = resp.json()[0]['id']
+        print(f"DEBUG: Found existing user: {supabase_uid}")
+        return supabase_uid
 
     # 2. Если не найдено — создаём пользователя через Supabase Auth API
     print("DEBUG: User not found, creating new user")
+    password = wallet_address + "_auto_pwd_1234"
     payload = {
-        "email": email or f"{privy_user_id}@privy.local",
-        "password": privy_user_id + "_auto_pwd_1234",
-        "data": {
-            "privy_user_id": privy_user_id,
-            "wallet_address": wallet_address
+        "email": email,
+        "password": password,
+        "user_metadata": {
+            "wallet_address": wallet_address,
+            # Добавляем имя, чтобы оно не было пустым в профиле
+            "name": wallet_address[:8]
         }
     }
     print(f"DEBUG: Creating user with payload: {payload}")
     auth_resp = requests.post(
         f"{SUPABASE_URL}/auth/v1/admin/users",
         headers=headers,
-        json=payload
+        data=json.dumps(payload)
     )
     print(f"DEBUG: Auth API response status: {auth_resp.status_code}")
+
     if auth_resp.status_code in (200, 201):
         user = auth_resp.json()['user'] if 'user' in auth_resp.json() else auth_resp.json()
         supabase_uid = user['id']
         print(f"DEBUG: Created user with UUID: {supabase_uid}")
-        # Добавляем в privy_users
-        privy_payload = {
-            "supabase_uid": supabase_uid,
-            "privy_user_id": privy_user_id,
-            "wallet_address": wallet_address,
-            "email": email
-        }
-        print("DEBUG: Adding user to privy_users table")
-        privy_resp = requests.post(f"{SUPABASE_URL}/rest/v1/privy_users", headers=headers, json=privy_payload)
-        print(f"DEBUG: privy_users insert response status: {privy_resp.status_code}")
+
+        # Профиль будет обновлен триггером в БД.
+        # Этот код больше не нужен.
+        # profile_update_payload = {"wallet_address": wallet_address}
+        # profile_update_headers = {**headers, 'Prefer': 'return=representation'}
+        # profile_update_resp = requests.patch(
+        #     f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{supabase_uid}",
+        #     headers=profile_update_headers,
+        #     json=profile_update_payload
+        # )
+        # print(f"DEBUG: Profile update response status: {profile_update_resp.status_code}")
+
         return supabase_uid
+
     elif auth_resp.status_code == 422 and 'email_exists' in auth_resp.text:
-        print("DEBUG: Email already exists, searching for user by email")
-        # Найти пользователя по email
-        user_search = requests.get(
+        print("DEBUG: Email already exists, trying to link wallet.")
+        # Находим пользователя по email
+        user_search_resp = requests.get(
             f"{SUPABASE_URL}/auth/v1/admin/users?email={email}",
             headers=headers
         )
-        print(f"DEBUG: User search by email status: {user_search.status_code}")
-        user_data = user_search.json()
-        if user_search.status_code == 200 and user_data.get('users'):
+        user_data = user_search_resp.json()
+        if user_search_resp.status_code == 200 and user_data.get('users'):
             user = user_data['users'][0]
             supabase_uid = user['id']
-            print(f"DEBUG: Found existing user with UUID: {supabase_uid}")
-            # Добавляем в privy_users
-            privy_payload = {
-                "supabase_uid": supabase_uid,
-                "privy_user_id": privy_user_id,
-                "wallet_address": wallet_address,
-                "email": email
-            }
-            print("DEBUG: Adding user to privy_users table (email exists case)")
-            privy_resp = requests.post(f"{SUPABASE_URL}/rest/v1/privy_users", headers=headers, json=privy_payload)
-            print(f"DEBUG: privy_users insert response status: {privy_resp.status_code}")
+            print(f"DEBUG: Found user by email with UUID: {supabase_uid}")
+
+            # Обновляем `user_metadata` с `wallet_address`
+            update_payload = {"data": {**user.get('user_metadata', {}), "wallet_address": wallet_address}}
+            requests.put(f"{SUPABASE_URL}/auth/v1/admin/users/{supabase_uid}", headers=headers, json=update_payload)
+
+            # Обновляем профиль с `wallet_address`
+            profile_update_payload = {"wallet_address": wallet_address}
+            requests.patch(
+                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{supabase_uid}",
+                headers=headers,
+                json=profile_update_payload
+            )
             return supabase_uid
         else:
-            print("DEBUG: Email exists in Supabase but user not found by email")
-            raise Exception("Email exists in Supabase but user not found by email")
-    print(f"DEBUG: Failed to create user. Response: {auth_resp.text}")
-    raise Exception(f"Failed to create/find user for privy_user_id: {privy_user_id}")
+            raise Exception("Email exists, but could not retrieve user to link wallet.")
 
-def generate_jwt_token_for_uuid(uuid: str, privy_user_id: str, wallet_address: str = None, email: str = None, metadata: Optional[Dict[str, Any]] = None) -> str:
+    print(f"DEBUG: Failed to create user. Response: {auth_resp.text}")
+    raise Exception(f"Failed to create/find user for wallet: {wallet_address}")
+
+def generate_jwt_token_for_uuid(uuid: str, wallet_address: str = None, email: str = None, metadata: Optional[Dict[str, Any]] = None) -> str:
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(seconds=JWT_EXPIRY)
     payload = {
@@ -179,7 +190,6 @@ def generate_jwt_token_for_uuid(uuid: str, privy_user_id: str, wallet_address: s
         'iat': int(now.timestamp()),
         'exp': int(expires_at.timestamp()),
         'user_metadata': {
-            'privy_user_id': privy_user_id,
             'wallet_address': wallet_address,
             'email': email,
             **(metadata or {})
@@ -340,24 +350,22 @@ async def searxng(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/auth/privy', response_model=AuthResponse)
-async def authenticate_with_privy(auth_request: PrivyAuthRequest):
-    print(f"DEBUG: /auth/privy endpoint called with privy_user_id: {auth_request.privy_user_id}")
+@app.post('/auth/wallet', response_model=AuthResponse)
+async def authenticate_with_wallet(auth_request: WalletAuthRequest):
+    wallet_address = auth_request.wallet_address
+    email = f"{wallet_address}@cyberchat.ai"
     try:
-        print("DEBUG: About to call get_or_create_supabase_user")
-        uuid = get_or_create_supabase_user(
-            privy_user_id=auth_request.privy_user_id,
-            wallet_address=auth_request.wallet_address,
-            email=auth_request.email
+        print("DEBUG: About to call get_or_create_user")
+        uuid = get_or_create_user(
+            wallet_address=wallet_address,
+            email=email
         )
         print(f"DEBUG: Got UUID: {uuid}")
         print("DEBUG: About to generate JWT token")
         access_token = generate_jwt_token_for_uuid(
             uuid=uuid,
-            privy_user_id=auth_request.privy_user_id,
-            wallet_address=auth_request.wallet_address,
-            email=auth_request.email,
-            metadata=auth_request.metadata
+            wallet_address=wallet_address,
+            email=email
         )
         print("DEBUG: JWT token generated successfully")
         return AuthResponse(
@@ -366,41 +374,8 @@ async def authenticate_with_privy(auth_request: PrivyAuthRequest):
             expires_in=JWT_EXPIRY
         )
     except Exception as e:
-        print(f"DEBUG: Exception in /auth/privy: {str(e)}")
+        print(f"DEBUG: Exception in /auth/wallet: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate token: {str(e)}")
-
-@app.get('/auth/test')
-async def test_auth():
-    """
-    Test endpoint to generate a fake JWT token for development
-    """
-    fake_user_id = "test-privy-user-123"
-    fake_wallet = "0x1234567890123456789012345678901234567890"
-    fake_email = "test@example.com"
-
-    try:
-        access_token = generate_jwt_token_for_uuid(
-            uuid=fake_user_id,
-            privy_user_id=fake_user_id,
-            wallet_address=fake_wallet,
-            email=fake_email,
-            metadata={"test": True}
-        )
-
-        return {
-            "message": "Test token generated successfully",
-            "access_token": access_token,
-            "token_type": "bearer",
-            "expires_in": JWT_EXPIRY,
-            "user_info": {
-                "privy_user_id": fake_user_id,
-                "wallet_address": fake_wallet,
-                "email": fake_email
-            }
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate test token: {str(e)}")
 
 # if IS_PRODUCTION:
 app.mount('/', StaticFiles(directory='static', html=True), name='static')
