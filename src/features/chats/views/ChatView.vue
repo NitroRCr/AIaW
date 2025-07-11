@@ -81,36 +81,8 @@
           ref="messageInputControl"
           :mime-input-types="['*']"
           :input-text="inputText"
-          :add-input-items="addInputItems"
           @send="send"
-          @update-input-text="inputText = $event"
         />
-        <!-- <div
-          style="display: flex; align-items: stretch; height: 56px"
-        >
-          <a-input
-            ref="messageInput"
-            style="flex: 1 1 0%"
-            max-h-50vh
-            of-y-auto
-            v-model="inputMessage"
-            outlined
-            autogrow
-            clearable
-            :debounce="30"
-            :placeholder="$t('dialogView.chatPlaceholder')"
-            @keydown.enter="onEnter"
-          />
-
-          <q-btn
-            unelevated
-            class="h-full flex items-center"
-            @click="send"
-          >
-            <q-icon :name="'sym_o_send'" />
-            <span class="q-ml-sm">{{ $t("dialogView.send") }}</span>
-          </q-btn>
-        </div> -->
       </div>
     </q-page>
   </q-page-container>
@@ -335,21 +307,14 @@ watch(
 )
 
 const inputText = ref("")
-const inputItems = ref<ApiResultItem[]>([])
 
-async function addInputItems (items: ApiResultItem[]) {
-  console.log("addInputItems", items)
-  inputItems.value.push(...items)
-}
-
-async function send () {
-  console.log("inputItems send", inputItems.value, inputText.value)
+async function send (text: string, items: ApiResultItem[]) {
   chatMessagesStore
     .add(mapChatMessageToDb({
       chatId: props.id,
       senderId: userStore.currentUserId,
-      content: inputText.value,
-    } as ChatMessage<DbChatMessageInsert>))
+      content: text,
+    } as ChatMessage<DbChatMessageInsert>), items)
     .catch((error) => {
       console.error("error", error)
       $q.notify({

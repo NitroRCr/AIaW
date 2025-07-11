@@ -6,28 +6,23 @@
       ref="messageInputControl"
       :mime-input-types="model?.inputTypes?.user || []"
       :input-text="inputText"
-      :add-input-items="addInputItems"
       :parser-plugins="assistant.plugins"
       @send="initDialog"
-      @update-input-text="inputText = $event"
-      @paste="onPaste"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, toRef } from "vue"
-import { useI18n } from "vue-i18n"
+import { ref, toRef } from "vue"
 
 import MessageInputControl from "@/shared/components/input/control/MessageInputControl.vue"
-import { useApiResultItem, useListenKey } from "@/shared/composables"
+import { useListenKey } from "@/shared/composables"
 import { useUserPerfsStore } from "@/shared/store"
 import type {
   ApiResultItem
 } from "@/shared/types"
 import {
-  isPlatformEnabled,
-  textBeginning
+  isPlatformEnabled
 } from "@/shared/utils/functions"
 
 import { useActiveWorkspace } from "@/features/workspaces/composables"
@@ -43,24 +38,20 @@ const { addApiResultStoredItem, lastMessage } = useDialogMessages(dialogId)
 
 const inputText = ref("")
 const inputVars = ref({})
-const inputItems = ref<ApiResultItem[]>([])
 
 const { data: perfs } = useUserPerfsStore()
-const { filesToApiResultItems } = useApiResultItem()
 // eslint-disable-next-line no-unused-vars
 const { createDialog } = useCreateDialog(toRef(workspaceId, "value"))
 
-const { t } = useI18n()
-
 const messageInputControl = ref()
 
-function initDialog () {
+function initDialog (text: string, items: ApiResultItem[]) {
   const message = {
     type: "user",
     messageContents: [
       {
         type: "user-message",
-        text: inputText.value,
+        text,
       },
     ],
     status: "inputing",
@@ -72,14 +63,10 @@ function initDialog () {
   }, message).then(async (dialog) => {
     dialogId.value = dialog.id
 
-    await Promise.all(inputItems.value.map(item => {
+    await Promise.all(items.map(item => {
       return addApiResultStoredItem(lastMessage.value.id, lastMessage.value.messageContents[0].id, item)
     }))
   })
-}
-
-async function addInputItems (items: ApiResultItem[]) {
-  inputItems.value.push(...items)
 }
 
 function focusInput () {
@@ -88,36 +75,6 @@ function focusInput () {
 }
 
 defineExpose({ focus: focusInput })
-
-function onPaste (ev: ClipboardEvent) {
-  const { clipboardData } = ev
-
-  if (clipboardData.types.includes("text/plain")) {
-    if (
-      !["TEXTAREA", "INPUT"].includes(document.activeElement.tagName) &&
-      !["true", "plaintext-only"].includes(
-        (document.activeElement as HTMLElement).contentEditable
-      )
-    ) {
-      const text = clipboardData.getData("text/plain")
-      addInputItems([
-        {
-          type: "text",
-          name: t("dialogView.pastedText", { text: textBeginning(text, 12) }),
-          contentText: text
-        }
-      ])
-    }
-
-    return
-  }
-
-  filesToApiResultItems(Array.from(clipboardData.files) as File[], model.value?.inputTypes?.user || [], assistant.value.plugins).then(items => {
-    addInputItems(items)
-  })
-}
-addEventListener("paste", onPaste)
-onUnmounted(() => removeEventListener("paste", onPaste))
 
 if (isPlatformEnabled(perfs.enableShortcutKey)) {
   useListenKey(toRef(perfs, "focusDialogInputKey"), () => focusInput())

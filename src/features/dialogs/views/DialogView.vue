@@ -137,10 +137,8 @@
           :mime-input-types="model?.inputTypes?.user || []"
           :loading="isStreaming || !!dialogItems.at(-2)?.message?.generatingSession"
           :input-text="inputMessageContent?.text"
-          :add-input-items="addInputItems"
           @send="sendUserMessageAndGenerateResponse"
           @abort="abortController?.abort()"
-          @update-input-text="inputMessageContent && updateInputText($event)"
           :parser-plugins="assistant.plugins"
         >
           <template #input-extension>
@@ -381,9 +379,11 @@ async function sendCyberlinkPrompt (text: string) {
  * Sends the current user message and initiates an LLM response generation.
  * This handles the core interaction flow of submitting user input and getting AI response.
  */
-async function sendUserMessageAndGenerateResponse () {
+async function sendUserMessageAndGenerateResponse (text: string, items: ApiResultItem[]) {
   if (!ensureAssistantAndModel()) return
 
+  await updateInputText(text)
+  await addInputItems(items)
   showVars.value = false
   nextTick().then(() => {
     scroll("bottom")

@@ -58,8 +58,6 @@
           v-for="(file, index) in pendingFiles.filter(f => !isImageFile(f))"
           :key="`file-${index}`"
           removable
-          color="grey-3"
-          text-color="dark"
           @remove="removeFile(pendingFiles.findIndex(f => f === file))"
           class="q-ma-xs"
         >
@@ -79,20 +77,19 @@
     <!-- Command suggestions overlay wrapping the input -->
     <command-suggestions-overlay
       ref="commandOverlay"
-      :input-text="props.inputText"
+      :input-text="inputValue"
       :commands="availableCommands"
       suggestion-position="top"
-      @update-input-text="$emit('update-input-text', $event)"
+      @update-input-text="inputValue = $event"
       @command-executed="onCommandExecuted"
     >
-      <template #default="{ onInput }">
+      <template #default="{ }">
         <a-input
           ref="messageInput"
           class="mb-2"
           max-h-50vh
           of-y-auto
-          :model-value="props.inputText"
-          @update:model-value="onInput"
+          v-model="inputValue"
           outlined
           autogrow
           clearable
@@ -193,13 +190,13 @@ import { useDialogFileHandling } from '@/shared/components/input/control/dialogF
 import { useInputCommands } from '@/shared/components/input/control/useInputCommands'
 import { useApiResultItem } from '@/shared/composables'
 import { useUserPerfsStore } from '@/shared/store'
-import { AssistantPlugins } from '@/shared/types'
+import { AssistantPlugins, ApiResultItem } from '@/shared/types'
 import { mimeTypeMatch, textBeginning } from '@/shared/utils/functions'
+import { isMarkdown } from '@/shared/utils/markdown'
 
 interface Props {
   loading?: boolean
   inputText?: string
-  addInputItems?: (items: any[]) => Promise<void>
   placeholder?: string
   allowFileUpload?: boolean
   allowImageUpload?: boolean
@@ -210,7 +207,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   inputText: '',
-  addInputItems: undefined,
   placeholder: undefined,
   allowFileUpload: true,
   allowImageUpload: true,
@@ -219,22 +215,22 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'send': []
+  'send': [text: string, items: ApiResultItem[]]
   'abort': []
-  'update-input-text': [text: string]
 }>()
 
 const imageInput = ref()
 const fileInput = ref()
 const messageInput = ref()
 const commandOverlay = ref()
-const inputEmpty = computed(() => !props.inputText && !pendingFiles.value.length)
+const inputValue = ref(props.inputText)
+const inputEmpty = computed(() => !inputValue.value && !pendingFiles.value.length)
 const { data: perfs } = useUserPerfsStore()
 
 const { t } = useI18n()
 const {
   pendingFiles,
-  onInputFiles,
+  addFiles,
   removeFile,
   clearAllFiles,
   getFileIcon,
@@ -250,6 +246,14 @@ const {
   // Note: assistant change handling now managed by parent component
   console.log('Assistant change requested:', assistantId)
 })
+
+const onInputFiles = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = Array.from(target.files || [])
+
+  addFiles(files)
+  target.value = ""
+}
 
 // Computed to check if any files are currently processing
 const isProcessingFiles = ref(false)
@@ -279,15 +283,13 @@ async function handleSend() {
     await until(allFilesReady).toBeTruthy()
   }
 
+  let items: ApiResultItem[] = []
+
   // Convert and add files using addInputItems prop
-  if (pendingFiles.value.length > 0 && props.addInputItems) {
+  if (pendingFiles.value.length > 0) {
     isProcessingFiles.value = true
     try {
-      const parsedItems = await filesToApiResultItems(pendingFiles.value, props.mimeInputTypes, props.parserPlugins)
-
-      if (parsedItems.length > 0) {
-        await props.addInputItems(parsedItems)
-      }
+      items = await filesToApiResultItems(pendingFiles.value, props.mimeInputTypes, props.parserPlugins)
 
       clearAllFiles()
     } finally {
@@ -296,7 +298,8 @@ async function handleSend() {
   }
 
   // Emit the send event
-  emit('send')
+  emit('send', inputValue.value, items)
+  inputValue.value = ""
 }
 
 function handleInputEnterKeyPress (ev: KeyboardEvent) {
@@ -309,12 +312,12 @@ function handleInputEnterKeyPress (ev: KeyboardEvent) {
   if ((perfs.sendKey === "ctrl+enter" && ev.ctrlKey) ||
     (perfs.sendKey === "shift+enter" && ev.shiftKey)
   ) {
-    emit('send')
+    handleSend()
   } else {
     if (ev.ctrlKey) {
       document.execCommand("insertText", false, "\n")
     } else if (!ev.shiftKey) {
-      emit('send')
+      handleSend()
     }
   }
 }
@@ -352,30 +355,28 @@ function handleInputEnterKeyPress (ev: KeyboardEvent) {
 
 function onPaste (ev: ClipboardEvent) {
   const { clipboardData } = ev
+  console.log("onPaste", clipboardData.types, clipboardData.files, document.activeElement.tagName)
 
   if (clipboardData.types.includes("text/plain")) {
-    if (
-      !["TEXTAREA", "INPUT"].includes(document.activeElement.tagName) &&
-      !["true", "plaintext-only"].includes(
-        (document.activeElement as HTMLElement).contentEditable
-      )
-    ) {
-      const text = clipboardData.getData("text/plain")
-      props.addInputItems([
-        {
-          type: "text",
-          name: t("dialogView.pastedText", { text: textBeginning(text, 12) }),
-          contentText: text,
-        },
-      ])
+    const text = clipboardData.getData("text/plain")
+    console.log("onPaste2", text, isMarkdown(text))
+
+    if (isMarkdown(text)) {
+    // Create a File object from the pasted text and add it as a file
+      const file = new File([
+        text
+      ], `${t("dialogView.pastedText", { text: textBeginning(text, 12) })}.txt`, { type: "text/plain" })
+      addFiles([file])
+      ev.preventDefault()
+
+      inputValue.value = ""
     }
+  } else if (clipboardData.files.length > 0) {
+    addFiles(Array.from(clipboardData.files) as File[])
+    ev.preventDefault()
 
-    return
+    inputValue.value = ""
   }
-
-  filesToApiResultItems(Array.from(clipboardData.files) as File[], props.mimeInputTypes, props.parserPlugins).then(items => {
-    props.addInputItems(items)
-  })
 }
 
 addEventListener("paste", onPaste)

@@ -18,7 +18,7 @@ const SUPPORTED_IMAGE_TYPES = [
 ] as const
 
 export function useDialogFileHandling() {
-  const pendingFiles = ref<FileWithPreview[]>([])
+  const pendingFiles = ref<(FileWithPreview)[]>([])
 
   const isImageFile = (file: File): boolean => {
     return SUPPORTED_IMAGE_TYPES.includes(file.type as any) || file.type.startsWith('image/')
@@ -57,10 +57,7 @@ export function useDialogFileHandling() {
     }
   }
 
-  async function onInputFiles(event: Event) {
-    const target = event.target as HTMLInputElement
-    const files = Array.from(target.files || [])
-
+  async function addFiles(files: File[]) {
     // Process files with preview URLs for images
     const filesWithPreviews = await Promise.all(
       files.map(async (file) => {
@@ -84,9 +81,6 @@ export function useDialogFileHandling() {
     )
 
     pendingFiles.value.push(...filesWithPreviews)
-
-    // Clear the input value so the same file can be selected again
-    target.value = ''
   }
 
   function removeFile(index: number) {
@@ -156,7 +150,7 @@ export function useDialogFileHandling() {
 
   return {
     pendingFiles,
-    onInputFiles,
+    addFiles,
     removeFile,
     clearAllFiles,
     getFileIcon,
@@ -164,6 +158,6 @@ export function useDialogFileHandling() {
     getFileSizeWarning,
     isImageFile,
     isValidForPreview,
-    MAX_PREVIEW_FILE_SIZE_MB
+    MAX_PREVIEW_FILE_SIZE_MB,
   }
 }
