@@ -53,11 +53,6 @@ async function extendChatsWithDisplayName (
 
 async function fetchChats (currentUserId: string | null) {
   const { data, error } = await supabase.rpc('get_chats_with_unread_count')
-  // const { data, error } = await supabase
-  // .from("chats")
-  //   .select(`*, unread_count:messages(count:is_read_false)`)
-  //   .order("created_at", { ascending: false })
-  console.log("----fetchChats", data)
 
   if (error) {
     console.error("❌ Failed to fetch chats:", error.message)

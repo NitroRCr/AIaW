@@ -73,7 +73,7 @@ const api: PluginApi = {
     return [
       {
         type: "text",
-        contentText: "修改成功",
+        contentText: t("artifactsPlugin.success"),
       },
     ]
   },

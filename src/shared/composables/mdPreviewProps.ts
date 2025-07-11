@@ -34,8 +34,8 @@ config({
         plugin: LinkAttr,
         options: {
           matcher (href: string) {
-            // 如果使用了markdown-it-anchor
-            // 应该忽略标题头部的锚点链接
+            // If markdown-it-anchor is used,
+            // it should ignore the anchor links in the title headers
             return !href.startsWith("#")
           },
           attrs: {

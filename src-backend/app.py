@@ -198,7 +198,7 @@ async def searxng(request: Request):
     target_url = f"{searxng_url}?{query_string}" if query_string else searxng_url
 
     headers = dict(request.headers)
-    # 移除 host header 以避免冲突
+    # Remove host header to avoid conflicts
     headers.pop('host', None)
 
     try:

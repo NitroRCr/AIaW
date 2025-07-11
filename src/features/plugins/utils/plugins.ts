@@ -966,48 +966,48 @@ const fluxPluginManifest: GradioPluginManifest = {
 const fluxPlugin: Plugin = buildGradioPlugin(fluxPluginManifest, { available: true })
 fluxPlugin.type = "builtin"
 
-const emotionsPrompt = `在回答中，你可以使用 html img 标签插入表情包，使回答更可爱、富有情感。
-设置 width="{{ displayWidth }}"，以避免显示得太大。
+const emotionsPrompt = `In the answer, you can use the html img tag to insert emoticons to make the answer more cute and emotional.
+Set width="{{ displayWidth }}" to avoid displaying too large.
 
-可用的表情：
+Available emoticons:
 
-| 链接 | 名称（文字内容） |
+| Link | Name (text content) |
 | --- | --- |
-| /emotions/nachoneko/0.webp | 好的（いいよ！） |
-| /emotions/nachoneko/1.webp | 开心（nya~） |
-| /emotions/nachoneko/2.webp | 疑惑（？？？） |
-| /emotions/nachoneko/3.webp | 招手 |
-| /emotions/nachoneko/4.webp | 睡觉（zzz） |
-| /emotions/nachoneko/5.webp | 吃冰棒 |
-| /emotions/nachoneko/6.webp | 逃避 |
-| /emotions/nachoneko/7.webp | 担心 |
-| /emotions/nachoneko/8.webp | 困倦（ねむい） |
-| /emotions/nachoneko/9.webp | 倒下 |
-| /emotions/nachoneko/10.webp | 偷看 |
-| /emotions/nachoneko/11.webp | 生气 |
-| /emotions/nachoneko/12.webp | 嫌弃 |
-| /emotions/nachoneko/13.webp | 哭泣 |
-| /emotions/nachoneko/14.webp | 蛋糕 |
-| /emotions/nachoneko/15.webp | 打瞌睡（おはよう） |
-| /emotions/nachoneko/16.webp | 想吃 |
-| /emotions/nachoneko/17.webp | 道歉（ごめんなさい） |
-| /emotions/nachoneko/18.webp | 不满（やだ） |
-| /emotions/nachoneko/19.webp | 思考（...?） |
-| /emotions/nachoneko/20.webp | 凝视 |
-| /emotions/nachoneko/21.webp | 撒娇 |
-| /emotions/nachoneko/22.webp | 大声叫 |
-| /emotions/nachoneko/23.webp | 心动 |
-| /emotions/nachoneko/24.webp | 发呆 |
-| /emotions/nachoneko/25.webp | 害羞 |
-| /emotions/nachoneko/26.webp | 你好（Hi） |
-| /emotions/nachoneko/27.webp | 愤怒 |
-| /emotions/nachoneko/28.webp | 无语（...） |
-| /emotions/nachoneko/29.webp | 喜爱 |
-| /emotions/nachoneko/30.webp | 期待 |
-| /emotions/nachoneko/31.webp | 害羞 |
-| /emotions/nachoneko/32.webp | 吓哭 |
-| /emotions/nachoneko/33.webp | 装傻 |
-| /emotions/nachoneko/34.webp | 惊叹（！） |
+| /emotions/nachoneko/0.webp | OK |
+| /emotions/nachoneko/1.webp | Happy  |
+| /emotions/nachoneko/2.webp | Confused |
+| /emotions/nachoneko/3.webp | Waving |
+| /emotions/nachoneko/4.webp | Sleeping (zzz) |
+| /emotions/nachoneko/5.webp | Eating popsicles |
+| /emotions/nachoneko/6.webp | Escaping |
+| /emotions/nachoneko/7.webp | Worried |
+| /emotions/nachoneko/8.webp | Sleepy |
+| /emotions/nachoneko/9.webp | fall down |
+| /emotions/nachoneko/10.webp | peek |
+| /emotions/nachoneko/11.webp | angry |
+| /emotions/nachoneko/12.webp | Dislike |
+| /emotions/nachoneko/13.webp | cry |
+| /emotions/nachoneko/14.webp | cake |
+| /emotions/nachoneko/15.webp | Doze |
+| /emotions/nachoneko/16.webp | Want to eat |
+| /emotions/nachoneko/17.webp | Apology |
+| /emotions/nachoneko/18.webp | Dissatisfied |
+| /emotions/nachoneko/19.webp | Thinking (...?) |
+| /emotions/nachoneko/20.webp | Staring |
+| /emotions/nachoneko/21.webp | Acting like a spoiled child |
+| /emotions/nachoneko/22.webp | Shouting |
+| /emotions/nachoneko/23.webp | Heartbeat |
+| /emotions/nachoneko/24.webp | Being in a daze |
+| /emotions/nachoneko/25.webp | Being shy |
+| /emotions/nachoneko/26.webp | Hello (Hi) |
+| /emotions/nachoneko/27.webp | Angry |
+| /emotions/nachoneko/28.webp | Speechless (...) |
+| /emotions/nachoneko/29.webp | Like |
+| /emotions/nachoneko/30.webp | Expectation |
+| /emotions/nachoneko/31.webp | Shy |
+| /emotions/nachoneko/32.webp | Crying |
+| /emotions/nachoneko/33.webp | Playing dumb |
+| /emotions/nachoneko/34.webp | Exclaiming (!) |
 `
 const emotionsPlugin: Plugin = {
   id: "aiaw-emotions",

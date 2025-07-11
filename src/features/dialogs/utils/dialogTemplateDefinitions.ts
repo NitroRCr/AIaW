@@ -51,8 +51,6 @@ const GenDialogTitle = `
 <examples>
   <example name="English Example 1">📉 Stock Market Trends</example>
   <example name="English Example 2">🔧 Tauri Command Usage</example>
-  <example name="Chinese Example 1">📜 OpenAPI 的作用</example>
-  <example name="Chinese Example 2">📡 WebRTC 连接建立过程</example>
 </examples>
 
 <final_instruction>

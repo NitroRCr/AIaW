@@ -54,7 +54,7 @@ import DialogList from "@/features/dialogs/components/DialogList.vue"
 import { usePluginsStore } from "@/features/plugins/store"
 import { useActiveWorkspace, useOpenLastWorkspace } from "@/features/workspaces/composables"
 
-const emptyAvatar = { type: "icon", icon: "sym_o_question_mark" } as IconAvatar
+const emptyAvatar = { type: "icon", icon: "sym_o_sentiment_very_dissatisfied" } as IconAvatar
 const { workspace, assistant } = useActiveWorkspace()
 const workspaceId = computed(() => workspace.value?.id as string)
 

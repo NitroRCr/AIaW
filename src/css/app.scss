@@ -159,45 +159,45 @@ body.desktop {
     }
   }
 
-  /* 滚动条整体部分 */
+  /* Scrollbar overall part */
   &::-webkit-scrollbar,
   *::-webkit-scrollbar {
     width: 6px;
-    /* 滚动条宽度 */
+    /* Scrollbar width */
     height: 6px;
-    /* 滚动条高度 */
+    /* Scrollbar height */
   }
 
-  /* 滚动条滑块 */
+  /* Scrollbar thumb */
   &::-webkit-scrollbar-thumb,
   *::-webkit-scrollbar-thumb {
     background-color: var(--a-out-var);
-    /* 滑块颜色 */
+    /* Thumb color */
     border-radius: 2px;
-    /* 滑块圆角 */
+    /* Thumb radius */
   }
 
-  /* 鼠标悬停在滑块上时 */
+  /* When the mouse is hovering over the thumb */
   &::-webkit-scrollbar-thumb:hover,
   *::-webkit-scrollbar-thumb:hover {
     background-color: var(--a-out-mid);
-    /* 悬停时滑块颜色 */
+    /* Hover color of the thumb */
   }
 
-  /* 滚动条轨道 */
+  /* Scrollbar track */
   &::-webkit-scrollbar-track,
   *::-webkit-scrollbar-track {
     background: none;
-    /* 轨道颜色 */
+    /* Track color */
     border-radius: 2px;
-    /* 轨道圆角 */
+    /* Track radius */
   }
 
-  /* 滚动条两端按钮 */
+  /* Scrollbar buttons at both ends */
   &::-webkit-scrollbar-button,
   *::-webkit-scrollbar-button {
     display: none;
-    /* 隐藏滚动条按钮 */
+      /* Hide scrollbar buttons */
   }
 
   ::-webkit-scrollbar-corner {

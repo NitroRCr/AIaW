@@ -143,6 +143,7 @@ export default {
   },
   artifactsPlugin: {
     description: "Modify Artifact",
+    success: "Success",
   },
   update: {
     updating: "Updating...",
