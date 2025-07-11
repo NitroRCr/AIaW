@@ -7,6 +7,7 @@
       :mime-input-types="model?.inputTypes?.user || []"
       :input-text="inputText"
       :parser-plugins="assistant.plugins"
+      :loading="isLoading"
       @send="initDialog"
     />
   </div>
@@ -29,13 +30,12 @@ import { useActiveWorkspace } from "@/features/workspaces/composables"
 
 import { DbDialogMessageUpdate, DialogMessage } from "@/services/data/types/dialogMessage"
 
-import { useCreateDialog, useDialogMessages, useDialogModel } from "../composables"
+import { useCreateDialog, useDialogModel } from "../composables"
 
 const { assistant, workspaceId } = useActiveWorkspace()
 const { model } = useDialogModel(null, assistant)
 const dialogId = ref<string | null>(null)
-const { addApiResultStoredItem, lastMessage } = useDialogMessages(dialogId)
-
+const isLoading = ref(false)
 const inputText = ref("")
 const inputVars = ref({})
 
@@ -46,6 +46,7 @@ const { createDialog } = useCreateDialog(toRef(workspaceId, "value"))
 const messageInputControl = ref()
 
 function initDialog (text: string, items: ApiResultItem[]) {
+  isLoading.value = true
   const message = {
     type: "user",
     messageContents: [
@@ -60,12 +61,10 @@ function initDialog (text: string, items: ApiResultItem[]) {
   createDialog({
     assistantId: assistant.value.id,
     inputVars: inputVars.value
-  }, message).then(async (dialog) => {
+  }, message, items).then(async (dialog) => {
     dialogId.value = dialog.id
-
-    await Promise.all(items.map(item => {
-      return addApiResultStoredItem(lastMessage.value.id, lastMessage.value.messageContents[0].id, item)
-    }))
+  }).finally(() => {
+    isLoading.value = false
   })
 }
 

@@ -278,8 +278,9 @@ watch(dialog, () => {
   } else {
     fetchMessages().then((messages) => {
       console.log("messages", messages)
+      const messageContent = messages[0].messageContents[0]
 
-      if (messages.length === 1) {
+      if (messages.length === 1 && (messageContent.text !== "" || messageContent.storedItems.length > 0)) {
         messageInputControl.value?.clearInput()
         startStream(lastMessageId.value)
       }
