@@ -19,7 +19,6 @@
         />
       </div>
     </div>
-
     <div class="card-view__grid">
       <slot />
     </div>
