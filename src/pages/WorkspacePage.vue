@@ -78,7 +78,7 @@ import ArtifactsExpansion from "@/features/artifacts/components/ArtifactsExpansi
 import { useArtifactsStore } from "@/features/artifacts/store"
 import ChatExpansion from "@/features/chats/components/ChatExpansion.vue"
 import ArtifactsPanel from "@/features/workspaces/components/ArtifactsPanel.vue"
-import FilesExpansion from "@/features/workspaces/components/WorkspaceFiles/WorkspaceExpansion.vue"
+import FilesExpansion from "@/features/workspaces/components/WorkspaceFiles/WorkspaceFilesExpansion.vue"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import { Artifact } from "@/services/data/types/artifact"

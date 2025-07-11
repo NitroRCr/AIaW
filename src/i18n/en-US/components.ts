@@ -235,6 +235,10 @@ export default {
     dontSave: "Don't Save",
     save: "Save",
   },
+  renameDialog: {
+    name: "Name",
+    nameRequired: "Name is required",
+  },
   jsonInputDialog: {
     cancel: "Cancel",
     ok: "OK",

@@ -145,6 +145,7 @@ export default {
     noteName: "Note Name",
     editFile: "Edit",
     noteNameRequired: "Note name is required",
+    renameFile: "Rename File",
   },
   chatsPage: {
     chats: "Chats",

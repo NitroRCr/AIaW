@@ -592,7 +592,7 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     return await storedItems.createAndUpload({ workspaceId }, file)
   }
 
-  async function updateFileItem (fileId: string, file: ApiResultItem) {
+  async function updateFileItem (fileId: string, file: Omit<ApiResultItem, "type"> & { type?:ApiResultItem['type'] }) {
     return await storedItems.update(fileId, file)
   }
 

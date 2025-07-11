@@ -14,7 +14,7 @@
         <icon-side-button
           icon="sym_o_note_alt"
           small
-          @click="editEmptyTextNote(null)"
+          @click="editFile(null)"
           :title="$t('workspacesPage.createTextNote')"
         />
       </div>
@@ -28,7 +28,7 @@
       >
         <div
           p="x-4 y-2"
-          v-if="files.length > 0"
+          v-if="files.length > 1"
         >
           <a-input
             dense
@@ -82,8 +82,7 @@
                 dense
                 round
                 size="sm"
-                @click.prevent.stop="editEmptyTextNote(file)"
-                v-if="file.type === 'text'"
+                @click.prevent.stop="editFile(file)"
               >
                 <q-tooltip>{{ $t("workspacesPage.editFile") }}</q-tooltip>
               </q-btn>
@@ -110,6 +109,7 @@ import { useQuasar } from "quasar"
 import { computed, inject, ref, Ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
+import RenameDialog from "@/shared/components/dialogs/RenameDialog.vue"
 import EmptyItem from "@/shared/components/layout/EmptyItem.vue"
 import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import { getFileUrl } from "@/shared/composables/storage/utils"
@@ -199,7 +199,22 @@ function viewFile (file: StoredItem) {
   }
 }
 
-function editEmptyTextNote (file?: StoredItem) {
+function editFile (file?: StoredItem) {
+  if (file?.type !== "text") {
+    $q.dialog({
+      component: RenameDialog,
+      componentProps: {
+        name: file?.name || "",
+        title: t("workspacesPage.renameFile"),
+      },
+    }).onOk((name) => {
+      updateFileItem(file.id, { name })
+      currentFiles.value = currentFiles.value.map((f) => f.id === file.id ? { ...f, name } : f)
+    })
+
+    return
+  }
+
   $q.dialog({
     component: EditNote,
     componentProps: {

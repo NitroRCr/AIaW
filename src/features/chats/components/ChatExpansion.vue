@@ -15,21 +15,7 @@
           :label="unreadCount"
         />
       </q-item-section>
-      <!-- <q-item-section side>
-    <q-btn
-      flat
-      dense
-      round
-      icon="sym_o_add"
-    />
-
-  </q-item-section> -->
     </template>
-
-    <!-- <chat-list
-  :workspace-id="workspace.id"
-  :active="activeTab === 'chats'"
-/> -->
     <icon-side-button
       icon="sym_o_search"
       @click="showSearchDialog = true"
@@ -52,45 +38,6 @@
       min-h="100px"
       pt-1
     >
-      <!-- <q-item>
-      <q-item-section>
-        <q-btn
-          icon="sym_o_search"
-          flat
-          dense
-          no-caps
-          no-padding
-          no-margin
-          @click.prevent.stop="showSearchDialog = true"
-        >
-          <q-tooltip> Search chats </q-tooltip>
-        </q-btn>
-      </q-item-section>
-      <q-item-section>
-        <q-btn
-          flat
-          icon="sym_o_question_answer"
-          dense
-          no-caps
-          @click="addItem"
-        >
-          <q-tooltip> New public chat </q-tooltip>
-        </q-btn>
-      </q-item-section>
-      <q-item-section>
-        <q-btn
-          icon="sym_o_3p"
-          flat
-          dense
-          no-caps
-          no-padding
-          no-margin
-          @click.prevent.stop="showUserSelectDialog"
-        >
-          <q-tooltip> New private chat </q-tooltip>
-        </q-btn>
-      </q-item-section>
-    </q-item> -->
       <chat-list-item
         v-for="chat in [...chats].reverse()"
         :key="chat.id"
@@ -108,8 +55,10 @@
 <script setup lang="ts">
 import { useQuasar } from "quasar"
 import { computed, ref, toRef } from "vue"
+import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
+import RenameDialog from "@/shared/components/dialogs/RenameDialog.vue"
 import IconSideButton from "@/shared/components/layout/IconSideButton.vue"
 import { useListenKey } from "@/shared/composables"
 import { useUserStore, useUserPerfsStore } from "@/shared/store"
@@ -129,6 +78,7 @@ const chatsStore = useChatsStore()
 const { chats, addChat } = useWorkspaceChats(toRef(props, "workspaceId"))
 const userStore = useUserStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const unreadCount = computed(() => {
   return chats.value.reduce((acc, chat) => acc + (chat.unreadCount || 0), 0)
@@ -154,9 +104,23 @@ const onSelectUser = async (userId: string) => {
 const selected = defineModel<string>()
 
 async function addItem () {
-  await addChat({
-    name: "New chat",
-    type: "workspace",
+  $q.dialog({
+    component: RenameDialog,
+    componentProps: {
+      name: "",
+      title: "New public chat",
+    },
+  }).onOk((name) => {
+    return addChat({
+      name,
+      type: "workspace",
+    })
+      .then((chat) => {
+        router.push(`/workspaces/${props.workspaceId}/chats/${chat.id}`)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
   })
 }
 
