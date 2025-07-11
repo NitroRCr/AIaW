@@ -136,7 +136,6 @@
           ref="messageInputControl"
           :supported-input-types="model?.inputTypes?.user || []"
           :loading="isStreaming || !!dialogItems.at(-2)?.message?.generatingSession"
-          :input-empty="inputEmpty"
           :input-text="inputMessageContent?.text"
           :add-input-items="addInputItems"
           :process-other-files="processOtherFiles"
@@ -254,7 +253,6 @@ const {
   inputMessageContent,
   inputContentItems,
   addInputItems,
-  inputEmpty,
 } = useDialogInput(dialogId)
 const pluginsStore = usePluginsStore()
 const { data: perfs } = useUserPerfsStore()

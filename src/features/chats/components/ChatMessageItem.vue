@@ -16,8 +16,6 @@
           :avatar
           :size="colMode ? '36px' : denseMode ? '40px' : '48px'"
           :class="colMode ? 'mx-3' : 'xs:mx-3 sm:mx-4'"
-          @click="onAvatarClick"
-          cursor-pointer
         />
         <div
           v-if="message.sender?.name"
@@ -134,11 +132,6 @@ const avatar = computed(() =>
     ? myProfile.value.avatar
     : (props.message.sender?.avatar)
 )
-
-// const router = useRouter()
-function onAvatarClick () {
-  console.log("onAvatarClick", props.message)
-}
 
 const showFloatBtns = ref(false)
 const floatBtnStyle = reactive({

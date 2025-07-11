@@ -108,7 +108,7 @@ async function addItem () {
     component: RenameDialog,
     componentProps: {
       name: "",
-      title: "New public chat",
+      title: t("chats.newPublicChat"),
     },
   }).onOk((name) => {
     return addChat({

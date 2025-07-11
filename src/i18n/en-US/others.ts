@@ -145,6 +145,9 @@ export default {
     description: "Modify Artifact",
     success: "Success",
   },
+  chats: {
+    newPublicChat: "New public chat",
+  },
   update: {
     updating: "Updating...",
     updateFound: "Update found: {version}",

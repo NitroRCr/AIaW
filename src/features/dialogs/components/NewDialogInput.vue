@@ -5,7 +5,6 @@
     <MessageInputControl
       ref="messageInputControl"
       :supported-input-types="model?.inputTypes?.user || []"
-      :input-empty="inputEmpty"
       :input-text="inputText"
       :add-input-items="addInputItems"
       :process-other-files="processOtherFiles"
@@ -19,7 +18,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import { computed, onUnmounted, ref, toRef } from "vue"
+import { onUnmounted, ref, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 
 import MessageInputControl from "@/shared/components/input/control/MessageInputControl.vue"
@@ -50,8 +49,6 @@ const { addApiResultStoredItem, lastMessage } = useDialogMessages(dialogId)
 const inputText = ref("")
 const inputVars = ref({})
 const inputItems = ref<ApiResultItem[]>([])
-
-const inputEmpty = computed(() => !inputText.value && !inputItems.value.length)
 
 const { data: perfs } = useUserPerfsStore()
 // eslint-disable-next-line no-unused-vars

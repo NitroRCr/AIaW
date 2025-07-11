@@ -169,15 +169,15 @@ watch(files, (newFiles) => {
 
 const $q = useQuasar()
 
-function removeFile (file: StoredItem) {
+function removeFile (storedItem: StoredItem) {
   $q.dialog({
     title: t("workspacesPage.deleteFile"),
-    message: t("workspacesPage.deleteFileConfirmation", { name: file.name }),
+    message: t("workspacesPage.deleteFileConfirmation", { name: storedItem.name }),
     cancel: true,
     ...dialogOptions,
   }).onOk(() => {
-    removeFileItem(file.id)
-    currentFiles.value = currentFiles.value.filter((f) => f.id !== file.id)
+    removeFileItem(storedItem)
+    currentFiles.value = currentFiles.value.filter((f) => f.id !== storedItem.id)
   })
 }
 

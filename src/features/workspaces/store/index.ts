@@ -596,8 +596,8 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     return await storedItems.update(fileId, file)
   }
 
-  async function removeFileItem (fileId: string) {
-    return await storedItems.remove(fileId)
+  async function removeFileItem (storedItem: StoredItem) {
+    return await storedItems.remove(storedItem)
   }
 
   function fetchFiles (workspaceId: string) {

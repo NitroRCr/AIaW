@@ -174,7 +174,7 @@
         :loading="props.loading"
         ml-4
         min-h="40px"
-        :disabled="(props.inputEmpty && pendingFiles.length === 0) || filesProcessing"
+        :disabled="(inputEmpty && pendingFiles.length === 0) || filesProcessing"
       />
     </div>
 
@@ -196,7 +196,6 @@ import { mimeTypeMatch } from '@/shared/utils/functions'
 
 interface Props {
   loading?: boolean
-  inputEmpty?: boolean
   inputText?: string
   addInputItems?: (items: any[]) => Promise<void>
   processOtherFiles?: (files: File[]) => Promise<void>
@@ -208,7 +207,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  inputEmpty: false,
   inputText: '',
   addInputItems: undefined,
   processOtherFiles: undefined,
@@ -231,6 +229,7 @@ const imageInput = ref()
 const fileInput = ref()
 const messageInput = ref()
 const commandOverlay = ref()
+const inputEmpty = computed(() => !props.inputText && !pendingFiles.value.length)
 
 const {
   pendingFiles,
