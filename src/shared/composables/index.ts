@@ -9,6 +9,7 @@ import { useMdPreviewProps } from "./mdPreviewProps"
 import { useOrder } from "./order"
 import { useSetTheme } from "./setTheme"
 import { useSetTitle } from "./setTitle"
+import { useApiResultItem } from "./useApiResultItem"
 
 export {
   useLocateId,
@@ -21,5 +22,6 @@ export {
   localReactive,
   useCallApi,
   useOrder,
-  useFilterOptions
+  useFilterOptions,
+  useApiResultItem
 }

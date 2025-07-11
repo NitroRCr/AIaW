@@ -242,7 +242,7 @@ function editFile (file?: StoredItem) {
 }
 
 async function uploadFiles (files: File[]) {
-  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, [],
+  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, null,
     (maxFileSize, file) => {
       $q.notify({
         message: t("dialogView.fileTooLarge", {

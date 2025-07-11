@@ -167,6 +167,7 @@ function executeCommand(command: Command) {
 }
 
 function handleInputChange(text: string) {
+  console.log('handleInputChange', text)
   emit('update-input-text', text)
 }
 

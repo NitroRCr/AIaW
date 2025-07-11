@@ -21,7 +21,7 @@ export async function parseFilesToApiResultItems(files: File[], mimeTypes:string
   for (const file of files) {
     if (await isTextFile(file)) {
       textFiles.push(file)
-    } else if (mimeTypes.length === 0 || mimeTypeMatch(file.type, mimeTypes)) {
+    } else if (mimeTypes === null || mimeTypeMatch(file.type, mimeTypes)) {
       supportedFiles.push(file)
     } else {
       otherFiles.push(file)

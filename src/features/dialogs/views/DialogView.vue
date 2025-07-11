@@ -134,16 +134,14 @@
         </div>
         <MessageInputControl
           ref="messageInputControl"
-          :supported-input-types="model?.inputTypes?.user || []"
+          :mime-input-types="model?.inputTypes?.user || []"
           :loading="isStreaming || !!dialogItems.at(-2)?.message?.generatingSession"
           :input-text="inputMessageContent?.text"
           :add-input-items="addInputItems"
-          :process-other-files="processOtherFiles"
           @send="sendUserMessageAndGenerateResponse"
           @abort="abortController?.abort()"
           @update-input-text="inputMessageContent && updateInputText($event)"
-          @keydown-enter="handleInputEnterKeyPress"
-          @paste="onPaste"
+          :parser-plugins="assistant.plugins"
         >
           <template #input-extension>
             <AssistantInputExtension
@@ -188,7 +186,7 @@
 import { until } from "@vueuse/core"
 import Mark from "mark.js"
 import { useQuasar } from "quasar"
-import { computed, inject, nextTick, onUnmounted, ref, toRef, watch } from "vue"
+import { computed, inject, nextTick, ref, toRef, watch } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRoute, useRouter } from "vue-router"
 
@@ -197,13 +195,11 @@ import { useListenKey } from "@/shared/composables"
 import { useSetTitle } from "@/shared/composables/setTitle"
 import { useUiStateStore, useUserDataStore, useUserPerfsStore } from "@/shared/store"
 import type { ApiResultItem, Plugin } from "@/shared/types"
-import { parseFilesToApiResultItems } from "@/shared/utils/files"
 import {
   almostEqual,
   displayLength,
   isPlatformEnabled,
   pageFhStyle,
-  textBeginning,
   wrapQuote
 } from "@/shared/utils/functions"
 
@@ -223,8 +219,6 @@ import ModelOverrideMenu from "@/features/providers/components/ModelOverrideMenu
 import { useActiveWorkspace } from "@/features/workspaces/composables/useActiveWorkspace"
 
 import { DialogMessageNested } from "@/services/data/types/dialogMessage"
-
-import ParseFilesDialog from "../components/ParseFilesDialog.vue"
 
 import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
 
@@ -343,109 +337,6 @@ async function regenerate(parentId: string) {
   if (!ensureAssistantAndModel()) return
 
   await startStream(parentId, false)
-}
-
-/**
- * Handles pasting of code from editors like VSCode.
- * Automatically detects code snippets and formats them with proper markdown syntax.
- *
- * @param ev - The clipboard event containing the pasted content
- */
-// function handleCodePasteFormatting (ev: ClipboardEvent) {
-//   if (!perfs.codePasteOptimize) return
-
-//   const { clipboardData } = ev
-//   const i = clipboardData.types.findIndex((t) => t === "vscode-editor-data")
-
-//   if (i !== -1) {
-//     const code = clipboardData
-//       .getData("text/plain")
-//       .replace(/\r\n/g, "\n")
-//       .replace(/\r/g, "\n")
-
-//     if (!/\n/.test(code)) return
-
-//     const data = clipboardData.getData("vscode-editor-data")
-//     const lang = JSON.parse(data).mode ?? ""
-
-//     if (lang === "markdown") return
-
-//     const wrappedCode = wrapCode(code, lang)
-//     document.execCommand("insertText", false, wrappedCode)
-//     ev.preventDefault()
-//   }
-// }
-
-function onPaste (ev: ClipboardEvent) {
-  const { clipboardData } = ev
-
-  if (clipboardData.types.includes("text/plain")) {
-    if (
-      !["TEXTAREA", "INPUT"].includes(document.activeElement.tagName) &&
-      !["true", "plaintext-only"].includes(
-        (document.activeElement as HTMLElement).contentEditable
-      )
-    ) {
-      const text = clipboardData.getData("text/plain")
-      addInputItems([
-        {
-          type: "text",
-          name: t("dialogView.pastedText", { text: textBeginning(text, 12) }),
-          contentText: text,
-        },
-      ])
-    }
-
-    return
-  }
-
-  parseFiles(Array.from(clipboardData.files) as File[])
-}
-addEventListener("paste", onPaste)
-onUnmounted(() => removeEventListener("paste", onPaste))
-
-async function parseFiles (files: File[]) {
-  if (!files.length) return
-
-  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, model.value.inputTypes.user,
-    (maxFileSize, file) => {
-      $q.notify({
-        message: t("dialogView.fileTooLarge", {
-          maxSize: maxFileSize
-        }),
-        color: "negative"
-      })
-    }
-  )
-
-  await addInputItems(parsedItems)
-
-  if (otherFiles.length) {
-    $q
-      .dialog({
-        component: ParseFilesDialog,
-        componentProps: { files: otherFiles, plugins: assistant.value.plugins },
-      })
-      .onOk((files: ApiResultItem[]) => {
-        addInputItems(files)
-      })
-  }
-}
-
-async function processOtherFiles (files: File[]) {
-  if (!files.length) return
-
-  return new Promise<void>((resolve) => {
-    $q.dialog({
-      component: ParseFilesDialog,
-      componentProps: { files, plugins: assistant.value.plugins }
-    }).onOk((processedFiles: ApiResultItem[]) => {
-      addInputItems(processedFiles)
-      resolve()
-    }).onCancel(() => {
-      resolve()
-    })
-  })
 }
 
 async function quote (item: ApiResultItem) {
@@ -588,21 +479,6 @@ watch(
   },
   { immediate: true }
 )
-
-/**
- * Handles the enter key press in the message input based on user preferences.
- * Supports different send key combinations (Enter, Ctrl+Enter, Shift+Enter).
- */
-function handleInputEnterKeyPress (ev) {
-  if ((perfs.sendKey === "ctrl+enter" && ev.ctrlKey) ||
-    (perfs.sendKey === "shift+enter" && ev.shiftKey)
-  ) {
-    sendUserMessageAndGenerateResponse()
-  } else {
-    if (ev.ctrlKey) document.execCommand("insertText", false, "\n")
-    else if (!ev.shiftKey) sendUserMessageAndGenerateResponse()
-  }
-}
 
 const scrollContainer = ref<HTMLElement>()
 

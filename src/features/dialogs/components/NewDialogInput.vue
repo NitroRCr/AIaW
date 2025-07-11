@@ -4,30 +4,27 @@
   >
     <MessageInputControl
       ref="messageInputControl"
-      :supported-input-types="model?.inputTypes?.user || []"
+      :mime-input-types="model?.inputTypes?.user || []"
       :input-text="inputText"
       :add-input-items="addInputItems"
-      :process-other-files="processOtherFiles"
+      :parser-plugins="assistant.plugins"
       @send="initDialog"
       @update-input-text="inputText = $event"
-      @keydown-enter="handleInputEnterKeyPress"
       @paste="onPaste"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from "quasar"
 import { onUnmounted, ref, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 
 import MessageInputControl from "@/shared/components/input/control/MessageInputControl.vue"
-import { useListenKey } from "@/shared/composables"
+import { useApiResultItem, useListenKey } from "@/shared/composables"
 import { useUserPerfsStore } from "@/shared/store"
 import type {
   ApiResultItem
 } from "@/shared/types"
-import { parseFilesToApiResultItems } from "@/shared/utils/files"
 import {
   isPlatformEnabled,
   textBeginning
@@ -39,8 +36,6 @@ import { DbDialogMessageUpdate, DialogMessage } from "@/services/data/types/dial
 
 import { useCreateDialog, useDialogMessages, useDialogModel } from "../composables"
 
-import ParseFilesDialog from "./ParseFilesDialog.vue"
-
 const { assistant, workspaceId } = useActiveWorkspace()
 const { model } = useDialogModel(null, assistant)
 const dialogId = ref<string | null>(null)
@@ -51,10 +46,10 @@ const inputVars = ref({})
 const inputItems = ref<ApiResultItem[]>([])
 
 const { data: perfs } = useUserPerfsStore()
+const { filesToApiResultItems } = useApiResultItem()
 // eslint-disable-next-line no-unused-vars
 const { createDialog } = useCreateDialog(toRef(workspaceId, "value"))
 
-const $q = useQuasar()
 const { t } = useI18n()
 
 const messageInputControl = ref()
@@ -117,66 +112,15 @@ function onPaste (ev: ClipboardEvent) {
     return
   }
 
-  parseFiles(Array.from(clipboardData.files) as File[])
+  filesToApiResultItems(Array.from(clipboardData.files) as File[], model.value?.inputTypes?.user || [], assistant.value.plugins).then(items => {
+    addInputItems(items)
+  })
 }
 addEventListener("paste", onPaste)
 onUnmounted(() => removeEventListener("paste", onPaste))
-
-async function parseFiles (files: File[]) {
-  if (!files.length) return
-
-  const { parsedItems, otherFiles } = await parseFilesToApiResultItems(files, model.value?.inputTypes?.user || [], (maxFileSize, file) => {
-    $q.notify({
-      message: t("dialogView.fileTooLarge", {
-        maxSize: maxFileSize
-      }),
-      color: "negative"
-    })
-  })
-
-  addInputItems(parsedItems)
-
-  if (otherFiles.length) {
-    $q.dialog({
-      component: ParseFilesDialog,
-      componentProps: { files: otherFiles, plugins: assistant.value.plugins }
-    }).onOk((files: ApiResultItem[]) => {
-      addInputItems(files)
-    })
-  }
-}
-
-function handleInputEnterKeyPress (ev: KeyboardEvent) {
-  if ((perfs.sendKey === "ctrl+enter" && ev.ctrlKey) ||
-    (perfs.sendKey === "shift+enter" && ev.shiftKey)
-  ) {
-    initDialog()
-  } else {
-    if (ev.ctrlKey) {
-      document.execCommand("insertText", false, "\n")
-    } else if (!ev.shiftKey) {
-      initDialog()
-    }
-  }
-}
 
 if (isPlatformEnabled(perfs.enableShortcutKey)) {
   useListenKey(toRef(perfs, "focusDialogInputKey"), () => focusInput())
 }
 
-async function processOtherFiles (files: File[]) {
-  if (!files.length) return
-
-  return new Promise<void>((resolve) => {
-    $q.dialog({
-      component: ParseFilesDialog,
-      componentProps: { files, plugins: assistant.value.plugins }
-    }).onOk((processedFiles: ApiResultItem[]) => {
-      addInputItems(processedFiles)
-      resolve()
-    }).onCancel(() => {
-      resolve()
-    })
-  })
-}
 </script>
