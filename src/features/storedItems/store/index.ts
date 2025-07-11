@@ -29,7 +29,7 @@ type SomeStoredItemId =
  * - Table: "stored_items" - Stores attachments and generated files
  */
 export const useStoredItemsStore = defineStore("storedItems", () => {
-  const { uploadApiResultItem } = useStorage()
+  const { uploadApiResultItem, deleteFile } = useStorage()
 
   // Fetch all stored items (optionally filter by workspace/message/message_content)
   async function fetchAll(someItemId:SomeStoredItemId) {
@@ -84,18 +84,39 @@ export const useStoredItemsStore = defineStore("storedItems", () => {
   }
 
   // Remove a stored item
-  async function remove(id: string) {
-    const { error } = await supabase
-      .from("stored_items")
-      .delete()
-      .eq("id", id)
+  async function remove(item: StoredItem) {
+    if (item.fileUrl) {
+      await deleteFile(item.fileUrl)
+    }
 
-    if (error) {
-      console.error("Failed to remove stored item:", error)
-      throw error
+    if (item.id) {
+      const { error } = await supabase
+        .from("stored_items")
+        .delete()
+        .eq("id", item.id)
+
+      if (error) {
+        console.error("Failed to remove stored item:", error)
+        throw error
+      }
     }
 
     return true
+  }
+
+  async function upsert(item: StoredItem<DbStoredItemInsert>) {
+    const { data, error } = await supabase
+      .from("stored_items")
+      .upsert(mapStoredItemToDb(item))
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Failed to upsert stored item:", error)
+      throw error
+    }
+
+    return mapDbToStoredItem(data)
   }
 
   const createAndUpload = async (storedItemId: SomeStoredItemId, item: ApiResultItem) => {
@@ -129,5 +150,6 @@ export const useStoredItemsStore = defineStore("storedItems", () => {
     add,
     update,
     remove,
+    upsert,
   }
 })

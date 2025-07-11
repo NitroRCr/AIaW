@@ -236,8 +236,7 @@ ALTER FUNCTION "public"."debug_workspaces"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_chats_with_unread_count"() RETURNS TABLE("id" "text", "name" "text", "owner_id" "text", "type" "text", "workspace_id" "text", "created_at" timestamp with time zone, "avatar" "jsonb", "description" "text", "unread_count" integer)
     LANGUAGE "sql"
-    AS $$
-SELECT
+    AS $$SELECT
     c.id,
     c.name,
     c.owner_id,
@@ -257,8 +256,7 @@ SELECT
           )
     ) AS unread_count
 FROM chats c
-ORDER BY c.created_at DESC;
-$$;
+ORDER BY c.created_at ASC;$$;
 
 
 ALTER FUNCTION "public"."get_chats_with_unread_count"() OWNER TO "postgres";
@@ -1031,12 +1029,12 @@ ALTER TABLE ONLY "public"."message_contents"
 
 
 ALTER TABLE ONLY "public"."message_read"
-    ADD CONSTRAINT "message_read_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."messages"("id");
+    ADD CONSTRAINT "message_read_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."messages"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."message_read"
-    ADD CONSTRAINT "message_read_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "message_read_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -1195,6 +1193,10 @@ CREATE POLICY "Can read stored_items via message workspace" ON "public"."stored_
 
 
 
+CREATE POLICY "Chat member can delete private chats" ON "public"."chats" FOR DELETE USING ((("type" = 'private'::"public"."chat_type") AND ("workspace_id" IS NULL) AND "public"."is_chat_member"("id")));
+
+
+
 CREATE POLICY "Chat members can create messages" ON "public"."messages" FOR INSERT WITH CHECK (("public"."is_chat_member"("chat_id") OR (EXISTS ( SELECT 1
    FROM ("public"."chats" "c"
      JOIN "public"."workspace_members" "wm" ON (("c"."workspace_id" = "wm"."workspace_id")))
@@ -1211,10 +1213,6 @@ CREATE POLICY "Chat members can read private chats" ON "public"."chats" FOR SELE
 
 
 CREATE POLICY "Chat members can update private chats" ON "public"."chats" FOR UPDATE USING ((("type" = 'private'::"public"."chat_type") AND ("workspace_id" IS NULL) AND "public"."is_chat_member"("id")));
-
-
-
-CREATE POLICY "Chat owner can delete private chats" ON "public"."chats" FOR DELETE USING ((("type" = 'private'::"public"."chat_type") AND ("workspace_id" IS NULL) AND "public"."is_chat_owner"("id")));
 
 
 
