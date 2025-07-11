@@ -55,7 +55,7 @@ const inputEmpty = computed(() => !inputText.value && !inputItems.value.length)
 
 const { data: perfs } = useUserPerfsStore()
 // eslint-disable-next-line no-unused-vars
-const { createDialog } = useCreateDialog(workspaceId.value)
+const { createDialog } = useCreateDialog(toRef(workspaceId, "value"))
 
 const $q = useQuasar()
 const { t } = useI18n()

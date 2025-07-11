@@ -6,13 +6,17 @@
     :to="'/cyberlinks'"
   />
   <sidebar-title :title="t('mainLayout.workspace')" />
-
-  <icon-side-button
-    :icon="workspace?.avatar || emptyAvatar"
-    :title="workspace?.name || 'Select a workspace...'"
-    :to="`/workspaces/my`"
-    direction="right"
-  />
+  <div>
+    <icon-side-button
+      :icon="workspace?.avatar || emptyAvatar"
+      :title="trimWorkspaceName(workspace?.name) || 'Select a workspace...'"
+      :to="`/workspaces/my`"
+      direction="right"
+    />
+    <q-tooltip>
+      {{ workspace?.name }}
+    </q-tooltip>
+  </div>
   <sidebar-title :title="'Assistant'" />
 
   <icon-side-button
@@ -74,4 +78,8 @@ const canViewCyberlinks = computed(() => {
     plugin.apis.some((api) => api.name === "query_cyberlinks")
   )
 })
+
+const trimWorkspaceName = (name: string) => {
+  return name.length > 16 ? name.slice(0, 16) + "..." : name
+}
 </script>

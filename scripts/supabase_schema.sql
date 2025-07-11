@@ -653,12 +653,14 @@ ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."stored_items" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "message_content_id" "uuid" NOT NULL,
+    "message_content_id" "uuid",
     "type" "text" NOT NULL,
     "content_text" "text",
     "name" "text",
     "mime_type" "text",
     "file_url" "text",
+    "message_id" "uuid",
+    "workspace_id" "uuid",
     CONSTRAINT "stored_items_type_check" CHECK (("type" = ANY (ARRAY['text'::"text", 'file'::"text", 'quote'::"text", 'image'::"text"])))
 );
 
@@ -1063,6 +1065,16 @@ ALTER TABLE ONLY "public"."stored_items"
 
 
 
+ALTER TABLE ONLY "public"."stored_items"
+    ADD CONSTRAINT "stored_items_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."stored_items"
+    ADD CONSTRAINT "stored_items_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."user_data"
     ADD CONSTRAINT "stored_reactives_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -1169,6 +1181,17 @@ CREATE POLICY "Anyone can read profiles" ON "public"."profiles" FOR SELECT USING
 CREATE POLICY "Anyone can read public workspace chats" ON "public"."chats" FOR SELECT USING ((("workspace_id" IS NOT NULL) AND ("type" = 'workspace'::"public"."chat_type") AND (EXISTS ( SELECT 1
    FROM "public"."workspaces" "w"
   WHERE (("w"."id" = "chats"."workspace_id") AND ("w"."is_public" = true))))));
+
+
+
+CREATE POLICY "Can read stored_items via direct workspace_id" ON "public"."stored_items" FOR SELECT USING ("public"."is_workspace_member"("workspace_id"));
+
+
+
+CREATE POLICY "Can read stored_items via message workspace" ON "public"."stored_items" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM ("public"."messages" "m"
+     JOIN "public"."chats" "c" ON (("m"."chat_id" = "c"."id")))
+  WHERE (("m"."id" = "stored_items"."message_id") AND "public"."is_workspace_member"("c"."workspace_id")))));
 
 
 

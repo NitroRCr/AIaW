@@ -32,7 +32,7 @@
           :active="false"
         /> -->
         <q-list>
-          <q-expansion-item
+          <!-- <q-expansion-item
             label="Files"
             class="panel-item"
             icon="sym_o_attach_file"
@@ -42,7 +42,8 @@
                 Not implemented yet
               </q-card-section>
             </q-card>
-          </q-expansion-item>
+          </q-expansion-item> -->
+          <files-expansion />
           <artifacts-expansion />
 
           <chat-expansion
@@ -77,6 +78,7 @@ import ArtifactsExpansion from "@/features/artifacts/components/ArtifactsExpansi
 import { useArtifactsStore } from "@/features/artifacts/store"
 import ChatExpansion from "@/features/chats/components/ChatExpansion.vue"
 import ArtifactsPanel from "@/features/workspaces/components/ArtifactsPanel.vue"
+import FilesExpansion from "@/features/workspaces/components/WorkspaceFiles/WorkspaceExpansion.vue"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import { Artifact } from "@/services/data/types/artifact"

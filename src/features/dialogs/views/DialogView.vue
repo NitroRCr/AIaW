@@ -14,6 +14,7 @@
     <q-page
       flex
       flex-col
+      p-2
       :style-fn="pageFhStyle"
     >
       <div

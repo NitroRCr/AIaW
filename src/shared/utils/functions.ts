@@ -523,6 +523,10 @@ function getFileExt (filename: string) {
   return filename.match(/\.(\w+)$/)?.[1]
 }
 
+function getFileName (filename: string) {
+  return filename.split(".").slice(0, -1).join(".")
+}
+
 /**
  * Creates a partial artifact update that saves the current temporary changes
  * as a new version in the artifact's version history
@@ -786,4 +790,5 @@ export {
   removeDuplicates,
   defaultTextAvatar,
   avatarKey,
+  getFileName
 }

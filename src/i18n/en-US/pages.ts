@@ -136,6 +136,15 @@ export default {
     refresh: "Refresh",
     refreshSuccess: "Workspaces refreshed successfully",
     refreshError: "Failed to refresh workspaces",
+    createTextNote: "Create Text Note",
+    deleteFile: "Delete",
+    searchPlaceholder: "Search files...",
+    files: "Files",
+    deleteFileConfirmation: "Are you sure you want to delete '{name}'? This action cannot be undone and will permanently remove the file.",
+    deleteFileConfirmationTitle: "Delete File",
+    noteName: "Note Name",
+    editFile: "Edit",
+    noteNameRequired: "Note name is required",
   },
   chatsPage: {
     chats: "Chats",
@@ -167,6 +176,7 @@ export default {
     createArtifact: "Create Artifact",
     cyberlinks: "Cyberlinks",
     logout: "Logout",
+
   },
   myWorkspaces: {
     noDescription: "No description",

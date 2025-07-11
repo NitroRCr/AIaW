@@ -17,7 +17,7 @@ const api: PluginApi = {
   type: "tool",
   name: "edit",
   description: t("artifactsPlugin.description"),
-  prompt: "修改 Artifact",
+  prompt: "Modify Artifact",
   parameters: Object({
     id: String({
       description: "Artifact id",
