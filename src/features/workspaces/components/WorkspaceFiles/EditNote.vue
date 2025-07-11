@@ -18,11 +18,15 @@
         />
       </q-card-section>
       <q-card-section pt-0>
-        <MdEditor v-model="text" />
+        <MdEditor
+          v-model="text"
+          :theme="$q.dark.isActive ? 'dark' : 'light'"
+        />
       </q-card-section>
       <q-card-actions>
         <q-btn
           flat
+          icon="sym_o_close"
           color="primary"
           :label="$t('saveDialog.cancel')"
           @click="onDialogCancel"
@@ -30,12 +34,7 @@
         <q-space />
         <q-btn
           flat
-          :label="$t('saveDialog.dontSave')"
-          text="pri hover:err"
-          @click="onDialogOK({ save: false })"
-        />
-        <q-btn
-          flat
+          icon="sym_o_save"
           color="primary"
           :label="$t('saveDialog.save')"
           @click="saveNote"

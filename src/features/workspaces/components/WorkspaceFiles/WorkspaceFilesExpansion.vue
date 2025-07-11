@@ -200,7 +200,7 @@ function viewFile (file: StoredItem) {
 }
 
 function editFile (file?: StoredItem) {
-  if (file?.type !== "text") {
+  if (file && file?.type !== "text") {
     $q.dialog({
       component: RenameDialog,
       componentProps: {
