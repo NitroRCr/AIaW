@@ -25,7 +25,7 @@ export const useDialogMessages = (dialogId: Ref<string>) => {
   const workspace = computed(() => workspaces.value.find(ws => ws.id === dialog.value?.workspaceId))
 
   const fetchMessages = async () => {
-    await fetchDialogMessages(dialogId.value)
+    return await fetchDialogMessages(dialogId.value)
   }
 
   const dialogMessages = computed<DialogMessageNested[]>(

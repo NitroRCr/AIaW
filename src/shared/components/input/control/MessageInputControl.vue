@@ -387,6 +387,10 @@ defineExpose({
   imageInput,
   fileInput,
   focus: () => messageInput.value?.focus(),
+  clearInput: () => {
+    inputValue.value = ""
+    clearAllFiles()
+  },
   getPendingFiles: () => [...pendingFiles.value],
   clearPendingFiles: () => {
     clearAllFiles()

@@ -260,6 +260,12 @@ const { genTitle, extractArtifact, streamLlmResponse, isStreaming } = useLlmDial
   assistant
 )
 
+const startStream = async (target: string) => {
+  preventLockingBottom.value = false
+  abortController.value = new AbortController()
+  await streamLlmResponse(target, abortController.value)
+}
+
 watch(dialog, () => {
   if (!dialog.value) {
     nextTick(() => {
@@ -268,6 +274,15 @@ watch(dialog, () => {
     $q.notify({
       message: t("dialogView.errors.dialogNotFound"),
       color: "negative",
+    })
+  } else {
+    fetchMessages().then((messages) => {
+      console.log("messages", messages)
+
+      if (messages.length === 1) {
+        messageInputControl.value?.clearInput()
+        startStream(lastMessageId.value)
+      }
     })
   }
 }, { immediate: true })
@@ -286,18 +301,6 @@ const abortController = ref<AbortController | null>(null)
 const messageInputControl = ref()
 const assistantExtension = ref()
 const showVars = ref(true)
-
-watch(
-  () => dialogId.value,
-  () => fetchMessages(),
-  { immediate: true }
-)
-
-const startStream = async (target: string, insert = false) => {
-  preventLockingBottom.value = false
-  abortController.value = new AbortController()
-  await streamLlmResponse(target, abortController.value)
-}
 
 function focusInput () {
   isPlatformEnabled(perfs.autoFocusDialogInput) && messageInputControl.value?.focus()
@@ -334,7 +337,7 @@ function ensureAssistantAndModel () {
 async function regenerate(parentId: string) {
   if (!ensureAssistantAndModel()) return
 
-  await startStream(parentId, false)
+  await startStream(parentId)
 }
 
 async function quote (item: ApiResultItem) {
@@ -389,7 +392,7 @@ async function sendUserMessageAndGenerateResponse (text: string, items: ApiResul
     scroll("bottom")
   })
 
-  await startStream(lastMessageId.value, false)
+  await startStream(lastMessageId.value)
 }
 
 let lastScrollTop
