@@ -1,9 +1,5 @@
 <template>
-  <q-list
-    py-2
-    max-w="1000px"
-    mx-a
-  >
+  <settings-list>
     <q-item>
       <q-item-section>
         <q-item-label>
@@ -17,6 +13,8 @@
         />
       </q-item-section>
     </q-item>
+  </settings-list>
+  <settings-list>
     <q-item-label header>
       {{ $t("shortcutKeysView.dialogPage") }}
     </q-item-label>
@@ -196,10 +194,11 @@
         />
       </q-item-section>
     </q-item>
-  </q-list>
+  </settings-list>
 </template>
 
 <script setup lang="ts">
+import SettingsList from "@/shared/components/panels/SettingsList.vue"
 import ShortcutKeyInput from "@/shared/components/ShortcutKeyInput.vue"
 import { useUserPrefsStore } from "@/shared/store/userPrefs"
 

@@ -261,9 +261,7 @@
         </q-item-section>
       </q-item>
     </settings-list>
-    <settings-list>
-      <shortcut-keys />
-    </settings-list>
+    <shortcut-keys />
   </div>
   <settings-list
     v-if="route.hash === '#ui'"
