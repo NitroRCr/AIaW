@@ -316,7 +316,7 @@ body .md-editor-preview-wrapper {
 .rd-md, [rd-md=""],
 .rd-lg, [rd-lg=""],
 .rd-xl, [rd-xl=""] {
-  border-radius: 10px;
+  border-radius: 10px !important;
 }
 
 .q-menu {
@@ -370,4 +370,12 @@ body .md-editor-preview-wrapper {
   max-width: 1010px;
   padding: 24px;
   margin-right: auto;
+}
+
+.q-drawer {
+  border-top: 1px solid var(--a-sur-c-high);
+
+  // &__content {
+  //   padding: 5px 5px 0;
+  // }
 }

@@ -1,6 +1,6 @@
 export default {
   accountPage: {
-    title: "Account",
+    title: "Account Settings",
     user: "User",
     infoHeader: "Information",
     emailLabel: "Email",
@@ -41,6 +41,8 @@ export default {
     name: "Name",
     description: "Description",
     avatar: "Avatar",
+    web3Settings: "Web3 Settings",
+    userSettings: "User Settings",
   },
   modelPricing: {
     modelPrice: "Model Price",
@@ -80,6 +82,11 @@ export default {
     customProviders: "Custom Providers",
     customProviderUsage: "Refer to the custom provider's",
     usageGuide: "Usage Guide",
+    account: "Account",
+    aiSettings: "AI Settings",
+    featuresSettings: "Features",
+    shortkeysSettings: "Shortkeys",
+    uiSettings: "UI",
   },
   errorNotFound: {
     message: "There's nothing here...",

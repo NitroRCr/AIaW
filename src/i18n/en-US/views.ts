@@ -199,7 +199,7 @@ export default {
     largeFile: "Large file",
   },
   settingsView: {
-    title: "Settings",
+    title: "{area} Settings",
     defaultProviderHeader: "Default Provider",
     customProvider: "Custom Provider",
     customProviderCaption:
@@ -232,9 +232,9 @@ export default {
       "Display a quick scroll button in the lower right corner of the conversation. After closing, you can still use keyboard shortcuts to scroll",
     autoFocusInput: "Automatically Focus Conversation Input Box",
     autoLockBottom: "Automatically Lock Bottom When Generating",
-    messageContentCatalog: "Message Content Catalog",
+    messageContentCatalog: "Markdown Table of Contents",
     messageContentCatalogCaption:
-      "Display the catalog next to the message when there is enough space",
+      "Display the table of contents next to the message when there is enough space",
     artifactsSettings: "Artifacts Settings",
     enableArtifacts: "Enable Artifacts Function",
     autoExtractArtifact: "Automatically Extract Artifact",

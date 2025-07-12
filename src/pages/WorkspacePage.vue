@@ -9,6 +9,7 @@
       side="right"
       v-model="drawerOpen"
       flex
+      pt-2
     >
       <artifacts-panel
         :workspace-id="id"
@@ -20,10 +21,6 @@
         h-full
         flex="~ col"
       >
-        <q-separator
-          mt-0
-          mb-2
-        />
         <!-- <icon-side-button
           icon="sym_o_settings"
           :to="`/workspaces/${id}/settings`"

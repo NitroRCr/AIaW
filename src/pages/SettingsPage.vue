@@ -1,6 +1,12 @@
 <template>
-  <router-view />
-  <view-common-header no-drawer />
+  <page-view-with-drawer
+    :title="pageTitle"
+    @toggle-drawer="$emit('toggle-drawer')"
+  >
+    <template #drawer>
+      <settings-drawer />
+    </template>
+  </page-view-with-drawer>
   <!-- <q-drawer
     bg-sur-c-low
     :width="320"
@@ -32,9 +38,34 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from "vue"
+import { computed, provide, ref, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
-import ViewCommonHeader from "@/layouts/components/ViewCommonHeader.vue"
+import SettingsDrawer from "@/shared/components/layout/settings/SettingsDrawer.vue"
+
+import PageViewWithDrawer from "./common/SettingPageLayout.vue"
+const route = useRoute()
+const router = useRouter()
+
+watch(() => route.hash, (hash) => {
+  console.log("hash", hash)
+
+  if (!hash) {
+    router.replace({ hash: "#ai" })
+  }
+}, { immediate: true })
+
+const pageTitleMap = {
+  ai: "AI Settings",
+  features: "Features Settings",
+  shortkeys: "Shortkey Settings",
+  ui: "UI Settings",
+}
+const pageTitle = computed(() => {
+  return pageTitleMap[route.hash.replace("#", "")]
+})
+
+defineEmits(["toggle-drawer"])
 
 // const drawerOpen = ref(false)
 // const drawerBreakpoint = 960

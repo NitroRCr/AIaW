@@ -1,34 +1,35 @@
 <template>
-  <icon-side-button
-    v-if="canViewCyberlinks"
-    icon="sym_o_hub"
-    :title="$t('mainLayout.cyberlinks')"
-    :to="'/cyberlinks'"
-  />
-  <sidebar-title :title="t('mainLayout.workspace')" />
-  <div>
+  <div pt-2>
     <icon-side-button
-      :icon="workspace?.avatar || emptyAvatar"
-      :title="trimWorkspaceName(workspace?.name) || 'Select a workspace...'"
-      :to="`/workspaces/my`"
+      v-if="canViewCyberlinks"
+      icon="sym_o_hub"
+      :title="$t('mainLayout.cyberlinks')"
+      :to="'/cyberlinks'"
+    />
+    <sidebar-title :title="t('mainLayout.workspace')" />
+    <div>
+      <icon-side-button
+        :icon="workspace?.avatar || emptyAvatar"
+        :title="trimWorkspaceName(workspace?.name) || 'Select a workspace...'"
+        :to="`/workspaces/my`"
+        direction="right"
+      />
+      <q-tooltip>
+        {{ workspace?.name }}
+      </q-tooltip>
+    </div>
+    <sidebar-title :title="'Assistant'" />
+
+    <icon-side-button
+      :icon="assistant?.avatar || emptyAvatar"
+      :title="assistant?.name || 'Select an assistant'"
+      :to="`/workspaces/${workspace.id}/assistants`"
       direction="right"
     />
-    <q-tooltip>
-      {{ workspace?.name }}
-    </q-tooltip>
-  </div>
-  <sidebar-title :title="'Assistant'" />
-
-  <icon-side-button
-    :icon="assistant?.avatar || emptyAvatar"
-    :title="assistant?.name || 'Select an assistant'"
-    :to="`/workspaces/${workspace.id}/assistants`"
-    direction="right"
-  />
-  <div class="pt-2" />
-  <dialog-list
-    :workspace-id="workspaceId"
-  />
+    <div class="pt-2" />
+    <dialog-list
+      :workspace-id="workspaceId"
+    />
   <!-- <sidebar-title title="Last Dialogs" />
   <q-item>
     <last-dialogs />
@@ -37,6 +38,7 @@
   <q-item>
     <pinned-chats />
   </q-item> -->
+  </div>
 </template>
 
 <script setup lang="ts">

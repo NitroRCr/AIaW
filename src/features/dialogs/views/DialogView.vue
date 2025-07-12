@@ -8,13 +8,15 @@
     <q-space />
   </view-common-header>
   <q-page-container
-    bg-sur-c-low
     v-if="dialog"
   >
     <q-page
       flex
       flex-col
-      p-2
+      pl-4
+      pr-4
+      mx-auto
+      max-w="1000px"
       :style-fn="pageFhStyle"
     >
       <div
@@ -44,7 +46,8 @@
             @regenerate="regenerate(item.message.parentId)"
             @delete="deleteBranch(item.message.id)"
             @quote="quote"
-            @extract-artifact="extractArtifact(item.message, ...$event)"
+            @extract-artifact="([text, pattern, options]) => {
+              extractArtifact(item.message, text, pattern, options)}"
             @rendered="item.message.generatingSession && lockBottom()"
             @create-cyberlink="sendCyberlinkPrompt"
             pt-2
@@ -53,7 +56,6 @@
         </template>
       </div>
       <div
-        bg-sur-c-low
         p-2
         pos-relative
       >
