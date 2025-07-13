@@ -47,6 +47,7 @@ export function useWalletAuth(options: UseWalletAuthOptions = {}) {
    * HTTP client for API requests
    */
   async function apiCall<T>(url: string, options: any = {}): Promise<T> {
+    console.log(`[useWalletAuth] Making API call to: ${url}`, options)
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',

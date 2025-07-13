@@ -21,6 +21,7 @@
     <sidebar-title :title="'Assistant'" />
 
     <icon-side-button
+      v-if="workspace"
       :icon="assistant?.avatar || emptyAvatar"
       :title="assistant?.name || 'Select an assistant'"
       :to="`/workspaces/${workspace.id}/assistants`"
@@ -81,7 +82,9 @@ const canViewCyberlinks = computed(() => {
   )
 })
 
-const trimWorkspaceName = (name: string) => {
+const trimWorkspaceName = (name: string | undefined) => {
+  if (!name) return ""
+
   return name.length > 16 ? name.slice(0, 16) + "..." : name
 }
 </script>

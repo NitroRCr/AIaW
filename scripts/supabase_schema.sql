@@ -182,6 +182,26 @@ $$;
 
 ALTER FUNCTION "public"."create_profile_on_signup"() OWNER TO "postgres";
 
+CREATE OR REPLACE FUNCTION public.add_user_to_default_workspace()
+RETURNS TRIGGER AS $$
+DECLARE
+  default_workspace_id UUID := '00000000-0000-0000-0000-000000000000'; -- ID рабочего стола по умолчанию
+BEGIN
+  -- Добавляем пользователя в рабочий стол по умолчанию с ролью 'member'
+  INSERT INTO public.workspace_members (workspace_id, user_id, role)
+  VALUES (default_workspace_id, NEW.id, 'member')
+  ON CONFLICT (workspace_id, user_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Триггер, который вызывает эту функцию после создания профиля
+CREATE TRIGGER on_profile_created
+  AFTER INSERT ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.add_user_to_default_workspace();
+
 
 CREATE OR REPLACE FUNCTION "public"."debug_workspaces"() RETURNS "void"
     LANGUAGE "plpgsql"
