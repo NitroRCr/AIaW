@@ -465,28 +465,34 @@ export type Database = {
           content_text: string | null
           file_url: string | null
           id: string
-          message_content_id: string
+          message_content_id: string | null
+          message_id: string | null
           mime_type: string | null
           name: string | null
           type: string
+          workspace_id: string | null
         }
         Insert: {
           content_text?: string | null
           file_url?: string | null
           id?: string
-          message_content_id: string
+          message_content_id?: string | null
+          message_id?: string | null
           mime_type?: string | null
           name?: string | null
           type: string
+          workspace_id?: string | null
         }
         Update: {
           content_text?: string | null
           file_url?: string | null
           id?: string
-          message_content_id?: string
+          message_content_id?: string | null
+          message_id?: string | null
           mime_type?: string | null
           name?: string | null
           type?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -494,6 +500,20 @@ export type Database = {
             columns: ["message_content_id"]
             isOneToOne: false
             referencedRelation: "message_contents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stored_items_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stored_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]

@@ -77,40 +77,12 @@
             @click="scroll('bottom')"
           />
         </div>
-        <div
-          style="display: flex; align-items: stretch; height: 56px"
-          v-if="userStore.isLoggedIn"
-        >
-          <a-input
-            ref="messageInput"
-            style="flex: 1 1 0%"
-            max-h-50vh
-            of-y-auto
-            v-model="inputMessage"
-            outlined
-            autogrow
-            clearable
-            :debounce="30"
-            :placeholder="$t('dialogView.chatPlaceholder')"
-            @keydown.enter="onEnter"
-          />
-
-          <q-btn
-            unelevated
-            class="h-full flex items-center"
-            @click="send"
-          >
-            <q-icon :name="'sym_o_send'" />
-            <span class="q-ml-sm">{{ $t("dialogView.send") }}</span>
-          </q-btn>
-        </div>
-        <div
-          v-else
-          class="h-full flex items-center justify-center"
-          style="font-size: 16px; color: var(--q-text-secondary); height: 56px"
-        >
-          Authenticate to send messages...
-        </div>
+        <MessageInputControl
+          ref="messageInputControl"
+          :mime-input-types="['*']"
+          :input-text="inputText"
+          @send="send"
+        />
       </div>
     </q-page>
   </q-page-container>
@@ -120,9 +92,9 @@
 import { QPageContainer, QPage, useQuasar } from "quasar"
 import { computed, inject, nextTick, ref, watch } from "vue"
 
-import { useUiStateStore } from "@/shared/store/uiState"
-import { useUserStore } from "@/shared/store/user"
-import { useUserPrefsStore } from "@/shared/store/userPrefs"
+import MessageInputControl from "@/shared/components/input/control/MessageInputControl.vue"
+import { useUserPerfsStore, useUiStateStore, useUserStore } from "@/shared/store"
+import { ApiResultItem } from "@/shared/types"
 import {
   almostEqual,
   isPlatformEnabled,
@@ -141,7 +113,8 @@ const props = defineProps<{
 }>()
 
 const scrollContainer = ref<HTMLElement>()
-const { data: perfs } = useUserPrefsStore()
+const { data: perfs } = useUserPerfsStore()
+const userStore = useUserStore()
 const lockingBottom = ref(false)
 let lastScrollTop
 
@@ -307,7 +280,6 @@ watch(
 )
 
 const uiStateStore = useUiStateStore()
-const userStore = useUserStore()
 const scrollTops = uiStateStore.dialogScrollTops
 const $q = useQuasar()
 
@@ -334,13 +306,15 @@ watch(
   }
 )
 
-async function send () {
+const inputText = ref("")
+
+async function send (text: string, items: ApiResultItem[]) {
   chatMessagesStore
     .add(mapChatMessageToDb({
       chatId: props.id,
       senderId: userStore.currentUserId,
-      content: inputMessage.value,
-    } as ChatMessage<DbChatMessageInsert>))
+      content: text,
+    } as ChatMessage<DbChatMessageInsert>), items)
     .catch((error) => {
       console.error("error", error)
       $q.notify({
@@ -349,17 +323,8 @@ async function send () {
       })
     })
 
-  inputMessage.value = ""
+  inputText.value = ""
 }
-
-function onEnter (ev) {
-  if (ev.ctrlKey || ev.shiftKey) return
-
-  send()
-  ev.preventDefault()
-}
-
-const inputMessage = ref("")
 
 defineEmits(["toggle-drawer"])
 </script>

@@ -5,7 +5,7 @@
         {{ workspace?.name }} {{ $t('myAssistants.myAssistants') }}
       </q-toolbar-title>
     </view-common-header>
-    <q-page class="my-assistants-page">
+    <q-page class="max-page-width">
       <card-view
         :add-button-caption="$t('myAssistants.newAssistant')"
         @add="addAssistant"
@@ -65,6 +65,7 @@
               <q-chip
                 v-if="assistant.model"
                 icon="sym_o_neurology"
+                class="max-w-32"
                 :label="`${assistant.model.name}`"
                 size="md"
                 outline
@@ -171,11 +172,6 @@ async function addAssistant () {
 </script>
 
 <style lang="scss" scoped>
-.my-assistants-page {
-  padding: 24px;
-  max-width: 1024px;
-  margin-right: auto;
-}
 
 .assistant-card-content {
   display: flex;

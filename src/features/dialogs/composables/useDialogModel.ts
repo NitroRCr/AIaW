@@ -14,7 +14,7 @@ export const useDialogModel = (
   const { getModel, getSdkModel } = useGetModel()
   const modelOptions = ref({})
   const { data: perfs } = useUserPerfsStore()
-  console.log("useDialogModel", dialog && dialog.value, assistant.value)
+
   const model = computed(() =>
     getModel((dialog && dialog.value?.modelOverride) || assistant.value?.model)
   )

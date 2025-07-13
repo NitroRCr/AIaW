@@ -231,7 +231,7 @@ const presetAvatars = {
   definitelyAIs: [
     { type: "url", url: "/ai-avatars/alice.webp", title: "AL-1S" },
     { type: "url", url: "/ai-avatars/arona.webp", title: "Arona" },
-    { type: "url", url: "/ai-avatars/ptilopsis.webp", title: "白面鸮" },
+    { type: "url", url: "/ai-avatars/ptilopsis.webp", title: "Ptilopsis" },
     { type: "url", url: "/ai-avatars/atri.webp", title: "ATRI" },
     { type: "url", url: "/ai-avatars/glados.webp", title: "GLaDOS" },
     { type: "url", url: "/ai-avatars/neuro.webp", title: "Neuro" },

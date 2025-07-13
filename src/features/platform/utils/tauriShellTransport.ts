@@ -7,20 +7,20 @@ import { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js"
 import { Command, Child } from "@tauri-apps/plugin-shell"
 
 /**
- * 读取缓冲器（基于字符串实现），用于将连续的标准输出流数据按行分割，解析为 JSON-RPC 消息。
+ * Read buffer (based on string implementation) for splitting continuous standard output stream data into lines and parsing it into JSON-RPC messages.
  */
 class BrowserReadBuffer {
   private _buffer: string = ""
 
   /**
-   * 追加数据到缓冲区，该数据应为字符串。
+   * Append data to the buffer, the data should be a string.
    */
   append (chunk: string): void {
     this._buffer += chunk
   }
 
   /**
-   * 读取一条完整消息（以 "\n" 作为分隔），如果没有完整消息则返回 null。
+   * Read a complete message (split by "\n"), if there is no complete message, return null.
    */
   readMessage (): JSONRPCMessage | null {
     const index = this._buffer.indexOf("\n")
@@ -36,7 +36,7 @@ class BrowserReadBuffer {
   }
 
   /**
-   * 清空缓冲区。
+   * Clear the buffer.
    */
   clear (): void {
     this._buffer = ""
@@ -44,38 +44,38 @@ class BrowserReadBuffer {
 }
 
 /**
- * 启动 Tauri Shell 进程的参数定义。
+ * Definition of parameters for starting the Tauri Shell process.
  */
 export type TauriShellServerParameters = {
   /**
-   * 要启动的可执行文件。
+   * The executable file to start.
    */
   command: string
   /**
-   * 传递给可执行文件的命令行参数。
+   * Command line arguments passed to the executable file.
    */
   args?: string[]
   /**
-   * 启动进程时使用的环境变量。
+   * Environment variables used when starting the process.
    */
   env?: Record<string, string>
   /**
-   * 进程的工作目录。
+   * The working directory of the process.
    */
   cwd?: string
 }
 
 /**
- * 基于 @tauri-apps/plugin-shell 的 transport 实现 —— 用于在浏览器（前端）环境下调用后端进程。
+ * Transport implementation based on @tauri-apps/plugin-shell —— used to call backend processes in the browser (frontend) environment.
  *
- * 该类按照 JSON-RPC 协议，与子进程通信。它通过 BrowserReadBuffer 缓存子进程的 stdout 输出，
- * 当检测到完整的以换行符结尾的消息时，便通过 onmessage 回调对外发布消息。
+ * This class communicates with the subprocess according to the JSON-RPC protocol. It caches the stdout output of the subprocess through BrowserReadBuffer,
+ * and when a complete message ending with a newline is detected, it publishes the message through the onmessage callback.
  */
 export class TauriShellClientTransport implements Transport {
   private _child?: Child
   private _readBuffer: BrowserReadBuffer = new BrowserReadBuffer()
   private _serverParams: TauriShellServerParameters
-  // 使用 TextDecoder 以便将 Uint8Array 转换为字符串。
+  // Use TextDecoder to convert Uint8Array to string.
   private _decoder: TextDecoder = new TextDecoder("utf-8")
 
   onclose?: () => void
@@ -87,7 +87,7 @@ export class TauriShellClientTransport implements Transport {
   }
 
   /**
-   * 启动子进程，并为 stdout、stderr 分别设置事件监听器，以便接收数据和错误信息。
+   * Start the subprocess, and set event listeners for stdout and stderr to receive data and error information.
    */
   async start (): Promise<void> {
     const command = Command.create(
@@ -100,18 +100,18 @@ export class TauriShellClientTransport implements Transport {
       }
     )
 
-    // 当命令执行出错时，调用 onerror 回调。
+    // When the command execution fails, call the onerror callback.
     command.on("error", (error: string) => {
       this.onerror?.(new Error(error))
     })
 
-    // 当子进程关闭时，清理 child 对象并调用 onclose 回调。
+    // When the subprocess closes, clean up the child object and call the onclose callback.
     command.on("close", () => {
       this._child = undefined
       this.onclose?.()
     })
 
-    // 处理子进程 stdout 输出的数据（可能为 string 或 Uint8Array）。
+    // Process the data output by the subprocess stdout (possibly string or Uint8Array).
     command.stdout.on("data", (chunk: string | Uint8Array) => {
       try {
         let chunkText: string
@@ -119,7 +119,7 @@ export class TauriShellClientTransport implements Transport {
         if (typeof chunk === "string") {
           chunkText = chunk
         } else {
-          // 如果是 Uint8Array，则使用 TextDecoder 转换为字符串
+          // If it is Uint8Array, use TextDecoder to convert it to a string
           chunkText = this._decoder.decode(chunk, { stream: true })
         }
 
@@ -130,7 +130,7 @@ export class TauriShellClientTransport implements Transport {
       }
     })
 
-    // 处理 stderr 输出的数据，将其包装为 Error 传递给 onerror 回调。
+    // Process the data output by the subprocess stderr, wrap it as an Error and pass it to the onerror callback.
     command.stderr.on("data", (chunk: string | Uint8Array) => {
       let errorText: string
 
@@ -143,12 +143,12 @@ export class TauriShellClientTransport implements Transport {
       this.onerror?.(new Error(errorText))
     })
 
-    // 启动子进程，后续的数据会通过 stdout/stderr 事件分发。
+    // Start the subprocess, subsequent data will be distributed through the stdout/stderr events.
     this._child = await command.spawn()
   }
 
   /**
-   * 将 JSON-RPC 消息发送到子进程。
+   * Send JSON-RPC messages to the subprocess.
    */
   async send (message: JSONRPCMessage): Promise<void> {
     if (!this._child) {
@@ -160,7 +160,7 @@ export class TauriShellClientTransport implements Transport {
   }
 
   /**
-   * 关闭 transport，终止子进程，并清空缓冲区。
+   * Close the transport, terminate the subprocess, and clear the buffer.
    */
   async close (): Promise<void> {
     if (this._child) {
@@ -173,7 +173,7 @@ export class TauriShellClientTransport implements Transport {
   }
 
   /**
-   * 从缓冲区中提取完整的 JSON-RPC 消息，并通过 onmessage 回调传递出去。
+   * Extract complete JSON-RPC messages from the buffer and pass them out through the onmessage callback.
    */
   private processReadBuffer (): void {
     while (true) {

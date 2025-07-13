@@ -5,15 +5,14 @@
       show-if-above
       :width="DRAWER_WIDTH"
       :breakpoint="1200"
-      bg-sur-c
+      bg-sur-c-low
       flex
       flex-col
     >
       <div
         text-xl
-        pt-1
         px-4
-        class="logo-container pt-2"
+        class="logo-container"
       >
         <div
           class="text-xl logo"
@@ -41,10 +40,7 @@
           @click="openLastWorkspace"
         />
       </div>
-      <q-separator
-        spaced
-        mb-0
-      />
+
       <workspace-left-sidebar />
     </q-drawer>
     <router-view />
@@ -100,8 +96,9 @@ function notifyVersion () {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 41px;
+  min-height: 50px;
   cursor: pointer;
+  border-bottom: 1px solid var(--a-sur-c-high);
 }
 .logo {
   font-family: "Material Symbols Outlined";

@@ -1,11 +1,11 @@
 <template>
   <q-page-container>
-    <view-common-header @toggle-drawer="$emit('toggle-drawer')">
+    <view-common-header no-drawer>
       <q-toolbar-title>
         {{ $t('myWorkspaces.myWorkspaces') }}
       </q-toolbar-title>
     </view-common-header>
-    <q-page class="my-workspaces-page">
+    <q-page class="max-page-width">
       <card-view
         :add-button-caption="$t('myWorkspaces.newWorkspace')"
         :find-button-caption="$t('myWorkspaces.findWorkspace')"
@@ -153,11 +153,6 @@ function navigateToWorkspaces() {
 </script>
 
 <style lang="scss" scoped>
-.my-workspaces-page {
-  padding: 24px;
-  max-width: 1024px;
-  margin-right: auto;
-}
 
 .workspace-card-content {
   display: flex;

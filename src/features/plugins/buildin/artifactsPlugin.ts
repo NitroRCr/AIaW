@@ -17,35 +17,35 @@ const api: PluginApi = {
   type: "tool",
   name: "edit",
   description: t("artifactsPlugin.description"),
-  prompt: "修改 Artifact",
+  prompt: "Modify Artifact",
   parameters: Object({
     id: String({
-      description: "要修改的 Artifact 的 id",
+      description: "Artifact id",
     }),
     updates: TArray(
       Object({
         pattern: String({
           description:
-            "要替换的旧内容的 JS 正则表达式字符串。你可以使用 `[\\s\\S]*` 来覆写全部内容",
+            "JS regular expression string to replace the old content. You can use `[\\s\\S]*` to overwrite all content",
         }),
         flags: Optional(
           String({
             description:
-              "JS 正则表达式的 flags，如 `g` 表示全局匹配。默认无 flags",
+              "JS regular expression flags, such as `g` to represent global matching. Default no flags",
           })
         ),
         replacement: String({
-          description: "替换后的新内容",
+          description: "New content after replacement",
         }),
       }),
       {
-        description: "按顺序执行的替换修改操作列表",
+        description: "List of replacement modification operations to be executed in order",
       }
     ),
     newName: Optional(
       String({
         description:
-          "如果要修改 Artifact 的名称，请填写此项。一般情况下不修改名称",
+          "If you want to modify the name of the Artifact, please fill in this item. Generally, the name is not modified",
       })
     ),
   }),
@@ -73,7 +73,7 @@ const api: PluginApi = {
     return [
       {
         type: "text",
-        contentText: "修改成功",
+        contentText: t("artifactsPlugin.success"),
       },
     ]
   },
@@ -89,11 +89,14 @@ const plugin: Plugin = {
   settings: Object({}),
 }
 
-const promptTemplate = `Artifacts 是用户可能修改或复用的独立内容（代码、文章等），为了清晰地展示，将显示在单独的 UI 窗口中。
+const promptTemplate = `Artifacts are independent content (code, articles, etc.) that users may modify or reuse.
+For clear display, they will be displayed in a separate UI window.
 
-你可以通过调用工具 \`edit-artifact\` 修改 \`writable\` 属性为 \`true\` 的 Artifacts。请先回答用户，说明你要做的修改，再调用工具修改 Artifacts。
+You can modify artifacts with the \`writable\` attribute set to \`true\` by calling the tool \`edit-artifact\`.
 
-下面是已有的 Artifacts：
+Please answer the user first to explain the changes you want to make, and then call the tool to modify the artifacts.
+
+The following are the existing artifacts:
 
 {%- for artifact in artifacts %}
 <artifact id="{{ artifact.id }}" name="{{ artifact.name }}" writable="{{ artifact.writable }}">

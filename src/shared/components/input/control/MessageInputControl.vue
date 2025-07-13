@@ -58,8 +58,6 @@
           v-for="(file, index) in pendingFiles.filter(f => !isImageFile(f))"
           :key="`file-${index}`"
           removable
-          color="grey-3"
-          text-color="dark"
           @remove="removeFile(pendingFiles.findIndex(f => f === file))"
           class="q-ma-xs"
         >
@@ -79,27 +77,25 @@
     <!-- Command suggestions overlay wrapping the input -->
     <command-suggestions-overlay
       ref="commandOverlay"
-      :input-text="props.inputText"
+      :input-text="inputValue"
       :commands="availableCommands"
       suggestion-position="top"
-      @update-input-text="$emit('update-input-text', $event)"
+      @update-input-text="inputValue = $event"
       @command-executed="onCommandExecuted"
     >
-      <template #default="{ onInput }">
+      <template #default="{ }">
         <a-input
           ref="messageInput"
           class="mb-2"
           max-h-50vh
           of-y-auto
-          :model-value="props.inputText"
-          @update:model-value="onInput"
+          v-model="inputValue"
           outlined
           autogrow
           clearable
           :debounce="30"
           :placeholder="props.placeholder || $t('dialogView.chatPlaceholder')"
-          @keydown.enter="handleEnterKey"
-          @paste="$emit('paste', $event)"
+          @keydown.enter="handleInputEnterKeyPress"
         />
       </template>
     </command-suggestions-overlay>
@@ -113,7 +109,7 @@
     >
       <!-- Core file upload buttons -->
       <q-btn
-        v-if="props.allowImageUpload && mimeTypeMatch('image/webp', props.supportedInputTypes)"
+        v-if="props.allowImageUpload && (!props.mimeInputTypes || mimeTypeMatch('image/webp', props.mimeInputTypes))"
         flat
         icon="sym_o_image"
         :title="$t('dialogView.addImage')"
@@ -174,7 +170,7 @@
         :loading="props.loading"
         ml-4
         min-h="40px"
-        :disabled="(props.inputEmpty && pendingFiles.length === 0) || filesProcessing"
+        :disabled="(inputEmpty && pendingFiles.length === 0) || filesProcessing"
       />
     </div>
 
@@ -185,56 +181,56 @@
 
 <script setup lang="ts">
 import { until } from '@vueuse/core'
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import AbortableBtn from '@/shared/components/AbortableBtn.vue'
 import CommandSuggestionsOverlay from '@/shared/components/input/control/CommandSuggestions.vue'
 import { useDialogFileHandling } from '@/shared/components/input/control/dialogFileHandling'
 import { useInputCommands } from '@/shared/components/input/control/useInputCommands'
-import { parseFilesToApiResultItems } from '@/shared/utils/files'
-import { mimeTypeMatch } from '@/shared/utils/functions'
+import { useApiResultItem } from '@/shared/composables'
+import { useUserPerfsStore } from '@/shared/store'
+import { AssistantPlugins, ApiResultItem } from '@/shared/types'
+import { mimeTypeMatch, textBeginning } from '@/shared/utils/functions'
+import { isMarkdown } from '@/shared/utils/markdown'
 
 interface Props {
   loading?: boolean
-  inputEmpty?: boolean
   inputText?: string
-  addInputItems?: (items: any[]) => Promise<void>
-  processOtherFiles?: (files: File[]) => Promise<void>
   placeholder?: string
   allowFileUpload?: boolean
   allowImageUpload?: boolean
-  supportedInputTypes?: string[]
+  mimeInputTypes?: string[]
+  parserPlugins?: AssistantPlugins
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  inputEmpty: false,
   inputText: '',
-  addInputItems: undefined,
-  processOtherFiles: undefined,
   placeholder: undefined,
   allowFileUpload: true,
   allowImageUpload: true,
-  supportedInputTypes: () => [],
+  mimeInputTypes: () => ["*"],
+  parserPlugins: () => null,
 })
 
 const emit = defineEmits<{
-  'send': []
+  'send': [text: string, items: ApiResultItem[]]
   'abort': []
-  'update-input-text': [text: string]
-  'keydown-enter': [event: KeyboardEvent]
-  'paste': [event: ClipboardEvent]
-  'process-files': [files: any[]]
 }>()
 
 const imageInput = ref()
 const fileInput = ref()
 const messageInput = ref()
 const commandOverlay = ref()
+const inputValue = ref(props.inputText)
+const inputEmpty = computed(() => !inputValue.value && !pendingFiles.value.length)
+const { data: perfs } = useUserPerfsStore()
 
+const { t } = useI18n()
 const {
   pendingFiles,
-  onInputFiles,
+  addFiles,
   removeFile,
   clearAllFiles,
   getFileIcon,
@@ -242,6 +238,7 @@ const {
   isImageFile,
 } = useDialogFileHandling()
 
+const { filesToApiResultItems } = useApiResultItem()
 const {
   availableCommands,
   onCommandExecuted
@@ -249,6 +246,14 @@ const {
   // Note: assistant change handling now managed by parent component
   console.log('Assistant change requested:', assistantId)
 })
+
+const onInputFiles = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = Array.from(target.files || [])
+
+  addFiles(files)
+  target.value = ""
+}
 
 // Computed to check if any files are currently processing
 const isProcessingFiles = ref(false)
@@ -263,16 +268,6 @@ const allFilesReady = computed(() =>
   pendingFiles.value.length === 0 || !filesProcessing.value
 )
 
-function handleEnterKey(event: KeyboardEvent) {
-  // Check if the command overlay handled the event
-  if (commandOverlay.value?.isShowingCommands()) {
-    // Let the overlay handle it
-    return
-  }
-
-  emit('keydown-enter', event)
-}
-
 async function handleSend() {
   // Hide command suggestions if they're showing
   if (commandOverlay.value?.isShowingCommands()) {
@@ -281,37 +276,20 @@ async function handleSend() {
     return
   }
 
+  console.log("handleSend", pendingFiles.value, filesProcessing.value)
+
   // Wait for all files to finish processing if any are processing
   if (filesProcessing.value) {
     await until(allFilesReady).toBeTruthy()
   }
 
+  let items: ApiResultItem[] = []
+
   // Convert and add files using addInputItems prop
-  if (pendingFiles.value.length > 0 && props.addInputItems) {
+  if (pendingFiles.value.length > 0) {
     isProcessingFiles.value = true
     try {
-      const { parsedItems, otherFiles } = await parseFilesToApiResultItems(
-        pendingFiles.value,
-        props.supportedInputTypes,
-        (maxFileSize, file) => {
-          // Handle file too large - could emit a notification or similar
-          console.warn(`File ${file.name} is too large (max: ${maxFileSize}MB)`)
-        }
-      )
-
-      // Add directly parsable files
-      if (parsedItems.length > 0) {
-        await props.addInputItems(parsedItems)
-      }
-
-      // Process files that need plugin processing
-      if (otherFiles.length > 0) {
-        if (props.processOtherFiles) {
-          await props.processOtherFiles(otherFiles)
-        } else {
-          emit('process-files', otherFiles)
-        }
-      }
+      items = await filesToApiResultItems(pendingFiles.value, props.mimeInputTypes, props.parserPlugins)
 
       clearAllFiles()
     } finally {
@@ -320,14 +298,99 @@ async function handleSend() {
   }
 
   // Emit the send event
-  emit('send')
+  emit('send', inputValue.value, items)
+  inputValue.value = ""
 }
+
+function handleInputEnterKeyPress (ev: KeyboardEvent) {
+  // Check if the command overlay handled the event
+  if (commandOverlay.value?.isShowingCommands()) {
+    // Let the overlay handle it
+    return
+  }
+
+  if ((perfs.sendKey === "ctrl+enter" && ev.ctrlKey) ||
+    (perfs.sendKey === "shift+enter" && ev.shiftKey)
+  ) {
+    handleSend()
+  } else {
+    if (ev.ctrlKey) {
+      document.execCommand("insertText", false, "\n")
+    } else if (!ev.shiftKey) {
+      handleSend()
+    }
+  }
+}
+
+/**
+ * Handles pasting of code from editors like VSCode.
+ * Automatically detects code snippets and formats them with proper markdown syntax.
+ *
+ * @param ev - The clipboard event containing the pasted content
+ */
+// function handleCodePasteFormatting (ev: ClipboardEvent) {
+//   if (!perfs.codePasteOptimize) return
+
+//   const { clipboardData } = ev
+//   const i = clipboardData.types.findIndex((t) => t === "vscode-editor-data")
+
+//   if (i !== -1) {
+//     const code = clipboardData
+//       .getData("text/plain")
+//       .replace(/\r\n/g, "\n")
+//       .replace(/\r/g, "\n")
+
+//     if (!/\n/.test(code)) return
+
+//     const data = clipboardData.getData("vscode-editor-data")
+//     const lang = JSON.parse(data).mode ?? ""
+
+//     if (lang === "markdown") return
+
+//     const wrappedCode = wrapCode(code, lang)
+//     document.execCommand("insertText", false, wrappedCode)
+//     ev.preventDefault()
+//   }
+// }
+
+function onPaste (ev: ClipboardEvent) {
+  const { clipboardData } = ev
+  console.log("onPaste", clipboardData.types, clipboardData.files, document.activeElement.tagName)
+
+  if (clipboardData.types.includes("text/plain")) {
+    const text = clipboardData.getData("text/plain")
+    console.log("onPaste2", text, isMarkdown(text))
+
+    if (isMarkdown(text)) {
+    // Create a File object from the pasted text and add it as a file
+      const file = new File([
+        text
+      ], `${t("dialogView.pastedText", { text: textBeginning(text, 12) })}.txt`, { type: "text/plain" })
+      addFiles([file])
+      ev.preventDefault()
+
+      inputValue.value = ""
+    }
+  } else if (clipboardData.files.length > 0) {
+    addFiles(Array.from(clipboardData.files) as File[])
+    ev.preventDefault()
+
+    inputValue.value = ""
+  }
+}
+
+addEventListener("paste", onPaste)
+onUnmounted(() => removeEventListener("paste", onPaste))
 
 defineExpose({
   messageInput,
   imageInput,
   fileInput,
   focus: () => messageInput.value?.focus(),
+  clearInput: () => {
+    inputValue.value = ""
+    clearAllFiles()
+  },
   getPendingFiles: () => [...pendingFiles.value],
   clearPendingFiles: () => {
     clearAllFiles()

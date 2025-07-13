@@ -1,28 +1,35 @@
 <template>
-  <icon-side-button
-    v-if="canViewCyberlinks"
-    icon="sym_o_hub"
-    :title="$t('mainLayout.cyberlinks')"
-    :to="'/cyberlinks'"
-  />
-  <sidebar-title :title="t('mainLayout.workspace')" />
+  <div pt-2>
+    <icon-side-button
+      v-if="canViewCyberlinks"
+      icon="sym_o_hub"
+      :title="$t('mainLayout.cyberlinks')"
+      :to="'/cyberlinks'"
+    />
+    <sidebar-title :title="t('mainLayout.workspace')" />
+    <div>
+      <icon-side-button
+        :icon="workspace?.avatar || emptyAvatar"
+        :title="trimWorkspaceName(workspace?.name) || 'Select a workspace...'"
+        :to="`/workspaces/my`"
+        direction="right"
+      />
+      <q-tooltip>
+        {{ workspace?.name }}
+      </q-tooltip>
+    </div>
+    <sidebar-title :title="'Assistant'" />
 
-  <icon-side-button
-    :icon="workspace?.avatar || emptyAvatar"
-    :title="workspace?.name || 'Select a workspace...'"
-    :to="`/workspaces/my`"
-    direction="right"
-  />
-  <icon-side-button
-    :icon="assistant?.avatar || emptyAvatar"
-    :title="assistant?.name || 'Select an assistant'"
-    :to="`/workspaces/${workspace.id}/assistants`"
-    direction="right"
-  />
-  <div class="pt-2" />
-  <dialog-list
-    :workspace-id="workspaceId"
-  />
+    <icon-side-button
+      :icon="assistant?.avatar || emptyAvatar"
+      :title="assistant?.name || 'Select an assistant'"
+      :to="`/workspaces/${workspace.id}/assistants`"
+      direction="right"
+    />
+    <div class="pt-2" />
+    <dialog-list
+      :workspace-id="workspaceId"
+    />
   <!-- <sidebar-title title="Last Dialogs" />
   <q-item>
     <last-dialogs />
@@ -31,6 +38,7 @@
   <q-item>
     <pinned-chats />
   </q-item> -->
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -48,7 +56,7 @@ import DialogList from "@/features/dialogs/components/DialogList.vue"
 import { usePluginsStore } from "@/features/plugins/store"
 import { useActiveWorkspace, useOpenLastWorkspace } from "@/features/workspaces/composables"
 
-const emptyAvatar = { type: "icon", icon: "sym_o_question_mark" } as IconAvatar
+const emptyAvatar = { type: "icon", icon: "sym_o_sentiment_very_dissatisfied" } as IconAvatar
 const { workspace, assistant } = useActiveWorkspace()
 const workspaceId = computed(() => workspace.value?.id as string)
 
@@ -72,4 +80,8 @@ const canViewCyberlinks = computed(() => {
     plugin.apis.some((api) => api.name === "query_cyberlinks")
   )
 })
+
+const trimWorkspaceName = (name: string) => {
+  return name.length > 16 ? name.slice(0, 16) + "..." : name
+}
 </script>

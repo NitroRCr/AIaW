@@ -29,7 +29,7 @@ export async function corsFetch(
 
   if (IsCapacitor || IsTauri) return fetch(url, { method, headers, body })
 
-  if (!CorsFetchBaseURL) throw new Error("当前部署配置不支持跨域请求")
+  if (!CorsFetchBaseURL) throw new Error("CORS fetch base URL is not set")
 
   const response = await fetch(`${CorsFetchBaseURL}/proxy`, {
     method: "POST",

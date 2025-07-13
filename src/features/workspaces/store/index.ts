@@ -3,13 +3,15 @@ import { defineStore } from "pinia"
 import { computed, ref, watch } from "vue"
 import { useI18n } from "vue-i18n"
 
-import { IconAvatar } from "@/shared/types"
+import { ApiResultItem, IconAvatar } from "@/shared/types"
 
 import { useUserLoginCallback } from "@/features/auth/composables/useUserLoginCallback"
 import { DefaultWsIndexContent } from "@/features/dialogs/utils"
+import { useStoredItemsStore } from "@/features/storedItems"
 import { useWorkspacesWithSubscription } from "@/features/workspaces/composables/useWorkspacesWithSubscription"
 
 import { supabase } from "@/services/data/supabase/client"
+import { StoredItem } from "@/services/data/types/storedItem"
 import {
   DbWorkspaceInsert,
   DbWorkspaceMember,
@@ -47,6 +49,7 @@ import {
  */
 export const useWorkspacesStore = defineStore("workspaces", () => {
   const { workspaces, isLoaded } = useWorkspacesWithSubscription()
+  const storedItems = useStoredItemsStore()
   const isLoadedMembers = ref(false)
   const isLoadedUserWorkspaces = ref(false)
   const workspaceMembers = ref<Record<string, WorkspaceMember[]>>({})
@@ -585,6 +588,34 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     }
   }
 
+  async function addFileItem (workspaceId: string, file: ApiResultItem) {
+    return await storedItems.createAndUpload({ workspaceId }, file)
+  }
+
+  async function updateFileItem (fileId: string, file: Omit<ApiResultItem, "type"> & { type?:ApiResultItem['type'] }) {
+    return await storedItems.update(fileId, file)
+  }
+
+  async function removeFileItem (storedItem: StoredItem) {
+    return await storedItems.remove(storedItem)
+  }
+
+  function fetchFiles (workspaceId: string) {
+    const isLoading = ref(true)
+    const files = ref<StoredItem[]>([])
+
+    // Start async fetch, update refs when done
+    storedItems.fetchAll({ workspaceId })
+      .then(result => {
+        files.value = result
+      })
+      .finally(() => {
+        isLoading.value = false
+      })
+
+    return { files, isLoading }
+  }
+
   return {
     isLoaded: computed(() => isLoaded.value && isLoadedMembers.value && isLoadedUserWorkspaces.value),
     workspaces,
@@ -608,6 +639,10 @@ export const useWorkspacesStore = defineStore("workspaces", () => {
     isSaving,
     hasChanges,
     // Cleanup function for subscriptions
-    $dispose: unsubscribeFromRealtimeUpdates
+    $dispose: unsubscribeFromRealtimeUpdates,
+    fetchFiles,
+    addFileItem,
+    removeFileItem,
+    updateFileItem
   }
 })

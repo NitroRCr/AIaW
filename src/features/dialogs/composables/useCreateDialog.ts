@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
 import { useUserDataStore } from "@/shared/store"
+import { ApiResultItem } from "@/shared/types"
 
 import { useDialogMessagesStore, useDialogsStore } from "@/features/dialogs/store"
 
@@ -14,10 +15,11 @@ export function useCreateDialog (workspaceId: Ref<string>) {
   const dialogsStore = useDialogsStore()
   const { t } = useI18n()
 
-  async function createDialog (props: Partial<Dialog> = {}, message?: DialogMessage<DbDialogMessageUpdate>) {
+  async function createDialog (props: Partial<Dialog> = {},
+    message?: DialogMessage<DbDialogMessageUpdate>,
+    items: ApiResultItem[] = []) {
     const userStore = useUserDataStore()
     const dialogMessagesStore = useDialogMessagesStore()
-    console.log("----createDialog", workspaceId, props, message)
 
     return await dialogsStore.addDialog(
       {
@@ -41,7 +43,11 @@ export function useCreateDialog (workspaceId: Ref<string>) {
           ],
           status: "inputing",
         }
-      )
+      ).then(async (message) => {
+        await Promise.all(items.map(item => {
+          return dialogMessagesStore.addApiResult(dialog.id, message.id, message.messageContents[0].id, item)
+        }))
+      })
 
       return dialog
     }).then(async (dialog) => {

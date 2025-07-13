@@ -36,9 +36,7 @@
     </div>
 
     <!-- Slot for the input component -->
-    <slot
-      :on-input="handleInputChange"
-    />
+    <slot />
   </div>
 </template>
 
@@ -164,10 +162,6 @@ function executeCommand(command: Command) {
   // Execute the command action and emit event
   command.action()
   emit('command-executed', command)
-}
-
-function handleInputChange(text: string) {
-  emit('update-input-text', text)
 }
 
 function handleEnterKey() {

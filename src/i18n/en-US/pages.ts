@@ -1,6 +1,6 @@
 export default {
   accountPage: {
-    title: "Account",
+    title: "Account Settings",
     user: "User",
     infoHeader: "Information",
     emailLabel: "Email",
@@ -41,6 +41,8 @@ export default {
     name: "Name",
     description: "Description",
     avatar: "Avatar",
+    web3Settings: "Web3 Settings",
+    userSettings: "User Settings",
   },
   modelPricing: {
     modelPrice: "Model Price",
@@ -80,6 +82,11 @@ export default {
     customProviders: "Custom Providers",
     customProviderUsage: "Refer to the custom provider's",
     usageGuide: "Usage Guide",
+    account: "Account",
+    aiSettings: "AI Settings",
+    featuresSettings: "Features",
+    shortkeysSettings: "Shortkeys",
+    uiSettings: "UI",
   },
   errorNotFound: {
     message: "There's nothing here...",
@@ -136,6 +143,16 @@ export default {
     refresh: "Refresh",
     refreshSuccess: "Workspaces refreshed successfully",
     refreshError: "Failed to refresh workspaces",
+    createTextNote: "Create Text Note",
+    deleteFile: "Delete",
+    searchPlaceholder: "Search files...",
+    files: "Files",
+    deleteFileConfirmation: "Are you sure you want to delete '{name}'? This action cannot be undone and will permanently remove the file.",
+    deleteFileConfirmationTitle: "Delete File",
+    noteName: "Note Name",
+    editFile: "Edit",
+    noteNameRequired: "Note name is required",
+    renameFile: "Rename File",
   },
   chatsPage: {
     chats: "Chats",
@@ -167,6 +184,7 @@ export default {
     createArtifact: "Create Artifact",
     cyberlinks: "Cyberlinks",
     logout: "Logout",
+
   },
   myWorkspaces: {
     noDescription: "No description",

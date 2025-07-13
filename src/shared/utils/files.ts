@@ -3,8 +3,15 @@ import { scaleBlob } from "@/features/media/utils/imageProcess"
 import { ApiResultItem } from "../types"
 
 import { MaxMessageFileSizeMB } from "./config"
-import { isTextFile, mimeTypeMatch } from "./functions"
+import { getFileName, isTextFile, mimeTypeMatch } from "./functions"
 
+/**
+ * Parses files to API result items
+ *
+ * @param files - Files to parse
+ * @param mimeTypes - Optional mime types to filter by (if empty, all files are supported)
+ * @param onTooLarge - Callback for when a file is too large
+ */
 export async function parseFilesToApiResultItems(files: File[], mimeTypes:string[], onTooLarge: (maxFileSize: number, file: File) => void) {
   if (!files.length) return
 
@@ -14,7 +21,7 @@ export async function parseFilesToApiResultItems(files: File[], mimeTypes:string
   for (const file of files) {
     if (await isTextFile(file)) {
       textFiles.push(file)
-    } else if (mimeTypeMatch(file.type, mimeTypes)) {
+    } else if (mimeTypes === null || mimeTypeMatch(file.type, mimeTypes)) {
       supportedFiles.push(file)
     } else {
       otherFiles.push(file)
@@ -25,7 +32,7 @@ export async function parseFilesToApiResultItems(files: File[], mimeTypes:string
   for (const file of textFiles) {
     parsedItems.push({
       type: "text",
-      name: file.name,
+      name: getFileName(file.name),
       contentText: await file.text()
     })
   }
@@ -41,7 +48,7 @@ export async function parseFilesToApiResultItems(files: File[], mimeTypes:string
         : file
     parsedItems.push({
       type: "file",
-      name: file.name,
+      name: getFileName(file.name),
       mimeType: file.type,
       contentBuffer: await f.arrayBuffer()
     })

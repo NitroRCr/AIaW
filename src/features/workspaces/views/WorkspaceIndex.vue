@@ -7,13 +7,19 @@
     </q-toolbar-title>
   </view-common-header>
   <q-page-container
-    bg-sur-c-low
     class="flex column"
   >
     <q-page
       bg-sur
       pb-10
-      class="col flex flex-center"
+      mx-auto
+      max-w="800px"
+      flex
+      flex-col
+      flex-center
+      justify-center
+      items-center
+      m-a
     >
       <div class="text-center">
         <a-avatar

@@ -201,8 +201,7 @@ ALTER FUNCTION "public"."debug_workspaces"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_chats_with_unread_count"() RETURNS TABLE("id" "text", "name" "text", "owner_id" "text", "type" "text", "workspace_id" "text", "created_at" timestamp with time zone, "avatar" "jsonb", "description" "text", "unread_count" integer)
     LANGUAGE "sql"
-    AS $$
-SELECT
+    AS $$SELECT
     c.id,
     c.name,
     c.owner_id,
@@ -222,8 +221,7 @@ SELECT
           )
     ) AS unread_count
 FROM chats c
-ORDER BY c.created_at DESC;
-$$;
+ORDER BY c.created_at ASC;$$;
 
 
 ALTER FUNCTION "public"."get_chats_with_unread_count"() OWNER TO "postgres";
@@ -602,12 +600,14 @@ ALTER TABLE public.profiles ADD COLUMN wallet_address TEXT;
 
 CREATE TABLE IF NOT EXISTS "public"."stored_items" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "message_content_id" "uuid" NOT NULL,
+    "message_content_id" "uuid",
     "type" "text" NOT NULL,
     "content_text" "text",
     "name" "text",
     "mime_type" "text",
     "file_url" "text",
+    "message_id" "uuid",
+    "workspace_id" "uuid",
     CONSTRAINT "stored_items_type_check" CHECK (("type" = ANY (ARRAY['text'::"text", 'file'::"text", 'quote'::"text", 'image'::"text"])))
 );
 
@@ -967,12 +967,12 @@ ALTER TABLE ONLY "public"."message_contents"
 
 
 ALTER TABLE ONLY "public"."message_read"
-    ADD CONSTRAINT "message_read_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."messages"("id");
+    ADD CONSTRAINT "message_read_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."messages"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."message_read"
-    ADD CONSTRAINT "message_read_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "message_read_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -993,6 +993,16 @@ ALTER TABLE ONLY "public"."profiles"
 
 ALTER TABLE ONLY "public"."stored_items"
     ADD CONSTRAINT "stored_items_message_content_id_fkey" FOREIGN KEY ("message_content_id") REFERENCES "public"."message_contents"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."stored_items"
+    ADD CONSTRAINT "stored_items_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."stored_items"
+    ADD CONSTRAINT "stored_items_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE CASCADE;
 
 
 
@@ -1105,6 +1115,21 @@ CREATE POLICY "Anyone can read public workspace chats" ON "public"."chats" FOR S
 
 
 
+CREATE POLICY "Can read stored_items via direct workspace_id" ON "public"."stored_items" FOR SELECT USING ("public"."is_workspace_member"("workspace_id"));
+
+
+
+CREATE POLICY "Can read stored_items via message workspace" ON "public"."stored_items" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM ("public"."messages" "m"
+     JOIN "public"."chats" "c" ON (("m"."chat_id" = "c"."id")))
+  WHERE (("m"."id" = "stored_items"."message_id") AND "public"."is_workspace_member"("c"."workspace_id")))));
+
+
+
+CREATE POLICY "Chat member can delete private chats" ON "public"."chats" FOR DELETE USING ((("type" = 'private'::"public"."chat_type") AND ("workspace_id" IS NULL) AND "public"."is_chat_member"("id")));
+
+
+
 CREATE POLICY "Chat members can create messages" ON "public"."messages" FOR INSERT WITH CHECK (("public"."is_chat_member"("chat_id") OR (EXISTS ( SELECT 1
    FROM ("public"."chats" "c"
      JOIN "public"."workspace_members" "wm" ON (("c"."workspace_id" = "wm"."workspace_id")))
@@ -1121,10 +1146,6 @@ CREATE POLICY "Chat members can read private chats" ON "public"."chats" FOR SELE
 
 
 CREATE POLICY "Chat members can update private chats" ON "public"."chats" FOR UPDATE USING ((("type" = 'private'::"public"."chat_type") AND ("workspace_id" IS NULL) AND "public"."is_chat_member"("id")));
-
-
-
-CREATE POLICY "Chat owner can delete private chats" ON "public"."chats" FOR DELETE USING ((("type" = 'private'::"public"."chat_type") AND ("workspace_id" IS NULL) AND "public"."is_chat_owner"("id")));
 
 
 

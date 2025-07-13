@@ -34,7 +34,7 @@
       <q-list pt-1>
         <div
           p="x-4 y-2"
-          v-if="artifacts.length > 0"
+          v-if="artifacts.length > 1"
         >
           <a-input
             dense

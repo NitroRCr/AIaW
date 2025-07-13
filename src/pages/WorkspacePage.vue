@@ -9,6 +9,7 @@
       side="right"
       v-model="drawerOpen"
       flex
+      pt-2
     >
       <artifacts-panel
         :workspace-id="id"
@@ -20,10 +21,6 @@
         h-full
         flex="~ col"
       >
-        <q-separator
-          mt-0
-          mb-2
-        />
         <!-- <icon-side-button
           icon="sym_o_settings"
           :to="`/workspaces/${id}/settings`"
@@ -32,7 +29,7 @@
           :active="false"
         /> -->
         <q-list>
-          <q-expansion-item
+          <!-- <q-expansion-item
             label="Files"
             class="panel-item"
             icon="sym_o_attach_file"
@@ -42,7 +39,8 @@
                 Not implemented yet
               </q-card-section>
             </q-card>
-          </q-expansion-item>
+          </q-expansion-item> -->
+          <files-expansion />
           <artifacts-expansion />
 
           <chat-expansion
@@ -77,6 +75,7 @@ import ArtifactsExpansion from "@/features/artifacts/components/ArtifactsExpansi
 import { useArtifactsStore } from "@/features/artifacts/store"
 import ChatExpansion from "@/features/chats/components/ChatExpansion.vue"
 import ArtifactsPanel from "@/features/workspaces/components/ArtifactsPanel.vue"
+import FilesExpansion from "@/features/workspaces/components/WorkspaceFiles/WorkspaceFilesExpansion.vue"
 import { useWorkspacesStore } from "@/features/workspaces/store"
 
 import { Artifact } from "@/services/data/types/artifact"

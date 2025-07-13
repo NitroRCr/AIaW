@@ -126,8 +126,6 @@ router.afterEach((to) => {
 
 // Check if user is authenticated
 router.beforeEach(async (to, from, next) => {
-  console.log("!!!!to", to, to.meta.public)
-
   if (!to.meta.public) {
     await until(() => userInitialized.value).toBeTruthy()
 

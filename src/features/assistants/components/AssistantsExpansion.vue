@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from "quasar"
-import { computed } from "vue"
+import { computed, toRef } from "vue"
 import { useI18n } from "vue-i18n"
 import { useRouter } from "vue-router"
 
@@ -185,5 +185,5 @@ function deleteItem ({ id, name }) {
   })
 }
 
-const { createDialog } = useCreateDialog(props.workspaceId)
+const { createDialog } = useCreateDialog(toRef(props, "workspaceId"))
 </script>

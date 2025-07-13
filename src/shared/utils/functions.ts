@@ -376,8 +376,6 @@ const cjkReg = /[\u4e00-\u9fa5\u0800-\u4e00\uac00-\ud7ff]/
  * @returns The display width of the text
  * @example
  * displayLength("Hello"); // Returns 5
- * displayLength("你好"); // Returns 4 (2 characters × 2 units)
- * displayLength("Hello 你好"); // Returns 9 (5 + 4)
  */
 function displayLength (text: string) {
   let length = 0
@@ -399,7 +397,6 @@ function displayLength (text: string) {
  * @returns The beginning of the text, truncated to the specified length with an ellipsis if needed
  * @example
  * textBeginning("Hello world", 5); // Returns "Hello…"
- * textBeginning("你好世界", 5); // Returns "你好…" (since each character counts as 2 units)
  */
 function textBeginning (text: string, length = 10) {
   let res = ""
@@ -521,6 +518,10 @@ function isPlatformEnabled (platform: PlatformEnabled) {
  */
 function getFileExt (filename: string) {
   return filename.match(/\.(\w+)$/)?.[1]
+}
+
+function getFileName (filename: string) {
+  return filename.split(".").slice(0, -1).join(".")
 }
 
 /**
@@ -786,4 +787,5 @@ export {
   removeDuplicates,
   defaultTextAvatar,
   avatarKey,
+  getFileName
 }

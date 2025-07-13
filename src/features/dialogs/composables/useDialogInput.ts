@@ -67,21 +67,11 @@ export const useDialogInput = (
     () => inputMessageContent.value?.storedItems || []
   )
 
-  /**
-   * Whether the input message is empty (no text and no stored items)
-   */
-  const inputEmpty = computed<boolean>(
-    () =>
-      !inputMessageContent.value?.text &&
-      !inputMessageContent.value?.storedItems.length
-  )
-
   return {
     inputMessageId: lastMessageId,
     updateInputText,
     inputMessageContent,
     inputContentItems,
     addInputItems,
-    inputEmpty,
   }
 }

@@ -17,8 +17,8 @@ export function useWorkspaceChats (workspaceId: Ref<string | null>) {
       : chats.value
   )
 
-  const addChat = async (chat: Partial<Chat>) => {
-    await chatsStore.add({ ...chat, workspaceId: workspaceId.value })
+  const addChat = async (chat: Partial<Chat>): Promise<Chat> => {
+    return await chatsStore.add({ ...chat, workspaceId: workspaceId.value })
   }
   const updateChat = async (id: string, chat: Partial<Chat>) => {
     await chatsStore.update(id, { ...chat, workspaceId: workspaceId.value })

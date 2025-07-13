@@ -3,4 +3,4 @@ description:
 globs:
 alwaysApply: true
 ---
-Always read CLAUDE.md and DEVELOPMENT_GUIDE.md before starting
+Always read CLAUDE.md and DEVELOPMENT_GUIDE.md and all docs in memory-bank folder before starting

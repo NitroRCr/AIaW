@@ -18,10 +18,6 @@
         <a-avatar
           v-if="avatar"
           :avatar
-          :size="colMode ? '36px' : denseMode ? '40px' : '48px'"
-          :class="colMode ? 'mx-3' : 'xs:mx-3 sm:mx-4'"
-          @click="onAvatarClick"
-          cursor-pointer
         />
         <div
           v-if="name"
@@ -359,7 +355,6 @@ import {
   watchEffect,
 } from "vue"
 import { useI18n } from "vue-i18n"
-import { useRouter } from "vue-router"
 
 import AAvatar from "@/shared/components/avatar/AAvatar.vue"
 import CopyBtn from "@/shared/components/CopyBtn.vue"
@@ -535,14 +530,6 @@ const denseMode = computed(() => showArtifacts.value || $q.screen.lt.md)
 const colMode = computed(
   () => denseMode.value && props.message.type === "assistant"
 )
-
-const router = useRouter()
-
-function onAvatarClick () {
-  if (props.message.type === "assistant") {
-    router.push(`../assistants/${props.message.assistantId}`)
-  }
-}
 
 const showFloatBtns = ref(false)
 const floatBtnStyle = reactive({

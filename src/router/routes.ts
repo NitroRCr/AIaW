@@ -1,6 +1,6 @@
 import { RouteRecordRaw } from "vue-router"
 
-import ShortcutKeys from "@/shared/views/ShortcutKeys.vue"
+import ShortcutKeys from "@/shared/components/panels/ShortcutKeys.vue"
 
 import AssistantsMarket from "@/features/assistants/views/AssistantsMarket.vue"
 import AssistantView from "@/features/assistants/views/AssistantView.vue"

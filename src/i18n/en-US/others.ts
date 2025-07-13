@@ -143,6 +143,10 @@ export default {
   },
   artifactsPlugin: {
     description: "Modify Artifact",
+    success: "Success",
+  },
+  chats: {
+    newPublicChat: "New public chat",
   },
   update: {
     updating: "Updating...",

@@ -1,9 +1,13 @@
 import { defineStore } from "pinia"
 
+import { ApiResultItem } from "@/shared/types"
+
+import { useStoredItemsStore } from "@/features/storedItems/store"
+
 import { supabase } from "@/services/data/supabase/client"
 import { DbDialogMessageUpdate, mapDbToDialogMessageNested, mapDialogMessageToDb, DialogMessageNested, DialogMessage, DialogMessageNestedUpdate } from "@/services/data/types/dialogMessage"
 import { DbMessageContentInsert, DbMessageContentUpdate, mapDbToMessageContentNested, mapMessageContentToDb, MessageContentNested, MessageContentNestedUpdate } from "@/services/data/types/messageContents"
-import { DbStoredItemInsert, DbStoredItemUpdate, mapDbToStoredItem, mapStoredItemToDb, StoredItem } from "@/services/data/types/storedItem"
+import { DbStoredItemInsert, DbStoredItemUpdate, StoredItem } from "@/services/data/types/storedItem"
 
 import { useDialogMessageCache } from "./composables/useDialogMessageCache"
 
@@ -42,6 +46,7 @@ type UpdateSingleEntityParams = {
  */
 export const useDialogMessagesStore = defineStore("dialogMessages", () => {
   const { dialogMessages, cache } = useDialogMessageCache()
+  const storeItemsStore = useStoredItemsStore()
 
   async function fetchDialogMessages(dialogId: string) {
     const { data, error } = await supabase
@@ -76,27 +81,12 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     const result = mapDbToMessageContentNested(data)
     cache.updateMessageContent(dialogId, messageId, result)
 
-    // stored items was already upserted with addStoredItem
-    // for (const item of storedItems) {
-    //   await upsertStoredItem(dialogId, messageId, { type: item.type, ...item, messageContentId: result.id })
-    // }
-
     return cache.getDialogMessageContent(dialogId, messageId, result.id)
   }
 
   // Insert or update stored item related to message content
   async function upsertStoredItem<T extends StoredItem<DbStoredItemInsert>>(dialogId: string, messageId: string, storedItem: T) {
-    const { data, error } = await supabase.from("stored_items")
-      .upsert(mapStoredItemToDb(storedItem) as DbStoredItemInsert)
-      .select()
-      .single()
-
-    if (error) {
-      console.error(error)
-      throw error
-    }
-
-    const result = mapDbToStoredItem(data)
+    const result = await storeItemsStore.upsert(storedItem)
 
     cache.updateStoredItem(dialogId, messageId, result.messageContentId, result)
 
@@ -213,20 +203,10 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     await fetchDialogMessages(dialogId)
   }
 
-  async function addStoredItem(dialogId: string, messageId: string, storedItem: StoredItem<DbStoredItemInsert>) {
-    const { data, error } = await supabase.from("stored_items")
-      .insert(mapStoredItemToDb(storedItem))
-      .select()
-      .single()
+  async function addApiResult(dialogId: string, messageId: string, messageContentId: string, item: ApiResultItem) {
+    const result = await storeItemsStore.createAndUpload({ messageContentId }, item)
 
-    if (error) {
-      console.error(error)
-      throw error
-    }
-
-    const result = mapDbToStoredItem(data)
-
-    cache.updateStoredItem(dialogId, messageId, result.messageContentId, result)
+    cache.updateStoredItem(dialogId, messageId, messageContentId, result)
 
     return result
   }
@@ -236,18 +216,12 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
    * Uses the delete operation to permanently remove the stored item
    */
   async function deleteStoredItem(dialogId: string, messageId: string, storedItem: StoredItem) {
-    // TODO: remove stored item from dialog messages, with message_content_id or without
-    const { error } = await supabase
-      .from("stored_items")
-      .delete()
-      .eq("id", storedItem.id)
+    await storeItemsStore.remove(storedItem)
 
-    if (error) {
-      console.error(error)
-      throw error
+    // in case if message wasn't applied to dialog(unsubmitted message), it not in cache and db
+    if (storedItem.id) {
+      cache.removeStoredItem(dialogId, messageId, storedItem.messageContentId, storedItem.id)
     }
-
-    cache.removeStoredItem(dialogId, messageId, storedItem.messageContentId, storedItem.id)
   }
 
   // to update single entity WITHOUT nested entities
@@ -291,6 +265,6 @@ export const useDialogMessagesStore = defineStore("dialogMessages", () => {
     deleteStoredItem,
     switchActiveDialogMessage,
     upsertSingleEntity,
-    addStoredItem,
+    addApiResult
   }
 })
