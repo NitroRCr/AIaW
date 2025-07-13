@@ -67,6 +67,7 @@
               outline
               class="full-width"
               label="With Wallet"
+              icon="img:svg/keplr.svg"
               :loading="walletLoading"
               @click="handleWalletAuth"
             />
