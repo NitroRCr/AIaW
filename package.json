@@ -60,7 +60,6 @@
     "@material/material-color-utilities": "^0.3.0",
     "@modelcontextprotocol/sdk": "^1.8.0",
     "@openrouter/ai-sdk-provider": "^0.4.5",
-    "@privy-io/js-sdk-core": "^0.52.3",
     "@quasar/extras": "^1.16.12",
     "@sinclair/typebox": "^0.33.12",
     "@supabase/supabase-js": "^2.49.4",

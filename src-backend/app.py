@@ -84,12 +84,6 @@ class ProxyRequest(BaseModel):
     headers: Optional[Dict[str, str]] = None
     body: Optional[Any] = None
 
-class PrivyAuthRequest(BaseModel):
-    privy_user_id: str
-    wallet_address: Optional[str] = None
-    email: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
-
 class WalletAuthRequest(BaseModel):
     wallet_address: str
     pub_key: str
