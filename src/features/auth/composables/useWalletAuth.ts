@@ -1,6 +1,7 @@
 import { useQuasar } from "quasar"
 import { inject, ref } from "vue"
 
+import { chainConfig } from "@/services/blockchain/consts"
 import { KeplerWallet } from "@/services/blockchain/kepler/KeplerWallet"
 import { supabase } from "@/services/data/supabase/client"
 
@@ -92,22 +93,52 @@ export function useWalletAuth(options: UseWalletAuthOptions = {}) {
       const keyInfo = await keplerWallet.getKey()
       const pubKeyBase64 = btoa(String.fromCharCode(...keyInfo.pubKey))
 
-      // Step 3: Call backend /auth/wallet endpoint
-      const response = await apiCall<WalletAuthResponse>(`${backendUrl}/auth/wallet`, {
-        method: 'POST',
-        body: JSON.stringify({
-          wallet_address: walletAddress,
-          pub_key: pubKeyBase64
-        })
-      })
+      // Step 2: Request challenge from backend
+      const challengeResp = await apiCall<{ nonce: string; message: string }>(
+        `${backendUrl}/auth/web3/challenge`,
+        {
+          method: "POST",
+          body: JSON.stringify({ wallet_address: walletAddress })
+        }
+      )
 
-      if (!response.access_token) {
-        throw new Error('No access token received from backend')
+      // Step 3: Sign the challenge message via Keplr
+      if (!window.keplr || !(window as any).keplr.signArbitrary) {
+        throw new Error("Keplr signArbitrary not supported or Keplr not installed")
+      }
+
+      // Keplr returns Uint8Array signature; convert to base64
+      const signResponse = await (window as any).keplr.signArbitrary(
+        chainConfig.CHAIN_ID,
+        walletAddress,
+        challengeResp.message
+      )
+
+      const signatureBase64 = btoa(
+        String.fromCharCode(...new Uint8Array(signResponse.signature))
+      )
+
+      // Step 4: Call backend /auth/wallet endpoint with message + signature
+      const authResponse = await apiCall<WalletAuthResponse>(
+        `${backendUrl}/auth/wallet`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            wallet_address: walletAddress,
+            pub_key: pubKeyBase64,
+            message: challengeResp.message,
+            signature: signatureBase64
+          })
+        }
+      )
+
+      if (!authResponse.access_token) {
+        throw new Error("No access token received from backend")
       }
 
       // Step 4: Set Supabase session with JWT
       const { error } = await supabase.auth.setSession({
-        access_token: response.access_token,
+        access_token: authResponse.access_token,
         refresh_token: "suka_refresh"
       })
 
@@ -117,14 +148,14 @@ export function useWalletAuth(options: UseWalletAuthOptions = {}) {
       }
 
       // Success
-      onAuthSuccess?.(walletAddress, response.access_token)
+      onAuthSuccess?.(walletAddress, authResponse.access_token)
 
       $q.notify({
         message: `Welcome ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}!`,
         color: 'positive'
       })
 
-      return { walletAddress, token: response.access_token }
+      return { walletAddress, token: authResponse.access_token }
     } catch (error) {
       console.error('Wallet authentication failed:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

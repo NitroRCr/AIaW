@@ -38,7 +38,9 @@ def init_challenge_service():
     global challenge_service
     if challenge_service is None:
         supabase_url = os.getenv('SUPABASE_URL')
-        supabase_anon_key = os.getenv('SUPABASE_ANON_KEY')
+        # Prefer using SERVICE_ROLE_KEY because inserting into auth_challenges
+        # requires bypassing RLS. Fallback to SUPABASE_ANON_KEY for local/dev.
+        supabase_anon_key = os.getenv('SERVICE_ROLE_KEY') or os.getenv('SUPABASE_ANON_KEY')
 
         if not supabase_url or not supabase_anon_key:
             raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set")
@@ -58,6 +60,7 @@ async def create_challenge(request: ChallengeRequest) -> ChallengeResponse:
         challenge_data = await challenge_service.create_challenge(request.wallet_address)
         return ChallengeResponse(**challenge_data)
     except Exception as e:
+        print(f"Failed to create challenge: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to create challenge: {str(e)}")
 
 @auth_router.post("/verify", response_model=VerifyResponse)
