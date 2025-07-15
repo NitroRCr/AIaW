@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 from coincurve import PublicKey
 from cosmospy import pubkey_to_address
+from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -91,7 +92,7 @@ def verify_wallet_auth(wallet_address: str, pubkey_b64: str) -> bool:
 
 def verify_keplr_signature(pubkey_b64, message, signature_b64):
     """
-    Проверяет подпись Keplr используя secp256k1 (дополнительная защита)
+    Проверяет подпись Keplr используя secp256k1
     """
     try:
         # Декодируем данные
@@ -108,26 +109,12 @@ def verify_keplr_signature(pubkey_b64, message, signature_b64):
         r = signature[:32]
         s = signature[32:]
 
-        # Создаем DER-кодированную подпись
-        def encode_der_integer(value_bytes):
-            # Удаляем ведущие нули
-            value_bytes = value_bytes.lstrip(b'\x00')
-            if not value_bytes:
-                value_bytes = b'\x00'
+        # Конвертируем r и s в integers
+        r_int = int.from_bytes(r, byteorder='big')
+        s_int = int.from_bytes(s, byteorder='big')
 
-            # Добавляем 0x00 если первый бит установлен (для положительных чисел)
-            if value_bytes[0] & 0x80:
-                value_bytes = b'\x00' + value_bytes
-
-            # Возвращаем INTEGER tag + length + value
-            return b'\x02' + bytes([len(value_bytes)]) + value_bytes
-
-        r_der = encode_der_integer(r)
-        s_der = encode_der_integer(s)
-
-        # SEQUENCE tag + length + content
-        content = r_der + s_der
-        der_signature = b'\x30' + bytes([len(content)]) + content
+        # Используем встроенную функцию для создания DER-кодированной подписи
+        der_signature = encode_dss_signature(r_int, s_int)
 
         # Проверяем подпись
         try:
