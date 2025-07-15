@@ -9,21 +9,15 @@ from fastapi.staticfiles import StaticFiles
 import os
 import jwt
 import json
-import base64
-import hashlib
 from datetime import datetime, timedelta, timezone
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-import requests
-from coincurve import PublicKey
-from cosmospy import pubkey_to_address
-from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
-# Импорт модуля авторизации
+# Import the authorization module
 from auth.auth_endpoints import auth_router
 from auth.crypto_utils import verify_wallet_auth
 
-# Загружаем переменные окружения из .env файла
+# Load environment variables from .env file
 load_dotenv()
 # load_dotenv(find_dotenv('.env.local'), override=True)
 
@@ -54,7 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключаем роутер для Web3 авторизации
+# Connect the router for Web3 authorization
 app.include_router(auth_router)
 
 ALLOWED_PREFIXES = [
@@ -107,10 +101,10 @@ async def get_or_create_user(wallet_address: str, email: str) -> str:
         'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}',
         'Content-Type': 'application/json',
     }
-    # Для служебных запросов важно обходить RLS
+    # For service requests, it is important to bypass RLS
     search_headers = {**headers, 'x-supabase-bypass-rls': 'true'}
 
-    # 1. Поиск по wallet_address в таблице profiles
+    # 1. Search by wallet_address in the profiles table
     search_url = f"{SUPABASE_URL}/rest/v1/profiles?wallet_address=eq.{wallet_address}&select=id"
     print(f"DEBUG: Searching for existing user by wallet_address: {wallet_address}")
     async with http_client.get(search_url, headers=search_headers) as resp:
@@ -127,7 +121,7 @@ async def get_or_create_user(wallet_address: str, email: str) -> str:
             except json.JSONDecodeError:
                 raise Exception(f"Failed to parse JSON from Supabase search, content was: {response_text[:500]}")
 
-    # 2. Если не найдено — создаём пользователя через Supabase Auth API
+    # 2. If not found — create a user via Supabase Auth API
     print("DEBUG: User not found, creating new user")
     password = wallet_address + "_auto_pwd_1234"
     payload = {
@@ -345,7 +339,7 @@ async def authenticate_with_wallet(auth_request: WalletAuthRequest) -> AuthRespo
     print(f"INFO: Received wallet auth request for: {auth_request.wallet_address}")
     try:
         # Primary verification: Check if public key matches wallet address
-        # Дополнительная проверка подписи если предоставлены данные
+        # Additional signature verification if data is provided
         if not verify_wallet_auth(
             auth_request.wallet_address,
             auth_request.pub_key,

@@ -1,47 +1,47 @@
 # Web3 Authentication Module
 
-Модуль для Web3 авторизации через подписи кошельков с использованием challenge/response протокола.
+Module for Web3 authentication via wallet signatures using the challenge/response protocol.
 
-## Структура модуля
+## Module Structure
 
 ```
 auth/
-├── __init__.py              # Экспорты модуля
-├── crypto_utils.py          # Криптографические функции
-├── challenge_service.py     # Сервис challenge/response
+├── __init__.py              # Module exports
+├── crypto_utils.py          # Cryptographic functions
+├── challenge_service.py     # Challenge/response service
 ├── auth_endpoints.py        # FastAPI endpoints
-└── README.md               # Эта документация
+└── README.md               # This documentation
 ```
 
-## Функциональность
+## Functionality
 
-### 1. Криптографические утилиты (`crypto_utils.py`)
+### 1. Cryptographic utilities (`crypto_utils.py`)
 
-- **`verify_signature`** - Проверяет подпись сообщения с использованием secp256k1 и SHA-256
-- **`verify_wallet_auth`** - Комплексная проверка аутентификации кошелька
-- **`generate_challenge_message`** - Генерирует стандартное сообщение для challenge
+- **`verify_signature`** - Verifies a message signature using secp256k1 and SHA-256
+- **`verify_wallet_auth`** - Comprehensive wallet authentication check
+- **`generate_challenge_message`** - Generates a standard message for the challenge
 
-### 2. Сервис challenge/response (`challenge_service.py`)
+### 2. Challenge/response service (`challenge_service.py`)
 
-- **`ChallengeService`** - Основной класс для работы с challenges
-  - `create_challenge()` - Создает новый challenge
-  - `verify_challenge()` - Проверяет challenge и подпись
-  - `cleanup_expired_challenges()` - Очищает истекшие challenges
+- **`ChallengeService`** - Main class for working with challenges
+  - `create_challenge()` - Creates a new challenge
+  - `verify_challenge()` - Verifies a challenge and signature
+  - `cleanup_expired_challenges()` - Cleans up expired challenges
 
 ### 3. FastAPI endpoints (`auth_endpoints.py`)
 
-- **`POST /auth/web3/challenge`** - Создание challenge
-- **`POST /auth/web3/verify`** - Проверка challenge
-- **`POST /auth/web3/cleanup`** - Очистка истекших challenges
+- **`POST /auth/web3/challenge`** - Create a challenge
+- **`POST /auth/web3/verify`** - Verify a challenge
+- **`POST /auth/web3/cleanup`** - Clean up expired challenges
 
-## Использование
+## Usage
 
-### Базовая проверка подписи
+### Basic signature verification
 
 ```python
 from auth.crypto_utils import verify_signature
 
-# Проверка подписи Keplr кошелька
+# Keplr wallet signature verification
 is_valid = verify_signature(
     signature_b64="base64-signature",
     message="Sign this message to login",
@@ -49,18 +49,18 @@ is_valid = verify_signature(
 )
 ```
 
-### Проверка аутентификации кошелька
+### Wallet authentication verification
 
 ```python
 from auth.crypto_utils import verify_wallet_auth
 
-# Простая проверка соответствия адреса и публичного ключа
+# Simple check for public key and address match
 is_valid = verify_wallet_auth(
     wallet_address="cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk",
     pub_key="base64-public-key"
 )
 
-# Полная проверка с подписью
+# Full check with signature
 is_valid = verify_wallet_auth(
     wallet_address="cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk",
     pub_key="base64-public-key",
@@ -74,33 +74,33 @@ is_valid = verify_wallet_auth(
 ```python
 from auth.challenge_service import ChallengeService
 
-# Инициализация сервиса
+# Service initialization
 service = ChallengeService(
     supabase_url="https://your-project.supabase.co",
     supabase_anon_key="your-anon-key"
 )
 
-# 1. Создание challenge
+# 1. Create a challenge
 challenge = await service.create_challenge("cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk")
-# Результат: {"nonce": "...", "message": "..."}
+# Result: {"nonce": "...", "message": "..."}
 
-# 2. Пользователь подписывает message своим кошельком
+# 2. User signs the message with their wallet
 
-# 3. Проверка challenge
+# 3. Verify the challenge
 result = await service.verify_challenge(
     wallet_address="cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk",
     pub_key="base64-public-key",
     signature="base64-signature",
     nonce=challenge["nonce"]
 )
-# Результат: {"success": True, "wallet_address": "..."} или {"success": False, "error": "..."}
+# Result: {"success": True, "wallet_address": "..."} or {"success": False, "error": "..."}
 ```
 
 ## API Endpoints
 
 ### POST /auth/web3/challenge
 
-Создает новый challenge для указанного адреса кошелька.
+Creates a new challenge for the specified wallet address.
 
 **Request:**
 ```json
@@ -119,7 +119,7 @@ result = await service.verify_challenge(
 
 ### POST /auth/web3/verify
 
-Проверяет подпись challenge.
+Verifies the challenge signature.
 
 **Request:**
 ```json
@@ -131,7 +131,7 @@ result = await service.verify_challenge(
 }
 ```
 
-**Response (успех):**
+**Response (success):**
 ```json
 {
   "success": true,
@@ -139,7 +139,7 @@ result = await service.verify_challenge(
 }
 ```
 
-**Response (ошибка):**
+**Response (error):**
 ```json
 {
   "success": false,
@@ -147,18 +147,18 @@ result = await service.verify_challenge(
 }
 ```
 
-## Требования
+## Requirements
 
 - Python 3.8+
 - FastAPI
 - coincurve (secp256k1)
-- cosmospy (для Cosmos SDK адресов)
-- cryptography (для DER кодирования)
-- aiohttp (для HTTP запросов)
+- cosmospy (for Cosmos SDK addresses)
+- cryptography (for DER encoding)
+- aiohttp (for HTTP requests)
 
-## База данных
+## Database
 
-Модуль использует таблицу `auth_challenges` в Supabase:
+The module uses the `auth_challenges` table in Supabase:
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.auth_challenges (
@@ -168,13 +168,13 @@ CREATE TABLE IF NOT EXISTS public.auth_challenges (
 );
 ```
 
-## Безопасность
+## Security
 
-1. **Challenge TTL**: Challenges истекают через 10 минут
-2. **One-time use**: Каждый challenge может быть использован только один раз
-3. **Signature verification**: Полная криптографическая проверка подписей
-4. **Address validation**: Проверка соответствия публичного ключа адресу кошелька
+1. **Challenge TTL**: Challenges expire after 10 minutes
+2. **One-time use**: Each challenge can only be used once
+3. **Signature verification**: Full cryptographic signature verification
+4. **Address validation**: Public key must match the wallet address
 
-## Улучшения
+## Improvements
 
-Модуль заменяет ручную DER конвертацию на использование встроенной функции `encode_dss_signature` из библиотеки `cryptography`, что делает код более надежным и читаемым.
+The module replaces manual DER conversion with the built-in `encode_dss_signature` function from the `cryptography` library, making the code more reliable and readable.

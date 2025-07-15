@@ -1,5 +1,5 @@
 """
-Криптографические утилиты для Web3 авторизации
+Cryptographic utilities for Web3 authentication
 """
 
 import base64
@@ -13,37 +13,37 @@ from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
 def verify_signature(signature_b64: str, message: str, pubkey_b64: str) -> bool:
     """
-    Проверяет подпись сообщения с использованием secp256k1 и SHA-256.
-    Использует coincurve для более простой работы с Keplr подписями.
+    Verifies a message signature using secp256k1 and SHA-256.
+    Uses coincurve for easier work with Keplr signatures.
 
-    :param signature_b64: base64-подпись из Keplr (raw формат, 64 байта)
-    :param message: строка, которую подписывали
-    :param pubkey_b64: base64-представление сжатого публичного ключа (33 байта)
-    :return: True если подпись валидна, иначе False
+    :param signature_b64: base64 signature from Keplr (raw format, 64 bytes)
+    :param message: string that was signed
+    :param pubkey_b64: base64 representation of the compressed public key (33 bytes)
+    :return: True if the signature is valid, otherwise False
     """
     try:
-        # Декодируем данные
+        # Decode data
         compressed_pubkey = base64.b64decode(pubkey_b64)
         signature = base64.b64decode(signature_b64)
 
-        # Создаем PublicKey из сжатого ключа
+        # Create PublicKey from compressed key
         pubkey = PublicKey(compressed_pubkey)
 
-        # Хешируем сообщение SHA256
+        # Hash the message with SHA256
         message_hash = hashlib.sha256(message.encode()).digest()
 
-        # Разделяем подпись на r и s компоненты (по 32 байта каждый)
+        # Split the signature into r and s components (32 bytes each)
         r = signature[:32]
         s = signature[32:]
 
-        # Конвертируем r и s в integers
+        # Convert r and s to integers
         r_int = int.from_bytes(r, byteorder='big')
         s_int = int.from_bytes(s, byteorder='big')
 
-        # Используем встроенную функцию для создания DER-кодированной подписи
+        # Use the built-in function to create a DER-encoded signature
         der_signature = encode_dss_signature(r_int, s_int)
 
-        # Проверяем подпись
+        # Verify the signature
         try:
             pubkey.verify(der_signature, message_hash)
             return True
@@ -57,27 +57,27 @@ def verify_signature(signature_b64: str, message: str, pubkey_b64: str) -> bool:
 def verify_wallet_auth(wallet_address: str, pub_key: str, message: Optional[str] = None,
                       signature: Optional[str] = None, hrp: str = 'cyber') -> bool:
     """
-    Проверяет аутентификацию кошелька.
+    Verifies wallet authentication.
 
-    Первичная проверка: проверяет, что публичный ключ соответствует адресу кошелька.
-    Дополнительная проверка: если предоставлены message и signature, проверяет подпись.
+    Primary check: verifies that the public key matches the wallet address.
+    Additional check: if message and signature are provided, verifies the signature.
 
-    :param wallet_address: адрес кошелька (например, cyber...)
-    :param pub_key: base64-представление публичного ключа
-    :param message: опциональное сообщение для проверки подписи
-    :param signature: опциональная подпись для проверки
-    :param hrp: human readable part для адреса (по умолчанию 'cyber')
-    :return: True если аутентификация прошла успешно
+    :param wallet_address: wallet address (e.g., cyber...)
+    :param pub_key: base64 representation of the public key
+    :param message: optional message for signature verification
+    :param signature: optional signature for verification
+    :param hrp: human readable part for the address (default 'cyber')
+    :return: True if authentication is successful
     """
     try:
-        # Основная проверка: соответствие публичного ключа адресу
+        # Main check: public key matches the address
         pubkey_bytes = base64.b64decode(pub_key)
         derived_address = pubkey_to_address(pubkey_bytes, hrp=hrp)
 
         if derived_address != wallet_address:
             return False
 
-        # Дополнительная проверка подписи (если предоставлены данные)
+        # Additional signature verification (if data is provided)
         if message and signature:
             return verify_signature(signature, message, pub_key)
 
@@ -89,10 +89,10 @@ def verify_wallet_auth(wallet_address: str, pub_key: str, message: Optional[str]
 
 def generate_challenge_message(wallet_address: str, nonce: str) -> str:
     """
-    Генерирует стандартное сообщение для подписи challenge
+    Generates a standard message for signing a challenge
 
-    :param wallet_address: адрес кошелька
-    :param nonce: уникальный nonce
-    :return: сообщение для подписи
+    :param wallet_address: wallet address
+    :param nonce: unique nonce
+    :return: message for signing
     """
     return f"Sign this message to authenticate with {wallet_address}.\nNonce: {nonce}"

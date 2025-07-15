@@ -1,5 +1,5 @@
 """
-FastAPI endpoints для Web3 авторизации
+FastAPI endpoints for Web3 authentication
 """
 
 from fastapi import APIRouter, HTTPException
@@ -8,10 +8,10 @@ from typing import Dict, Any
 import os
 from .challenge_service import ChallengeService
 
-# Создаем роутер для авторизации
+# Create a router for authentication
 auth_router = APIRouter(prefix="/auth/web3", tags=["Web3 Authentication"])
 
-# Модели данных
+# Data models
 class ChallengeRequest(BaseModel):
     wallet_address: str
 
@@ -30,11 +30,11 @@ class VerifyResponse(BaseModel):
     wallet_address: str = None
     error: str = None
 
-# Инициализируем сервис
+# Initialize the service
 challenge_service = None
 
 def init_challenge_service():
-    """Инициализирует сервис challenges"""
+    """Initializes the challenges service"""
     global challenge_service
     if challenge_service is None:
         supabase_url = os.getenv('SUPABASE_URL')
@@ -48,9 +48,9 @@ def init_challenge_service():
 @auth_router.post("/challenge", response_model=ChallengeResponse)
 async def create_challenge(request: ChallengeRequest) -> ChallengeResponse:
     """
-    Создает новый challenge для Web3 авторизации
+    Creates a new challenge for Web3 authentication
 
-    Клиент должен подписать возвращенное сообщение своим приватным ключом
+    The client must sign the returned message with their private key
     """
     init_challenge_service()
 
@@ -63,9 +63,9 @@ async def create_challenge(request: ChallengeRequest) -> ChallengeResponse:
 @auth_router.post("/verify", response_model=VerifyResponse)
 async def verify_challenge(request: VerifyRequest) -> VerifyResponse:
     """
-    Проверяет подпись challenge для Web3 авторизации
+    Verifies the challenge signature for Web3 authentication
 
-    Если подпись валидна, пользователь считается аутентифицированным
+    If the signature is valid, the user is considered authenticated
     """
     init_challenge_service()
 
@@ -88,7 +88,7 @@ async def verify_challenge(request: VerifyRequest) -> VerifyResponse:
 @auth_router.post("/cleanup")
 async def cleanup_expired_challenges() -> Dict[str, Any]:
     """
-    Очищает истекшие challenges (служебный endpoint)
+    Cleans up expired challenges (service endpoint)
     """
     init_challenge_service()
 
@@ -98,13 +98,13 @@ async def cleanup_expired_challenges() -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to cleanup challenges: {str(e)}")
 
-# Функции для использования в основном приложении
+# Functions for use in the main application
 async def create_challenge(wallet_address: str) -> Dict[str, str]:
-    """Создает challenge для указанного адреса кошелька"""
+    """Creates a challenge for the specified wallet address"""
     init_challenge_service()
     return await challenge_service.create_challenge(wallet_address)
 
 async def verify_challenge(wallet_address: str, pub_key: str, signature: str, nonce: str) -> Dict[str, Any]:
-    """Проверяет challenge и подпись"""
+    """Verifies the challenge and signature"""
     init_challenge_service()
     return await challenge_service.verify_challenge(wallet_address, pub_key, signature, nonce)

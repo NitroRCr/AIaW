@@ -1,7 +1,7 @@
 """
 Web3 Authentication Module
 
-Модуль для работы с Web3 авторизацией через wallet подписи
+Module for working with Web3 authentication via wallet signatures
 """
 
 from .crypto_utils import verify_signature, verify_wallet_auth

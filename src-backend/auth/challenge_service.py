@@ -1,5 +1,5 @@
 """
-Сервис для работы с challenge/response авторизацией
+Service for working with challenge/response authentication
 """
 
 import secrets
@@ -10,34 +10,34 @@ import aiohttp
 from .crypto_utils import generate_challenge_message, verify_wallet_auth
 
 class ChallengeService:
-    """Сервис для управления challenges для Web3 авторизации"""
+    """Service for managing challenges for Web3 authentication"""
 
     def __init__(self, supabase_url: str, supabase_anon_key: str, challenge_ttl_minutes: int = 10):
         """
-        :param supabase_url: URL Supabase проекта
-        :param supabase_anon_key: Anon ключ Supabase
-        :param challenge_ttl_minutes: Время жизни challenge в минутах
+        :param supabase_url: Supabase project URL
+        :param supabase_anon_key: Supabase anon key
+        :param challenge_ttl_minutes: Challenge lifetime in minutes
         """
         self.supabase_url = supabase_url
         self.supabase_anon_key = supabase_anon_key
         self.challenge_ttl = timedelta(minutes=challenge_ttl_minutes)
 
     def generate_nonce(self, length: int = 32) -> str:
-        """Генерирует случайный nonce"""
+        """Generates a random nonce"""
         alphabet = string.ascii_letters + string.digits
         return ''.join(secrets.choice(alphabet) for _ in range(length))
 
     async def create_challenge(self, wallet_address: str) -> Dict[str, str]:
         """
-        Создает новый challenge для кошелька
+        Creates a new challenge for the wallet
 
-        :param wallet_address: адрес кошелька
-        :return: словарь с nonce и message для подписи
+        :param wallet_address: wallet address
+        :return: dict with nonce and message for signing
         """
         nonce = self.generate_nonce()
         message = generate_challenge_message(wallet_address, nonce)
 
-        # Сохраняем challenge в базу данных
+        # Save the challenge to the database
         await self._store_challenge(wallet_address, nonce)
 
         return {
@@ -48,15 +48,15 @@ class ChallengeService:
     async def verify_challenge(self, wallet_address: str, pub_key: str,
                              signature: str, nonce: str) -> Dict[str, Any]:
         """
-        Проверяет challenge и подпись
+        Verifies the challenge and signature
 
-        :param wallet_address: адрес кошелька
-        :param pub_key: публичный ключ
-        :param signature: подпись сообщения
-        :param nonce: nonce из challenge
-        :return: результат проверки
+        :param wallet_address: wallet address
+        :param pub_key: public key
+        :param signature: message signature
+        :param nonce: nonce from the challenge
+        :return: verification result
         """
-        # Проверяем, что challenge существует и не истек
+        # Check that the challenge exists and has not expired
         stored_challenge = await self._get_challenge(wallet_address)
         if not stored_challenge:
             return {"success": False, "error": "Challenge not found or expired"}
@@ -64,19 +64,19 @@ class ChallengeService:
         if stored_challenge["nonce"] != nonce:
             return {"success": False, "error": "Invalid nonce"}
 
-        # Генерируем сообщение для проверки
+        # Generate the message for verification
         message = generate_challenge_message(wallet_address, nonce)
 
-        # Проверяем подпись
+        # Verify the signature
         if verify_wallet_auth(wallet_address, pub_key, message, signature):
-            # Удаляем использованный challenge
+            # Delete the used challenge
             await self._delete_challenge(wallet_address)
             return {"success": True, "wallet_address": wallet_address}
         else:
             return {"success": False, "error": "Invalid signature"}
 
     async def _store_challenge(self, wallet_address: str, nonce: str) -> None:
-        """Сохраняет challenge в базу данных"""
+        """Stores the challenge in the database"""
         headers = {
             'apikey': self.supabase_anon_key,
             'Authorization': f'Bearer {self.supabase_anon_key}',
@@ -93,22 +93,22 @@ class ChallengeService:
         url = f"{self.supabase_url}/rest/v1/auth_challenges"
 
         async with aiohttp.ClientSession() as session:
-            # Сначала удаляем старый challenge если есть
+            # First, delete the old challenge if it exists
             await self._delete_challenge(wallet_address)
 
-            # Создаем новый challenge
+            # Create a new challenge
             async with session.post(url, headers=headers, json=payload) as resp:
                 if resp.status not in [200, 201]:
                     raise Exception(f"Failed to store challenge: {resp.status}")
 
     async def _get_challenge(self, wallet_address: str) -> Optional[Dict[str, Any]]:
-        """Получает challenge из базы данных"""
+        """Retrieves the challenge from the database"""
         headers = {
             'apikey': self.supabase_anon_key,
             'Authorization': f'Bearer {self.supabase_anon_key}',
         }
 
-        # Вычисляем время истечения
+        # Calculate the expiration time
         expiry_time = datetime.utcnow() - self.challenge_ttl
         expiry_iso = expiry_time.isoformat()
 
@@ -128,7 +128,7 @@ class ChallengeService:
                 return None
 
     async def _delete_challenge(self, wallet_address: str) -> None:
-        """Удаляет challenge из базы данных"""
+        """Deletes the challenge from the database"""
         headers = {
             'apikey': self.supabase_anon_key,
             'Authorization': f'Bearer {self.supabase_anon_key}',
@@ -139,14 +139,14 @@ class ChallengeService:
 
         async with aiohttp.ClientSession() as session:
             async with session.delete(url, headers=headers, params=params) as resp:
-                # Игнорируем ошибки удаления - не критично
+                # Ignore deletion errors - not critical
                 pass
 
     async def cleanup_expired_challenges(self) -> int:
         """
-        Очищает истекшие challenges
+        Cleans up expired challenges
 
-        :return: количество удаленных записей
+        :return: number of deleted records
         """
         expiry_time = datetime.utcnow() - self.challenge_ttl
         expiry_iso = expiry_time.isoformat()
@@ -163,7 +163,7 @@ class ChallengeService:
         async with aiohttp.ClientSession() as session:
             async with session.delete(url, headers=headers, params=params) as resp:
                 if resp.status == 200:
-                    # Supabase возвращает количество удаленных записей в заголовке
+                    # Supabase returns the number of deleted records in the header
                     count_header = resp.headers.get('Content-Range', '0')
                     if '/' in count_header:
                         return int(count_header.split('/')[-1])

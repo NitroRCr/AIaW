@@ -1,5 +1,5 @@
 """
-Тесты для Web3 авторизации endpoints
+Tests for Web3 authentication endpoints
 """
 
 import pytest
@@ -15,14 +15,14 @@ class TestWeb3AuthEndpoints:
 
     @patch('auth.challenge_service.ChallengeService.create_challenge')
     def test_create_challenge_endpoint(self, mock_create_challenge):
-        """Тест создания challenge"""
-        # Мокаем ответ сервиса
+        """Test challenge creation"""
+        # Mock the service response
         mock_create_challenge.return_value = {
             "nonce": "test-nonce-123",
             "message": "Sign this message to authenticate with cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk.\nNonce: test-nonce-123"
         }
 
-        # Подготавливаем переменные окружения
+        # Prepare environment variables
         with patch.dict(os.environ, {
             'SUPABASE_URL': 'https://test.supabase.co',
             'SUPABASE_ANON_KEY': 'test-key'
@@ -40,8 +40,8 @@ class TestWeb3AuthEndpoints:
 
     @patch('auth.challenge_service.ChallengeService.verify_challenge')
     def test_verify_challenge_success(self, mock_verify_challenge):
-        """Тест успешной верификации challenge"""
-        # Мокаем успешный ответ
+        """Test successful challenge verification"""
+        # Mock successful response
         mock_verify_challenge.return_value = {
             "success": True,
             "wallet_address": "cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk"
@@ -68,8 +68,8 @@ class TestWeb3AuthEndpoints:
 
     @patch('auth.challenge_service.ChallengeService.verify_challenge')
     def test_verify_challenge_failure(self, mock_verify_challenge):
-        """Тест неудачной верификации challenge"""
-        # Мокаем неуспешный ответ
+        """Test failed challenge verification"""
+        # Mock unsuccessful response
         mock_verify_challenge.return_value = {
             "success": False,
             "error": "Invalid signature"
