@@ -16,6 +16,16 @@ declare global {
       experimentalSuggestChain: (chainInfo: any) => Promise<void>
       enable: (chainId: string) => Promise<void>
       getOfflineSigner: (chainId: string) => OfflineAminoSigner
+      getKey: (chainId: string) => Promise<{
+        name: string
+        algo: string
+        pubKey: Uint8Array
+        address: Uint8Array
+        bech32Address: string
+        ethereumHexAddress: string
+        isNanoLedger: boolean
+        isKeystone: boolean
+      }>
     }
   }
 }
@@ -251,6 +261,14 @@ export function createKeplerWallet () {
     return window.keplr.getOfflineSigner(chainConfig.CHAIN_ID)
   }
 
+  const getKey = async () => {
+    if (!window.keplr) {
+      throw new Error("Keplr extension not installed")
+    }
+
+    return await window.keplr.getKey(chainConfig.CHAIN_ID)
+  }
+
   return {
     state,
     connect,
@@ -259,6 +277,7 @@ export function createKeplerWallet () {
     executeTransaction,
     getTx: waitForTransaction,
     getOfflineSigner,
+    getKey,
   }
 }
 

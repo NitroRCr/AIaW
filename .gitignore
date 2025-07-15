@@ -28,6 +28,8 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+**/*.pyc
+**/__pycache__
 
 # local .env files
 .env.local*

@@ -12,3 +12,4 @@ pycryptodome
 coincurve
 cosmospy
 ecdsa
+cryptography

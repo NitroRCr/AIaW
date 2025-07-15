@@ -88,11 +88,16 @@ export function useWalletAuth(options: UseWalletAuthOptions = {}) {
         throw new Error("Failed to get wallet address")
       }
 
-      // Step 2: Call backend /auth/wallet endpoint
+      // Step 2: Get public key from Keplr
+      const keyInfo = await keplerWallet.getKey()
+      const pubKeyBase64 = btoa(String.fromCharCode(...keyInfo.pubKey))
+
+      // Step 3: Call backend /auth/wallet endpoint
       const response = await apiCall<WalletAuthResponse>(`${backendUrl}/auth/wallet`, {
         method: 'POST',
         body: JSON.stringify({
-          wallet_address: walletAddress
+          wallet_address: walletAddress,
+          pub_key: pubKeyBase64
         })
       })
 
@@ -100,7 +105,7 @@ export function useWalletAuth(options: UseWalletAuthOptions = {}) {
         throw new Error('No access token received from backend')
       }
 
-      // Step 3: Set Supabase session with JWT
+      // Step 4: Set Supabase session with JWT
       const { error } = await supabase.auth.setSession({
         access_token: response.access_token,
         refresh_token: "suka_refresh"

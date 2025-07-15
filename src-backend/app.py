@@ -19,6 +19,10 @@ from coincurve import PublicKey
 from cosmospy import pubkey_to_address
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
+# Импорт модуля авторизации
+from auth.auth_endpoints import auth_router
+from auth.crypto_utils import verify_wallet_auth
+
 # Загружаем переменные окружения из .env файла
 load_dotenv()
 # load_dotenv(find_dotenv('.env.local'), override=True)
@@ -50,6 +54,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Подключаем роутер для Web3 авторизации
+app.include_router(auth_router)
+
 ALLOWED_PREFIXES = [
     'https://lobehub.search1api.com/api/search',
     'https://pollinations.ai-chat.top/api/drawing',
@@ -70,61 +77,6 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_KEY = os.environ.get('SERVICE_ROLE_KEY')
 
 print("JWT_SECRET", JWT_SECRET)
-
-def verify_wallet_auth(wallet_address: str, pubkey_b64: str) -> bool:
-    """
-    Простая проверка соответствия публичного ключа и адреса кошелька
-    Более простой и надежный способ для Cosmos SDK
-    """
-    try:
-        # Декодируем публичный ключ
-        pubkey_bytes = base64.b64decode(pubkey_b64)
-
-        # Генерируем адрес из публичного ключа
-        generated_address = pubkey_to_address(pubkey_bytes, hrp='cyber')
-
-        # Проверяем соответствие
-        return wallet_address == generated_address
-
-    except Exception as e:
-        print(f"Error in verify_wallet_auth: {e}")
-        return False
-
-def verify_keplr_signature(pubkey_b64, message, signature_b64):
-    """
-    Проверяет подпись Keplr используя secp256k1
-    """
-    try:
-        # Декодируем данные
-        compressed_pubkey = base64.b64decode(pubkey_b64)
-        signature = base64.b64decode(signature_b64)
-
-        # Создаем PublicKey из сжатого ключа
-        pubkey = PublicKey(compressed_pubkey)
-
-        # Хешируем сообщение SHA256
-        message_hash = hashlib.sha256(message.encode()).digest()
-
-        # Разделяем подпись на r и s компоненты (по 32 байта каждый)
-        r = signature[:32]
-        s = signature[32:]
-
-        # Конвертируем r и s в integers
-        r_int = int.from_bytes(r, byteorder='big')
-        s_int = int.from_bytes(s, byteorder='big')
-
-        # Используем встроенную функцию для создания DER-кодированной подписи
-        der_signature = encode_dss_signature(r_int, s_int)
-
-        # Проверяем подпись
-        try:
-            pubkey.verify(der_signature, message_hash)
-            return True
-        except Exception:
-            return False
-
-    except Exception as e:
-        return False
 
 class ProxyRequest(BaseModel):
     method: str
@@ -399,16 +351,16 @@ async def authenticate_with_wallet(auth_request: WalletAuthRequest) -> AuthRespo
     print(f"INFO: Received wallet auth request for: {auth_request.wallet_address}")
     try:
         # Primary verification: Check if public key matches wallet address
-        if not verify_wallet_auth(auth_request.wallet_address, auth_request.pub_key):
-            raise HTTPException(status_code=401, detail="Wallet address does not match public key")
+        # Дополнительная проверка подписи если предоставлены данные
+        if not verify_wallet_auth(
+            auth_request.wallet_address,
+            auth_request.pub_key,
+            auth_request.message,
+            auth_request.signature
+        ):
+            raise HTTPException(status_code=401, detail="Wallet authentication failed")
 
-        print(f"INFO: Wallet address verified successfully for: {auth_request.wallet_address}")
-
-        # Optional: Additional signature verification if provided
-        if auth_request.message and auth_request.signature:
-            if not verify_keplr_signature(auth_request.pub_key, auth_request.message, auth_request.signature):
-                raise HTTPException(status_code=401, detail="Invalid signature")
-            print(f"INFO: Signature also verified successfully")
+        print(f"INFO: Wallet authentication successful for: {auth_request.wallet_address}")
 
         # Generate a unique, deterministic email from the wallet address
         # This avoids requiring a real email for wallet-only users
