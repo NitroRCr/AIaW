@@ -6,3 +6,9 @@ llama-index-core==0.12.1
 llama-parse==0.5.15
 python-dotenv==1.0.1
 pyjwt==2.10.1
+pynacl
+bech32
+pycryptodome
+coincurve
+cosmospy
+ecdsa

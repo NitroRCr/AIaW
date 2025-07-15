@@ -1,0 +1,9 @@
+{
+  "address": "cyber14r6j7h4n2hmuam8tj224mw8g3earax5t4vvlkk",
+  "message": "Sign this message to login. Nonce: test-nonce-123",
+  "signature": "Qay6dDIUTRphM+7obxOefyNBKupvcBGso+jrrC5nFHIrC7dfG238xYhRPLNjJ9fa1k0NBdneYkvwinWZMyzW/w==",
+  "pub_key": {
+    "type": "tendermint/PubKeySecp256k1",
+    "value": "Ag3EI2K4aGNMdk/OVQbDCEn8OEPNylNhHNSv/l+ct9sQ"
+  }
+}

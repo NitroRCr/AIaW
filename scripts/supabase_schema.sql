@@ -757,6 +757,14 @@ CREATE TABLE IF NOT EXISTS "public"."workspaces" (
     CONSTRAINT "workspaces_type_check" CHECK (("type" = ANY (ARRAY['folder'::"text", 'workspace'::"text"])))
 );
 
+CREATE TABLE IF NOT EXISTS public.auth_challenges (
+    wallet_address TEXT PRIMARY KEY,
+    nonce TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.auth_challenges ENABLE ROW LEVEL SECURITY;
+
 
 ALTER TABLE "public"."workspaces" OWNER TO "postgres";
 

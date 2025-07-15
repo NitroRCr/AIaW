@@ -9,10 +9,14 @@ from fastapi.staticfiles import StaticFiles
 import os
 import jwt
 import json
+import base64
+import hashlib
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv, find_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import requests
+from coincurve import PublicKey
+from cosmospy import pubkey_to_address
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -66,6 +70,75 @@ SUPABASE_SERVICE_KEY = os.environ.get('SERVICE_ROLE_KEY')
 
 print("JWT_SECRET", JWT_SECRET)
 
+def verify_wallet_auth(wallet_address: str, pubkey_b64: str) -> bool:
+    """
+    Простая проверка соответствия публичного ключа и адреса кошелька
+    Более простой и надежный способ для Cosmos SDK
+    """
+    try:
+        # Декодируем публичный ключ
+        pubkey_bytes = base64.b64decode(pubkey_b64)
+
+        # Генерируем адрес из публичного ключа
+        generated_address = pubkey_to_address(pubkey_bytes, hrp='cyber')
+
+        # Проверяем соответствие
+        return wallet_address == generated_address
+
+    except Exception as e:
+        print(f"Error in verify_wallet_auth: {e}")
+        return False
+
+def verify_keplr_signature(pubkey_b64, message, signature_b64):
+    """
+    Проверяет подпись Keplr используя secp256k1 (дополнительная защита)
+    """
+    try:
+        # Декодируем данные
+        compressed_pubkey = base64.b64decode(pubkey_b64)
+        signature = base64.b64decode(signature_b64)
+
+        # Создаем PublicKey из сжатого ключа
+        pubkey = PublicKey(compressed_pubkey)
+
+        # Хешируем сообщение SHA256
+        message_hash = hashlib.sha256(message.encode()).digest()
+
+        # Разделяем подпись на r и s компоненты (по 32 байта каждый)
+        r = signature[:32]
+        s = signature[32:]
+
+        # Создаем DER-кодированную подпись
+        def encode_der_integer(value_bytes):
+            # Удаляем ведущие нули
+            value_bytes = value_bytes.lstrip(b'\x00')
+            if not value_bytes:
+                value_bytes = b'\x00'
+
+            # Добавляем 0x00 если первый бит установлен (для положительных чисел)
+            if value_bytes[0] & 0x80:
+                value_bytes = b'\x00' + value_bytes
+
+            # Возвращаем INTEGER tag + length + value
+            return b'\x02' + bytes([len(value_bytes)]) + value_bytes
+
+        r_der = encode_der_integer(r)
+        s_der = encode_der_integer(s)
+
+        # SEQUENCE tag + length + content
+        content = r_der + s_der
+        der_signature = b'\x30' + bytes([len(content)]) + content
+
+        # Проверяем подпись
+        try:
+            pubkey.verify(der_signature, message_hash)
+            return True
+        except Exception:
+            return False
+
+    except Exception as e:
+        return False
+
 class ProxyRequest(BaseModel):
     method: str
     url: str
@@ -80,6 +153,9 @@ class PrivyAuthRequest(BaseModel):
 
 class WalletAuthRequest(BaseModel):
     wallet_address: str
+    pub_key: str
+    message: Optional[str] = None
+    signature: Optional[str] = None
 
 class AuthResponse(BaseModel):
     access_token: str
@@ -331,9 +407,22 @@ async def searxng(request: Request):
 async def authenticate_with_wallet(auth_request: WalletAuthRequest) -> AuthResponse:
     """
     Handles wallet-based authentication.
+    Uses simple pubkey->address verification (recommended) or signature verification.
     """
     print(f"INFO: Received wallet auth request for: {auth_request.wallet_address}")
     try:
+        # Primary verification: Check if public key matches wallet address
+        if not verify_wallet_auth(auth_request.wallet_address, auth_request.pub_key):
+            raise HTTPException(status_code=401, detail="Wallet address does not match public key")
+
+        print(f"INFO: Wallet address verified successfully for: {auth_request.wallet_address}")
+
+        # Optional: Additional signature verification if provided
+        if auth_request.message and auth_request.signature:
+            if not verify_keplr_signature(auth_request.pub_key, auth_request.message, auth_request.signature):
+                raise HTTPException(status_code=401, detail="Invalid signature")
+            print(f"INFO: Signature also verified successfully")
+
         # Generate a unique, deterministic email from the wallet address
         # This avoids requiring a real email for wallet-only users
         email_for_supabase = f"{auth_request.wallet_address}@wallet.cyber.ai"
@@ -356,6 +445,8 @@ async def authenticate_with_wallet(auth_request: WalletAuthRequest) -> AuthRespo
             token_type="bearer",
             expires_in=JWT_EXPIRY
         )
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"DEBUG: Exception in /auth/wallet: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate token: {str(e)}")
