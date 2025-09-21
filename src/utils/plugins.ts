@@ -9,7 +9,7 @@ import { corsFetch } from './cors-fetch'
 import artifacts from './artifacts-plugin'
 import { CallToolResult, GetPromptResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
 import { fetch, IsTauri } from './platform-api'
-import { getClient } from './mcp-client'
+import { MCPRequestTimeout, getClient } from './mcp-client'
 import { i18n } from 'src/boot/i18n'
 import webSearchPlugin from './web-search-plugin'
 import docParsePlugin from './doc-parse-plugin'
@@ -341,7 +341,7 @@ function buildGradioPlugin(manifest: GradioPluginManifest, available: boolean): 
   }
 }
 
-function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
+function buildMcpPlugin(dump: McpPluginDump, available: boolean, getPluginData?: () => PluginData | undefined): Plugin {
   const resourceToResultItem = (resource, name?) => resource.text ? {
     type: 'text' as const,
     name,
@@ -353,6 +353,11 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
     mimeType: resource.mimeType
   }
   const { id, title, description, transport, noRoundtrip, author, homepage } = dump
+  const resolveTimeout = () => {
+    const data = getPluginData?.()
+    const value = data?.timeout
+    return typeof value === 'number' && value > 0 ? value : MCPRequestTimeout
+  }
   const tools: PluginApi[] = dump.tools.map(tool => ({
     type: 'tool',
     name: tool.name,
@@ -360,10 +365,13 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
     prompt: tool.description,
     parameters: tool.inputSchema as PluginSchema,
     async execute(args, settings) {
-      const client = await getClient(id, { type: transport.type, ...settings })
+      const timeout = resolveTimeout()
+      const client = await getClient(id, { type: transport.type, ...settings }, { timeout })
       const res: CallToolResult = await client.callTool({
         name: tool.name,
         arguments: args
+      }, undefined, {
+        timeout
       })
       return await Promise.all(res.content.map(async i => {
         if (i.type === 'text') {
@@ -380,7 +388,7 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
         } else if (i.type === 'resource') {
           return resourceToResultItem(i.resource)
         } else {
-          const resource = await client.readResource({ uri: i.uri })
+          const resource = await client.readResource({ uri: i.uri }, { timeout })
           return resourceToResultItem(resource.contents[0])
         }
       }))
@@ -395,8 +403,9 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
       description,
       parameters: TObject({}),
       async execute(args, settings) {
-        const client = await getClient(id, { type: transport.type, ...settings })
-        const res: ReadResourceResult = await client.readResource({ uri })
+        const timeout = resolveTimeout()
+        const client = await getClient(id, { type: transport.type, ...settings }, { timeout })
+        const res: ReadResourceResult = await client.readResource({ uri }, { timeout })
         return res.contents.map(c => resourceToResultItem(c, name))
       }
     }
@@ -415,8 +424,9 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
       description,
       parameters: TObject(params),
       async execute(args, settings) {
-        const client = await getClient(id, { type: transport.type, ...settings })
-        const res: GetPromptResult = await client.getPrompt({ name, arguments: args })
+        const timeout = resolveTimeout()
+        const client = await getClient(id, { type: transport.type, ...settings }, { timeout })
+        const res: GetPromptResult = await client.getPrompt({ name, arguments: args }, { timeout })
         return await Promise.all(res.messages.map(async m => {
           const { content } = m
           if (content.type === 'text') {
@@ -435,7 +445,7 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
           } else if (content.type === 'resource') {
             return resourceToResultItem(content.resource, content.resource.uri)
           } else {
-            const resource = await client.readResource({ uri: content.uri })
+            const resource = await client.readResource({ uri: content.uri }, { timeout })
             return resourceToResultItem(resource.contents[0])
           }
         }))
@@ -487,11 +497,12 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
 }
 
 async function dumpMcpPlugin(manifest: McpPluginManifest): Promise<McpPluginDump> {
-  const client = await getClient(manifest.id, manifest.transport)
+  const timeout = MCPRequestTimeout
+  const client = await getClient(manifest.id, manifest.transport, { timeout })
   const capabilities = client.getServerCapabilities()
-  const { tools } = capabilities.tools ? await client.listTools() : { tools: [] }
-  const { resources } = capabilities.resources ? await client.listResources() : { resources: [] }
-  const { prompts } = capabilities.prompts ? await client.listPrompts() : { prompts: [] }
+  const { tools } = capabilities.tools ? await client.listTools(undefined, { timeout }) : { tools: [] }
+  const { resources } = capabilities.resources ? await client.listResources(undefined, { timeout }) : { resources: [] }
+  const { prompts } = capabilities.prompts ? await client.listPrompts(undefined, { timeout }) : { prompts: [] }
   return {
     ...manifest,
     tools,
@@ -507,7 +518,8 @@ function lobeDefaultData(manifest: LobeChatPluginManifest): PluginData {
     avatar: meta.avatar
       ? (meta.avatar.startsWith('http') ? { type: 'url', url: meta.avatar } : { type: 'text', text: meta.avatar })
       : defaultAvatar((meta.title || identifier)[0].toUpperCase()),
-    fileparsers: {}
+    fileparsers: {},
+    timeout: MCPRequestTimeout
   }
 }
 
@@ -531,7 +543,7 @@ function gradioDefaultData(manifest: GradioPluginManifest): PluginData {
       mimeTypes: e.inputs.find(i => i.paramType === 'file').mimeTypes
     }
   })
-  return { settings, avatar: manifest.avatar, fileparsers }
+  return { settings, avatar: manifest.avatar, fileparsers, timeout: MCPRequestTimeout }
 }
 
 function mcpDefaultData(manifest: McpPluginManifest): PluginData {
@@ -548,7 +560,7 @@ function mcpDefaultData(manifest: McpPluginManifest): PluginData {
       url: transport.url
     }
   const avatar = manifest.avatar as Avatar ?? defaultAvatar(manifest.title[0].toUpperCase())
-  return { settings, avatar, fileparsers: {} }
+  return { settings, avatar, fileparsers: {}, timeout: MCPRequestTimeout }
 }
 
 const huggingIconsMap = {
@@ -809,19 +821,22 @@ const defaultData: PluginsData = {
   'aiaw-time': {
     settings: {},
     avatar: { type: 'icon', icon: 'sym_o_alarm', hue: 220 },
-    fileparsers: {}
+    fileparsers: {},
+    timeout: MCPRequestTimeout
   },
   'aiaw-video-transcript': {
     settings: {},
     avatar: { type: 'icon', icon: 'sym_o_smart_display', hue: 160 },
     fileparsers: {
       transcribe: { enabled: true, mimeTypes: ['video/*'] }
-    }
+    },
+    timeout: MCPRequestTimeout
   },
   'aiaw-calculator': {
     settings: {},
     avatar: { type: 'icon', icon: 'sym_o_calculate', hue: 270 },
-    fileparsers: {}
+    fileparsers: {},
+    timeout: MCPRequestTimeout
   },
   'aiaw-whisper': gradioDefaultData(whisperPluginManifest),
   [fluxPluginManifest.id]: {
@@ -831,12 +846,14 @@ const defaultData: PluginsData = {
   'aiaw-emotions': {
     settings: {},
     avatar: { type: 'icon', icon: 'sym_o_mood', hue: 80 },
-    fileparsers: {}
+    fileparsers: {},
+    timeout: MCPRequestTimeout
   },
   'aiaw-mermaid': {
     settings: {},
     avatar: { type: 'icon', icon: 'sym_o_account_tree', hue: 15 },
-    fileparsers: {}
+    fileparsers: {},
+    timeout: MCPRequestTimeout
   },
   [docParsePlugin.pluginId]: docParsePlugin.defaultData,
   [webSearchPlugin.pluginId]: webSearchPlugin.defaultData,

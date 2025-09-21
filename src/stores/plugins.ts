@@ -33,7 +33,7 @@ export const usePluginsStore = defineStore('plugins', () => {
     ...installed.value.map(i => {
       if (i.type === 'lobechat') return buildLobePlugin(i.manifest, i.available)
       else if (i.type === 'gradio') return buildGradioPlugin(i.manifest, i.available)
-      else return buildMcpPlugin(i.manifest, i.available)
+      else return buildMcpPlugin(i.manifest, i.available, () => data[i.id])
     })
   ])
 

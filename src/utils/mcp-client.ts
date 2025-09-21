@@ -11,20 +11,23 @@ import { SSEClientTransport } from './mcp-sse-transport'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
 const KeepAliveTimeout = 300e3
+export const MCPRequestTimeout = 60 * 1000
 
 const pool = new Map<string, {
   conf: TransportConf
   client: Client
   timeoutId: number
+  requestTimeout: number
 }>()
 
 const { t } = i18n.global
 
-export async function getClient(key: string, transportConf: TransportConf) {
+export async function getClient(key: string, transportConf: TransportConf, options: { timeout?: number } = {}) {
+  const timeout = options.timeout ?? MCPRequestTimeout
   if (pool.has(key)) {
     const item = pool.get(key)
-    const { conf, client, timeoutId } = item
-    if (JSONEqual(conf, transportConf)) {
+    const { conf, client, timeoutId, requestTimeout } = item
+    if (JSONEqual(conf, transportConf) && requestTimeout === timeout) {
       window.clearTimeout(timeoutId)
       item.timeoutId = window.setTimeout(() => {
         client.close()
@@ -57,7 +60,10 @@ export async function getClient(key: string, transportConf: TransportConf) {
   } else if (transportConf.type === 'http') {
     await client.connect(new StreamableHTTPClientTransport(new URL(transportConf.url), {
       fetch,
-      requestInit: { headers: transportConf.headers }
+      requestInit: {
+        headers: transportConf.headers,
+        signal: AbortSignal.timeout(timeout)
+      }
     })).catch(err => {
       client.close()
       throw err
@@ -73,10 +79,13 @@ export async function getClient(key: string, transportConf: TransportConf) {
   const timeoutId = window.setTimeout(() => {
     client.close()
   }, KeepAliveTimeout)
-  pool.set(key, { conf: transportConf, client, timeoutId })
+  pool.set(key, { conf: transportConf, client, timeoutId, requestTimeout: timeout })
   client.onclose = () => {
-    window.clearTimeout(pool.get(key).timeoutId)
-    pool.delete(key)
+    const cached = pool.get(key)
+    if (cached) {
+      window.clearTimeout(cached.timeoutId)
+      pool.delete(key)
+    }
   }
   client.onerror = err => {
     console.error(err)

@@ -119,6 +119,8 @@ export default {
     author: '作者',
     homepage: '主頁',
     icon: '圖示',
+    timeout: '逾時時間',
+    timeoutUnit: '秒',
     fileParsing: '檔案解析',
     enable: '啟用',
     mimeType: 'MIME 類型',

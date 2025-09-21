@@ -109,6 +109,20 @@
           component="item"
           lazy
         />
+        <q-item>
+          <q-item-section>{{ $t('pluginSettings.timeout') }}</q-item-section>
+          <q-item-section side>
+            <q-input
+              filled
+              dense
+              type="number"
+              min="1"
+              style="width: 120px"
+              v-model.number="timeoutSeconds"
+              :suffix="$t('pluginSettings.timeoutUnit')"
+            />
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-page>
   </q-page-container>
@@ -126,6 +140,7 @@ import ErrorNotFound from 'src/pages/ErrorNotFound.vue'
 import ListInput from 'src/components/ListInput.vue'
 import JsonInput from 'src/components/JsonInput.vue'
 import { useSetTitle } from 'src/composables/set-title'
+import { MCPRequestTimeout } from 'src/utils/mcp-client'
 
 const props = defineProps<{
   id: string
@@ -135,6 +150,23 @@ defineEmits(['toggle-drawer'])
 
 const pluginsStore = usePluginsStore()
 const { data } = pluginsStore
+
+const timeoutSeconds = computed({
+  get: () => {
+    const pluginData = data[props.id]
+    if (!pluginData) return Math.round(MCPRequestTimeout / 1000)
+    return Math.round(((pluginData.timeout ?? MCPRequestTimeout) / 1000))
+  },
+  set: (val: number) => {
+    const pluginData = data[props.id]
+    if (!pluginData) return
+    if (Number.isFinite(val) && val > 0) {
+      pluginData.timeout = Math.round(val * 1000)
+    } else {
+      pluginData.timeout = undefined
+    }
+  }
+})
 
 const plugin = computed(() => pluginsStore.plugins.find(p => p.id === props.id))
 

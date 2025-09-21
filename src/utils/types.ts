@@ -377,6 +377,7 @@ interface PluginData {
   settings
   avatar: Avatar
   fileparsers: Record<string, FileparserData>
+  timeout?: number
 }
 
 type PluginsData = Record<string, PluginData>

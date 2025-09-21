@@ -119,6 +119,8 @@ export default {
     author: 'Author',
     homepage: 'Homepage',
     icon: 'Icon',
+    timeout: 'Timeout',
+    timeoutUnit: 's',
     fileParsing: 'File Parsing',
     enable: 'Enable',
     mimeType: 'MIME Type',
