@@ -65,7 +65,7 @@ export const useUserPerfsStore = defineStore('user-perfs', () => {
       hue: 300
     },
     commonModelOptions: [
-      'gpt-5',
+      'gpt-5.1',
       'gpt-5-mini',
       'o4-mini',
       'claude-sonnet-4-5-20250929',

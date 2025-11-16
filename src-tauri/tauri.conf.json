@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "AI as Workspace",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "identifier": "app.aiaw",
   "build": {
     "frontendDist": "../dist/spa",

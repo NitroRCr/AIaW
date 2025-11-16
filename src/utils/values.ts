@@ -248,6 +248,7 @@ const models: Model[] = [
   { name: 'o1', inputTypes: InputTypes.commonVision },
   { name: 'o1-preview', inputTypes: InputTypes.textOnly },
   { name: 'o1-preview-2024-09-12', inputTypes: InputTypes.textOnly },
+  { name: 'gpt-5.1', inputTypes: InputTypes.commonVision },
   { name: 'gpt-5', inputTypes: InputTypes.commonVision },
   { name: 'gpt-5-2025-08-07', inputTypes: InputTypes.commonVision },
   { name: 'gpt-5-mini', inputTypes: InputTypes.commonVision },
