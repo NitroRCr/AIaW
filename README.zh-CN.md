@@ -4,6 +4,12 @@
 
 ![](https://badge.mcpx.dev?type=client 'MCP Client') ![](https://badge.mcpx.dev?type=client&features=resources,prompts,tools 'MCP client with features')
 
+> [!WARNING]
+>
+> 此项目已弃用并被[Nya AI](https://github.com/NitroRCr/nyaai)取代。新项目使用新的技术栈重写，提供了此项目的大部分功能和一致的体验，并拥有许多新功能和优化。
+>
+> 对于现有用户，我们会在近期准备好数据迁移的方式。
+
 更好的 AI 客户端
 
 [网站链接](https://aiaw.app) - [下载客户端](https://github.com/NitroRCr/AIaW/releases/latest) - [使用文档](https://docs.aiaw.app/zh/) - [自部署指南](https://docs.aiaw.app/self-host/)

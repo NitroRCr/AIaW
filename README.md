@@ -4,6 +4,12 @@
 
 ![](https://badge.mcpx.dev?type=client 'MCP Client') ![](https://badge.mcpx.dev?type=client&features=resources,prompts,tools 'MCP client with features')
 
+> [!WARNING]
+>
+> This project is deprecated and has been succeeded by [Nya AI](https://github.com/NitroRCr/nyaai), a complete rewrite with a new tech stack. The new project provides most of the features and consistent experience of this project, along with many new features and optimizations.
+>
+> For existing users, we will prepare a data migration method soon.
+
 An elegant AI client
 
 [Web Version](https://aiaw.app) - [Download](https://github.com/NitroRCr/AIaW/releases/latest) - [Docs](https://docs.aiaw.app/) - [Self-hosting Guide](https://docs.aiaw.app/self-host/) - [简体中文](README.zh-CN.md)
