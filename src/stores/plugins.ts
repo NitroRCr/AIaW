@@ -49,7 +49,7 @@ export const usePluginsStore = defineStore('plugins', () => {
         manifest
       })
       await db.reactives.update('#plugins-data', {
-        [`value.${id}`]: lobeDefaultData(manifest)
+        [`value.${id}` as any]: lobeDefaultData(manifest)
       })
     })
   }
@@ -64,7 +64,7 @@ export const usePluginsStore = defineStore('plugins', () => {
         manifest
       })
       await db.reactives.update('#plugins-data', {
-        [`value.${manifest.id}`]: gradioDefaultData(manifest)
+        [`value.${manifest.id}` as any]: gradioDefaultData(manifest)
       })
     })
   }
@@ -91,7 +91,7 @@ export const usePluginsStore = defineStore('plugins', () => {
         })
       }
       await db.reactives.update('#plugins-data', {
-        [`value.${manifest.id}`]: mcpDefaultData(manifest)
+        [`value.${manifest.id}` as any]: mcpDefaultData(manifest)
       })
     })
   }

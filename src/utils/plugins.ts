@@ -362,10 +362,10 @@ function buildMcpPlugin(dump: McpPluginDump, available: boolean): Plugin {
     parameters: tool.inputSchema as PluginSchema,
     async execute(args, settings) {
       const client = await getClient(id, { type: transport.type, ...settings })
-      const res: CallToolResult = await client.callTool({
+      const res = await client.callTool({
         name: tool.name,
         arguments: args
-      }, undefined, requestOptions(settings))
+      }, undefined, requestOptions(settings)) as CallToolResult
       return await Promise.all(res.content.map(async i => {
         if (i.type === 'text') {
           return {
