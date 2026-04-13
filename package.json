@@ -63,7 +63,7 @@
     "capacitor-stream-fetch": "^0.0.6",
     "codejar-linenumbers": "^1.0.1",
     "dexie": "^4.4.2",
-    "dexie-cloud-addon": "^4.4.8",
+    "dexie-cloud-addon": "^4.4.10",
     "dexie-export-import": "^4.4.0",
     "eventsource": "^3.0.6",
     "expr-eval": "^2.0.2",

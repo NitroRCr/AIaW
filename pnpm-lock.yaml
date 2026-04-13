@@ -147,8 +147,8 @@ importers:
         specifier: ^4.4.2
         version: 4.4.2
       dexie-cloud-addon:
-        specifier: ^4.4.8
-        version: 4.4.8(dexie@4.4.2)
+        specifier: ^4.4.10
+        version: 4.4.10(dexie@4.4.2)
       dexie-export-import:
         specifier: ^4.4.0
         version: 4.4.0(dexie@4.4.2)
@@ -3847,8 +3847,8 @@ packages:
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
-  dexie-cloud-addon@4.4.8:
-    resolution: {integrity: sha512-ugGMNxKsQuDe3dzL6e5IEdtJSGXgt/5FAaobGU+XP8tV9K78Ni34AqFADHw14Ez0UJ371KZnspO5L5BDm48BCw==}
+  dexie-cloud-addon@4.4.10:
+    resolution: {integrity: sha512-3zrTRixHvIsIeSjhb40ybxM3OlBz25ejnuUaLG/PPBjgDanpeJt26OrMkBkJxulXZAr68EuiL3uQyYl1PttE9w==}
     engines: {node: '>=14'}
     peerDependencies:
       dexie: ^4.4.2
@@ -11250,7 +11250,7 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  dexie-cloud-addon@4.4.8(dexie@4.4.2):
+  dexie-cloud-addon@4.4.10(dexie@4.4.2):
     dependencies:
       dexie: 4.4.2
       dexie-cloud-common: 1.0.59
