@@ -1,5 +1,9 @@
 {
   "extends": "./.quasar/tsconfig.json",
+  "compilerOptions": {
+    "strict": false,
+    "noImplicitAny": false,
+  },
   "exclude": [
     "./dist",
     "./node_modules",
