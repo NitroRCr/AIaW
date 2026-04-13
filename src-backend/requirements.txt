@@ -1,6 +1,6 @@
 fastapi==0.115.5
 uvicorn==0.32.1
 aiohttp==3.11.7
-python-multipart==0.0.18
+python-multipart==0.0.22
 llama-index-core==0.12.41
 llama-parse==0.5.15
