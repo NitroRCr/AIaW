@@ -369,5 +369,12 @@ export default {
   },
   enablePluginsMenu: {
     moreInfo: '更多信息'
+  },
+  migrationAlertDialog: {
+    title: '迁移至新项目',
+    messageP1: 'AIaW 已经停止维护。建议您迁移至我们的新项目「Nya AI」继续使用。新项目使用新的技术栈重写，提供了此项目的大部分功能和一致的体验，并拥有许多新功能和优化。',
+    messageP2: '您仍然可以继续使用 AIaW，但我们不再提供功能更新和积极维护。',
+    dismiss: '不再提示',
+    learnMore: '了解更多'
   }
 }

@@ -7,6 +7,7 @@ interface UserData {
   tipDismissed: Record<string, boolean>
   prodExpiredNotifiedTimestamp: number
   evalExpiredNotified: boolean
+  migrationAlertDismissed: boolean
 }
 
 export const useUserDataStore = defineStore('user-data', () => {
@@ -15,7 +16,8 @@ export const useUserDataStore = defineStore('user-data', () => {
     noobAlertDismissed: false,
     tipDismissed: {},
     prodExpiredNotifiedTimestamp: null,
-    evalExpiredNotified: false
+    evalExpiredNotified: false,
+    migrationAlertDismissed: false
   })
   return { data, ready }
 })

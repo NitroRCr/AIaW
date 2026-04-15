@@ -83,6 +83,10 @@ export default defineConfig({
           {
             text: 'Privacy Policy',
             link: '/privacy-policy/'
+          },
+          {
+            text: 'Migrate to Nya AI',
+            link: '/migration/'
           }
         ]
       }
@@ -127,6 +131,10 @@ export default defineConfig({
           {
             text: '隐私政策',
             link: '/zh/privacy-policy/'
+          },
+          {
+            text: '迁移至 Nya AI',
+            link: '/zh/migration/'
           }
         ]
       }

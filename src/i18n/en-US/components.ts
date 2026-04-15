@@ -369,5 +369,12 @@ export default {
   },
   enablePluginsMenu: {
     moreInfo: 'More Info'
+  },
+  migrationAlertDialog: {
+    title: 'Migrate to new project',
+    messageP1: 'AIaW is no longer maintained. We recommend you migrate to our new project "Nya AI" to continue using it. The new project is rewritten with a new tech stack, providing most of the features of this project with a consistent experience, and has many new features and optimizations.',
+    messageP2: 'You can still continue using AIaW, but we will no longer provide feature updates and active maintenance.',
+    dismiss: 'Dismiss',
+    learnMore: 'Learn more'
   }
 }

@@ -8,7 +8,7 @@
 >
 > 此项目已弃用并被 [Nya AI](https://github.com/NitroRCr/nyaai) 取代。新项目使用新的技术栈重写，提供了此项目的大部分功能和一致的体验，并拥有许多新功能和优化。
 >
-> 对于现有用户，我们会在近期准备好数据迁移的方式。
+> 对于现有用户，请参考[迁移至 Nya AI](https://docs.aiaw.app/zh/migration/)。
 
 更好的 AI 客户端
 

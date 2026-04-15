@@ -8,7 +8,7 @@
 >
 > This project is deprecated and has been succeeded by [Nya AI](https://github.com/NitroRCr/nyaai), a complete rewrite with a new tech stack. The new project provides most of the features and consistent experience of this project, along with many new features and optimizations.
 >
-> For existing users, we will prepare a data migration method soon.
+> For existing users, please refer to [Migrating to Nya AI](https://docs.aiaw.app/migration/).
 
 An elegant AI client
 

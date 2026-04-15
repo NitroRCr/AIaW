@@ -7,8 +7,8 @@ android {
         applicationId "app.aiaw"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10809
-        versionName "Arona-v1.8.9"
+        versionCode 10810
+        versionName "Arona-v1.8.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

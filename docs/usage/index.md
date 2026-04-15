@@ -1,5 +1,8 @@
 # Features Overview
 
+> [!WARNING]
+> This project is no longer maintained. We recommend you [migrate to Nya AI](../migration/).
+
 ## Basic Features
 
 - Streaming, image uploading, LaTeX formulas... These basic features are naturally available, no need to mention them.
