@@ -19,6 +19,7 @@ export function useCreateDialog(workspace: Ref<Workspace>) {
         name: t('createDialog.newDialog'),
         msgTree: { $root: [messageId], [messageId]: [] },
         msgRoute: [],
+        msgBranchState: {},
         assistantId: workspace.value.defaultAssistantId,
         inputVars: {},
         ...props

@@ -424,6 +424,7 @@ interface Dialog {
   assistantId?: string
   msgTree: Record<string, string[]>
   msgRoute: number[]
+  msgBranchState?: Record<string, number>
   inputVars: Record<string, PromptVarValue>
   modelOverride?: Model
 }
