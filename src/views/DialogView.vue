@@ -1114,11 +1114,67 @@ async function stream(target, insert = false) {
         actions: [{ label: t('dialogView.recharge'), color: 'on-sur', handler() { router.push('/account') } }]
       })
     }
-    await db.messages.update(id, { contents, error: e.message || e.toString(), status: 'failed', generatingSession: null })
+    await db.messages.update(id, { contents, error: getDisplayErrorMessage(e), status: 'failed', generatingSession: null })
   }
   perfs.artifactsAutoExtract && autoExtractArtifact()
   lockingBottom.value = false
 }
+
+function getDisplayErrorMessage(error: any): string {
+  const messages: string[] = []
+  const visited = new Set()
+
+  collectErrorMessages(error, messages, visited)
+
+  return messages.find(isDescriptiveErrorMessage) || messages[0] || String(error)
+}
+
+function collectErrorMessages(error: any, messages: string[], visited: Set<any>): void {
+  if (!error) return
+
+  if (typeof error === 'string') {
+    messages.push(error)
+    return
+  }
+
+  if (typeof error !== 'object' || visited.has(error)) return
+  visited.add(error)
+
+  addStringMessage(messages, error.data?.error?.message)
+  addStringMessage(messages, error.data?.message)
+  addResponseBodyMessage(messages, error.responseBody)
+
+  collectErrorMessages(error.cause, messages, visited)
+  collectErrorMessages(error.error, messages, visited)
+
+  if (Array.isArray(error.errors)) {
+    error.errors.forEach((item: any) => collectErrorMessages(item, messages, visited))
+  }
+
+  addStringMessage(messages, error.message)
+}
+
+function addStringMessage(messages: string[], message: any): void {
+  if (typeof message === 'string' && message.trim()) {
+    messages.push(message)
+  }
+}
+
+function addResponseBodyMessage(messages: string[], responseBody: any): void {
+  if (typeof responseBody !== 'string') return
+
+  try {
+    const parsed = JSON.parse(responseBody)
+    addStringMessage(messages, parsed.message || parsed.Message || parsed.error?.message)
+  } catch {
+    addStringMessage(messages, responseBody)
+  }
+}
+
+function isDescriptiveErrorMessage(message: string): boolean {
+  return !/^[A-Za-z]+(?:Exception|Error)$/.test(message)
+}
+
 function toToolResultContent(items: StoredItem[]) {
   const val = []
   for (const item of items) {

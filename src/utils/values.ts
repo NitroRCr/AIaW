@@ -13,8 +13,10 @@ import { createCohere } from '@ai-sdk/cohere'
 import { createGroq } from '@ai-sdk/groq'
 import { createOllama } from 'ai-sdk-ollama'
 import { createDeepSeek } from '@ai-sdk/deepseek'
+import { BedrockClient, ListFoundationModelsCommand, ListInferenceProfilesCommand } from '@aws-sdk/client-bedrock'
 import { i18n } from 'src/boot/i18n'
 import { fetch } from './platform-api'
+import { createBedrock } from './aws-bedrock'
 
 const { t } = i18n.global
 
@@ -30,15 +32,102 @@ const commonSettings = {
   baseURL: String({ title: t('values.apiAddress'), description: t('values.defaultServiceAddress') }),
   apiKey: String({ title: 'API Key', format: 'password' })
 }
-async function openaiGetModelList({ baseURL, apiKey }) {
+
+interface ApiProviderSettings {
+  baseURL?: string
+  apiKey: string
+}
+
+interface ModelListItem {
+  id: string
+  name?: string
+  supportedGenerationMethods?: string[]
+}
+
+interface BedrockProviderSettings {
+  region: string
+  accessKeyId: string
+  secretAccessKey: string
+}
+
+const BedrockInferenceProfilePrefixes = ['us', 'eu', 'apac', 'global', 'jp', 'au']
+const SupportedBedrockModelPrefixes = [
+  'anthropic.',
+  'meta.llama',
+  'mistral.',
+  'amazon.nova',
+  'ai21.'
+]
+const UnsupportedBedrockChatModelIds = [
+  'amazon.nova-sonic-v1:0',
+  'amazon.nova-2-sonic-v1:0',
+  // Legacy Bedrock models cannot be used reliably so hiding them from the list.
+  'meta.llama3-2-3b-instruct-v1:0',
+  'meta.llama3-2-1b-instruct-v1:0',
+  'meta.llama3-2-90b-instruct-v1:0',
+  'meta.llama3-2-11b-instruct-v1:0',
+  'anthropic.claude-sonnet-4-20250514-v1:0'
+]
+
+function getBedrockBaseModelId(modelId: string) {
+  const [prefix, ...rest] = modelId.split('.')
+  if (rest.length > 0 && BedrockInferenceProfilePrefixes.includes(prefix)) {
+    return rest.join('.')
+  }
+  return modelId
+}
+
+function isSupportedBedrockModelId(modelId: string) {
+  const baseModelId = getBedrockBaseModelId(modelId)
+  return !UnsupportedBedrockChatModelIds.includes(baseModelId) &&
+    SupportedBedrockModelPrefixes.some(prefix => baseModelId.startsWith(prefix))
+}
+
+async function openaiGetModelList({ baseURL, apiKey }: ApiProviderSettings) {
   const resp = await fetch(`${baseURL}/models`, {
     headers: {
       Authorization: `Bearer ${apiKey}`
     }
   })
-  const { data } = await resp.json()
+  const { data } = await resp.json() as { data: ModelListItem[] }
   return data.map(m => m.id)
 }
+
+async function bedrockGetModelList(settings: BedrockProviderSettings) {
+  const client = new BedrockClient({
+    region: settings.region,
+    credentials: {
+      accessKeyId: settings.accessKeyId,
+      secretAccessKey: settings.secretAccessKey
+    }
+  })
+
+  const response = await client.send(new ListFoundationModelsCommand({
+    byInferenceType: 'ON_DEMAND',
+    byOutputModality: 'TEXT'
+  }))
+
+  const foundationModelIds = (response.modelSummaries || [])
+    .filter(model => model.modelLifecycle?.status === 'ACTIVE')
+    .filter(model => model.modelId)
+    .map(model => model.modelId as string)
+    .filter(isSupportedBedrockModelId)
+
+  const inferenceProfiles = await client.send(new ListInferenceProfilesCommand({
+    typeEquals: 'SYSTEM_DEFINED',
+    maxResults: 1000
+  }))
+
+  const inferenceProfileIds = (inferenceProfiles.inferenceProfileSummaries || [])
+    .filter(profile => profile.status === 'ACTIVE')
+    .filter(profile => profile.inferenceProfileId)
+    .map(profile => profile.inferenceProfileId as string)
+    .filter(isSupportedBedrockModelId)
+
+  return [...new Set([...foundationModelIds, ...inferenceProfileIds])]
+    .sort()
+}
+
 const ProviderTypes: ProviderType[] = [
   {
     name: 'openai',
@@ -51,11 +140,11 @@ const ProviderTypes: ProviderType[] = [
       project: String({ title: t('values.project'), description: t('values.optional') })
     }),
     initialSettings: {},
-    constructor: (...args) => {
+    constructor: (...args: Parameters<typeof createOpenAI>) => {
       const provider = createOpenAI(...args)
-      return modelId => provider.chat(modelId)
+      return (modelId: string) => provider.chat(modelId)
     },
-    getModelList: ({ baseURL, apiKey }) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openai, apiKey })
+    getModelList: ({ baseURL, apiKey }: ApiProviderSettings) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openai, apiKey })
   },
   {
     name: 'openai-responses',
@@ -68,11 +157,11 @@ const ProviderTypes: ProviderType[] = [
       project: String({ title: t('values.project'), description: t('values.optional') })
     }),
     initialSettings: {},
-    constructor: (...args) => {
+    constructor: (...args: Parameters<typeof createOpenAI>) => {
       const provider = createOpenAI(...args)
-      return modelId => provider.responses(modelId)
+      return (modelId: string) => provider.responses(modelId)
     },
-    getModelList: ({ baseURL, apiKey }) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openai, apiKey })
+    getModelList: ({ baseURL, apiKey }: ApiProviderSettings) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openai, apiKey })
   },
   {
     name: 'anthropic',
@@ -84,7 +173,7 @@ const ProviderTypes: ProviderType[] = [
     }),
     initialSettings: {},
     constructor: createAnthropic,
-    getModelList: async (settings) => {
+    getModelList: async (settings: ApiProviderSettings) => {
       const baseURL = settings.baseURL || OfficialBaseURLs.anthropic
       const resp = await fetch(`${baseURL}/models`, {
         headers: {
@@ -92,7 +181,7 @@ const ProviderTypes: ProviderType[] = [
           'anthropic-version': '2023-06-01'
         }
       })
-      const { data } = await resp.json()
+      const { data } = await resp.json() as { data: ModelListItem[] }
       return data.map(m => m.id)
     }
   },
@@ -106,15 +195,18 @@ const ProviderTypes: ProviderType[] = [
     }),
     initialSettings: {},
     constructor: createGoogleGenerativeAI,
-    getModelList: async (settings) => {
+    getModelList: async (settings: ApiProviderSettings) => {
       const baseURL = settings.baseURL || OfficialBaseURLs.google
       const resp = await fetch(`${baseURL}/models`, {
         headers: {
           'x-goog-api-key': settings.apiKey
         }
       })
-      const { models } = await resp.json()
-      return models.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.split('/').at(-1))
+      const { models } = await resp.json() as { models: ModelListItem[] }
+      return models
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+        .map(m => m.name?.split('/').at(-1))
+        .filter((name): name is string => Boolean(name))
     }
   },
   {
@@ -148,7 +240,7 @@ const ProviderTypes: ProviderType[] = [
     settings: Object(commonSettings),
     initialSettings: {},
     constructor: createOpenRouter,
-    getModelList: ({ baseURL, apiKey }) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openrouter, apiKey })
+    getModelList: ({ baseURL, apiKey }: ApiProviderSettings) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openrouter, apiKey })
   },
   {
     name: 'xai',
@@ -190,7 +282,7 @@ const ProviderTypes: ProviderType[] = [
       includeUsage: true,
       ...options
     }),
-    getModelList: ({ apiKey }) => openaiGetModelList({ baseURL: OfficialBaseURLs.burncloud, apiKey })
+    getModelList: ({ apiKey }: ApiProviderSettings) => openaiGetModelList({ baseURL: OfficialBaseURLs.burncloud, apiKey })
   },
   {
     name: 'togetherai',
@@ -223,6 +315,31 @@ const ProviderTypes: ProviderType[] = [
     settings: Object(commonSettings),
     initialSettings: {},
     constructor: createMistral
+  },
+  {
+    name: 'aws-bedrock',
+    label: 'AWS Bedrock',
+    avatar: { type: 'svg', name: 'aws-bedrock', hue: 30 },
+    settings: Object({
+      region: String({
+        title: 'AWS Region',
+        description: 'e.g., ap-south-1, us-east-1',
+        default: 'ap-south-1'
+      }),
+      accessKeyId: String({
+        title: 'Access Key ID',
+        format: 'password'
+      }),
+      secretAccessKey: String({
+        title: 'Secret Access Key',
+        format: 'password'
+      })
+    }),
+    initialSettings: {
+      region: 'ap-south-1'
+    },
+    constructor: createBedrock,
+    getModelList: bedrockGetModelList
   }
 ]
 
@@ -332,8 +449,37 @@ const models: Model[] = [
   { name: 'grok-3-mini-beta', inputTypes: InputTypes.textOnly },
   { name: 'grok-3-mini-fast', inputTypes: InputTypes.textOnly },
   { name: 'grok-3-mini-fast-beta', inputTypes: InputTypes.textOnly },
-  { name: 'grok-4', inputTypes: InputTypes.commonVision }
+  { name: 'grok-4', inputTypes: InputTypes.commonVision },
+
+  // Mistral models on Bedrock
+  { name: 'mistral.mistral-large-2402-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'mistral.mistral-small-2402-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'mistral.mixtral-8x7b-instruct-v0:1', inputTypes: InputTypes.textOnly },
+
+  // Claude models on Bedrock
+  { name: 'anthropic.claude-3-haiku-20240307-v1:0', inputTypes: InputTypes.claudeVision },
+  { name: 'anthropic.claude-3-sonnet-20240229-v1:0', inputTypes: InputTypes.claudeVision },
+  { name: 'anthropic.claude-3-5-sonnet-20240620-v1:0', inputTypes: InputTypes.claudeVision },
+  // Meta Llama models on Bedrock
+  { name: 'meta.llama3-8b-instruct-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'meta.llama3-70b-instruct-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'us.meta.llama3-1-8b-instruct-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'us.meta.llama3-1-70b-instruct-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'us.meta.llama3-2-1b-instruct-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'us.meta.llama3-2-3b-instruct-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'us.meta.llama3-2-11b-instruct-v1:0', inputTypes: InputTypes.commonVision },
+  { name: 'us.meta.llama3-2-90b-instruct-v1:0', inputTypes: InputTypes.commonVision },
+
+  // Amazon Nova models
+  { name: 'amazon.nova-micro-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'amazon.nova-lite-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'amazon.nova-pro-v1:0', inputTypes: InputTypes.commonVision },
+
+  // AI21 Labs
+  { name: 'ai21.jamba-1-5-mini-v1:0', inputTypes: InputTypes.textOnly },
+  { name: 'ai21.jamba-1-5-large-v1:0', inputTypes: InputTypes.textOnly }
 ]
+
 const modelOptions = models.map(m => m.name)
 const dialogOptions = {
   color: 'primary'

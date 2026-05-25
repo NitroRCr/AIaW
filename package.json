@@ -28,6 +28,8 @@
     "@ai-sdk/openai-compatible": "^1.0.14",
     "@ai-sdk/togetherai": "^1.0.12",
     "@ai-sdk/xai": "^2.0.11",
+    "@aws-sdk/client-bedrock": "^3.948.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.948.0",
     "@bradenmacdonald/s3-lite-client": "npm:@jsr/bradenmacdonald__s3-lite-client@^0.8.0",
     "@capacitor/android": "^7.0.1",
     "@capacitor/app": "^7.0.0",
