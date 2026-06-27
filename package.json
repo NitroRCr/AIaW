@@ -46,6 +46,7 @@
     "@material/material-color-utilities": "^0.3.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@openrouter/ai-sdk-provider": "^1.1.2",
+    "@requesty/ai-sdk": "^3.4.0",
     "@quasar/extras": "^1.16.12",
     "@sinclair/typebox": "^0.33.12",
     "@tauri-apps/plugin-clipboard-manager": "~2.2.1",

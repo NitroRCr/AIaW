@@ -4,6 +4,7 @@ import { Object, String } from '@sinclair/typebox'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+import { createRequesty } from '@requesty/ai-sdk'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createAzure } from '@ai-sdk/azure'
 import { createMistral } from '@ai-sdk/mistral'
@@ -24,6 +25,7 @@ const OfficialBaseURLs = {
   google: 'https://generativelanguage.googleapis.com/v1beta',
   ollama: 'http://localhost:11434/api',
   openrouter: 'https://openrouter.ai/api/v1',
+  requesty: 'https://router.requesty.ai/v1',
   burncloud: 'https://ai.burncloud.com/v1'
 }
 const commonSettings = {
@@ -149,6 +151,15 @@ const ProviderTypes: ProviderType[] = [
     initialSettings: {},
     constructor: createOpenRouter,
     getModelList: ({ baseURL, apiKey }) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.openrouter, apiKey })
+  },
+  {
+    name: 'requesty',
+    label: 'Requesty',
+    avatar: { type: 'svg', name: 'requesty' },
+    settings: Object(commonSettings),
+    initialSettings: {},
+    constructor: createRequesty,
+    getModelList: ({ baseURL, apiKey }) => openaiGetModelList({ baseURL: baseURL || OfficialBaseURLs.requesty, apiKey })
   },
   {
     name: 'xai',
