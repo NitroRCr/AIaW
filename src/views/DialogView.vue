@@ -1220,6 +1220,7 @@ watch(route, to => {
 }, { immediate: true })
 
 function onEnter(ev) {
+  if (ev.isComposing) return
   if (perfs.sendKey === 'ctrl+enter') {
     ev.ctrlKey && send()
   } else if (perfs.sendKey === 'shift+enter') {
