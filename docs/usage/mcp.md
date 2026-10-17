@@ -84,6 +84,34 @@ interface McpPluginManifest {
 
 For the meaning of some attributes, you can refer to [Gradio Plugin](plugin-dev#gradio-plugin)
 
+## Example: Parallel Search MCP
+
+[Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp) provides web search (`web_search`) and page fetching (`web_fetch`). Free anonymous searches use Fast mode, with no account or API key required. Free access has usage limits.
+
+Save the following as `parallel-search.json`:
+
+```json
+{
+  "id": "mcp-parallel-search",
+  "title": "Parallel Search",
+  "description": "Web search and page fetching with Parallel",
+  "transport": {
+    "type": "http",
+    "url": "https://search.parallel.ai/mcp",
+    "headers": {
+      "User-Agent": "AIaW"
+    }
+  },
+  "homepage": "https://docs.parallel.ai/integrations/mcp/search-mcp"
+}
+```
+
+1. Open **Plugins**, click the **+** button, choose **Select Config File**, and select `parallel-search.json`.
+2. Enable **Parallel Search** in the assistant settings and use a model that supports tool calling.
+3. Try asking: "Search for the latest Vite release notes, fetch the official release page, and summarize the changes with source links."
+
+This example uses a hosted HTTP server, so Node.js, Python, and uv are not needed. It adds an optional plugin; your existing web search plugin and assistant settings remain unchanged until you enable it.
+
 ## Update
 
 If the MCP server has breaking updates, you need to uninstall and reinstall the corresponding MCP plugin to avoid conflicts caused by API changes.

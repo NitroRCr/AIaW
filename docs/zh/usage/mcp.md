@@ -84,6 +84,34 @@ interface McpPluginManifest {
 
 部分属性的含义可以参考 [Gradio 插件](plugin-dev#gradio-插件)
 
+## 示例：Parallel Search MCP
+
+[Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp) 提供网页搜索（`web_search`）和网页内容抓取（`web_fetch`）功能。免费匿名搜索使用 Fast 模式，无需账号或 API Key。免费访问有用量限制。
+
+将以下内容保存为 `parallel-search.json`：
+
+```json
+{
+  "id": "mcp-parallel-search",
+  "title": "Parallel Search",
+  "description": "Web search and page fetching with Parallel",
+  "transport": {
+    "type": "http",
+    "url": "https://search.parallel.ai/mcp",
+    "headers": {
+      "User-Agent": "AIaW"
+    }
+  },
+  "homepage": "https://docs.parallel.ai/integrations/mcp/search-mcp"
+}
+```
+
+1. 打开「插件」页面，点击右上角的 **+**，选择「选择配置文件」，然后选择 `parallel-search.json`。
+2. 在助手设置中启用 **Parallel Search**，并使用支持工具调用的模型。
+3. 可以尝试提问：「搜索 Vite 最新版本的发布说明，抓取官方发布页面，并附上来源链接总结变化。」
+
+此示例连接的是托管的 HTTP 服务器，因此不需要安装 Node.js、Python 或 uv。它只添加一个可选插件；启用之前，现有的网络搜索插件和助手设置保持不变。
+
 ## 更新
 
 如果 MCP 服务器有破坏性的更新，那么需要卸载并重新安装对应的 MCP 插件，以避免 API 更改带来的冲突。
